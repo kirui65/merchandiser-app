@@ -1,0 +1,64 @@
+rules_version = '2';
+
+// IMPORTANT: this is a DEFENSE-IN-DEPTH BACKSTOP, not the primary access
+// control layer. All writes from the mobile app and admin dashboard go
+// through the Express backend using the Firebase Admin SDK, which BYPASSES
+// these rules entirely. The real authorization boundary is
+// backend/src/middleware/auth.middleware.js and the per-controller scope
+// checks (see shared/firestoreSchema.md). These rules exist only in case a
+// client SDK integration is added later that talks to Firestore directly —
+// do not rely on them, and do not remove backend-side checks because they
+// exist.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isManager() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'manager';
+    }
+
+    function isOwner(repId) {
+      return isSignedIn() && request.auth.uid == repId;
+    }
+
+    match /reps/{repId} {
+      allow read: if isOwner(repId) || isManager();
+      allow write: if isManager();
+    }
+
+    match /outlets/{outletId} {
+      allow read: if isSignedIn();
+      allow write: if isManager();
+    }
+
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow write: if isManager();
+    }
+
+    match /sales/{saleId} {
+      allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.repId == request.auth.uid;
+      allow update: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
+      allow delete: if isManager();
+    }
+
+    match /routes/{routeId} {
+      allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
+      allow create, update: if isSignedIn() && request.resource.data.repId == request.auth.uid;
+      allow delete: if isManager();
+    }
+
+    // No client role may ever write mpesaTransactions directly — only the
+    // backend (via the Daraja callback, using the Admin SDK) creates these.
+    match /mpesaTransactions/{txnId} {
+      allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
+      allow write: if false;
+    }
+  }
+}

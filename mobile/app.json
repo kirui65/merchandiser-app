@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Merchandiser App",
+    "slug": "merchandiser-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used to capture receipt and shelf photos when logging a sale.",
+        "NSLocationWhenInUseUsageDescription": "Used to record your route while a shift is active.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to record your route in the background during an active shift (2-5 min pings, not continuous tracking).",
+        "UIBackgroundModes": ["location", "fetch"]
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE"
+      ]
+    }
+  }
+}
