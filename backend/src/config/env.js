@@ -29,10 +29,12 @@ module.exports = {
     shortcode: process.env.DARAJA_SHORTCODE,
     passkey: process.env.DARAJA_PASSKEY,
     callbackUrl: process.env.DARAJA_CALLBACK_URL,
+    callbackToken: process.env.DARAJA_CALLBACK_TOKEN,
     env: process.env.DARAJA_ENV || 'sandbox',
   },
 
   reconciliationWindowMinutes: Number(process.env.RECONCILIATION_WINDOW_MINUTES || 15),
+  geofenceRadiusMeters: Number(process.env.GEOFENCE_RADIUS_METERS || 100),
 
   allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',').map((s) => s.trim()),
 };

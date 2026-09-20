@@ -9,7 +9,7 @@ Each has its own `package.json` and runs independently.
 
 ---
 
-## Phase 1 — Sales logging + basic dashboard (this build)
+## Phase 1 — Sales logging + basic dashboard
 
 ### What was built
 
@@ -31,8 +31,7 @@ Each has its own `package.json` and runs independently.
   duplicate sales or getting stuck in a retry loop
 - `GET /api/dashboard/totals` — aggregates sales by rep/outlet/product/day
   (manager-only)
-- Phase 2/3 route files (`routes.routes.js`, `mpesa.routes.js`) are mounted
-  as minimal 501 stubs rather than left broken, so the app boots today
+- Phase 2 route/GPS and Phase 3 M-Pesa routes are mounted and covered by focused tests
 
 **Mobile** (`mobile/`):
 - `src/offline/syncManager.js` — built and unit-tested standalone with
@@ -49,19 +48,14 @@ Each has its own `package.json` and runs independently.
   a `postSale` wrapper shaped to return `{status, data}` (not throw on
   4xx/5xx) so `syncManager` can branch on status codes
 - `src/auth/` — `AuthContext` + `LoginScreen`, functional
-- Remaining screens (`SaleEntryScreen`, `HomeScreen`, `OutletListScreen`,
-  `HistoryScreen`), components, and navigation are still stub files with
-  `// TODO` markers — **not yet built**. Wiring the sale-entry form to
-  `salesQueue.enqueueSale()` + `syncManager` is the next piece of work.
+- Mobile navigation, sale entry, outlet list, history, camera capture, and shift-controlled GPS tracking are implemented.
 
 **Admin dashboard** (`admin-dashboard/`) — functional:
 - Vite + React, manager-only login (rejects non-manager tokens client-side
   as a UX nicety; the backend enforces it regardless), protected routing
 - `Dashboard` page: fetches `/api/dashboard/totals`, renders a bar chart
   (sales by day, Recharts) and a totals-by-rep table
-- `RepsPage`, `OutletsPage`, `RouteReplayPage`, `ReconciliationPage` remain
-  stubs — not built yet (RouteReplayPage and ReconciliationPage are Phase
-  2/3 anyway; RepsPage/OutletsPage management UIs are a Phase 1 gap)
+- `RepsPage`, `OutletsPage`, `RouteReplayPage`, and `ReconciliationPage` are implemented as protected manager workflows.
 
 **Firestore** (`firestore/`):
 - `firestore.rules` written as a defense-in-depth backstop mirroring the
@@ -127,8 +121,21 @@ this README once decided.
 
 ---
 
-## Phase 2 — Route/GPS tracking
-Not started.
+## Phase 2 — Route/GPS tracking (implemented)
 
-## Phase 3 — M-Pesa reconciliation
-Not started.
+- Backend route APIs: `GET /api/routes`, `POST /api/routes/pings`, and manager-only `PUT /api/routes/plan`
+- Ping batches are deduplicated, stored under deterministic `repId_YYYY-MM-DD` route documents, and scoped by JWT role
+- Planned outlets are marked visited when a ping falls within `GEOFENCE_RADIUS_METERS` (default 100 m); managers can replay a route in the dashboard
+- Mobile GPS uses Expo background location with balanced accuracy and a 3-minute interval, writes to SQLite first, and syncs batches every 30 seconds or when connectivity returns
+- Admin route replay includes date/rep filters, Leaflet map, replay scrubber, and visited/missed outlet counts
+
+To change the default geofence radius, set `GEOFENCE_RADIUS_METERS` in `backend/.env`.
+
+## Phase 3 — M-Pesa reconciliation (implemented)
+
+- `POST /api/mpesa/stk-push` initiates a Daraja payment and stores a pending transaction.
+- `POST /api/mpesa/callback` accepts the Daraja callback, verifies the configured callback token when present, and persists the receipt/result.
+- `GET /api/mpesa/reconciliation` is manager-only and matches completed collections by rep, amount, and configurable +/- time window, choosing the earliest unmatched sale.
+- The admin reconciliation page shows matched, unmatched sale, and unmatched transaction records.
+
+Set `DARAJA_*` variables in `backend/.env` before using STK Push. `DARAJA_CALLBACK_TOKEN` should be set in production.

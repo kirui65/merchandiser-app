@@ -1,17 +1,13 @@
-// STK push + Daraja callback webhook — Phase 3.
 const express = require('express');
 const { requireAuth } = require('../middleware/auth.middleware');
+const { requireManager } = require('../middleware/auth.middleware');
+const { initiatePayment, callback, getReconciliation } = require('../controllers/mpesa.controller');
 
 const router = express.Router();
 
-// NOTE: the Daraja callback itself must NOT go through requireAuth (Safaricom
-// calls it directly, with no JWT) — when built in Phase 3, mount that one
-// route before router.use(requireAuth) below, and verify it instead via
-// Daraja's own callback validation.
+router.post('/callback', callback);
 router.use(requireAuth);
-
-router.all('*', (req, res) => {
-  res.status(501).json({ error: { message: 'M-Pesa reconciliation endpoints ship in Phase 3' } });
-});
+router.post('/stk-push', initiatePayment);
+router.get('/reconciliation', requireManager, getReconciliation);
 
 module.exports = router;

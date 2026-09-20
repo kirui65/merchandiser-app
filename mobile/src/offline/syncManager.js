@@ -27,7 +27,7 @@
 
 const MAX_ATTEMPTS_BEFORE_BACKOFF_CAP = 5;
 
-export function createSyncManager({ queue, api, isOnline }) {
+export function createSyncManager({ queue, api, isOnline, subscribeToConnectivity, checkOnline = isOnline }) {
   let syncing = false;
 
   /**
@@ -38,7 +38,7 @@ export function createSyncManager({ queue, api, isOnline }) {
    */
   async function syncPendingSales() {
     if (syncing) return { skipped: true, reason: 'already-syncing' };
-    if (!isOnline()) return { skipped: true, reason: 'offline' };
+    if (!(await isOnline())) return { skipped: true, reason: 'offline' };
 
     syncing = true;
     const results = { synced: 0, duplicates: 0, failed: 0, errors: [] };
@@ -88,5 +88,19 @@ export function createSyncManager({ queue, api, isOnline }) {
     return syncing;
   }
 
-  return { syncPendingSales, isSyncing, MAX_ATTEMPTS_BEFORE_BACKOFF_CAP };
+  function start() {
+    const unsubscribe = subscribeToConnectivity((online) => {
+      if (online) syncPendingSales();
+    });
+    const interval = setInterval(syncPendingSales, 30 * 1000);
+    Promise.resolve(checkOnline()).then((online) => {
+      if (online) syncPendingSales();
+    });
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }
+
+  return { syncPendingSales, isSyncing, start, MAX_ATTEMPTS_BEFORE_BACKOFF_CAP };
 }

@@ -1,15 +1,14 @@
-// GPS ping ingestion + route replay — Phase 2.
-// Kept as a minimal router (not just a comment) so index.js can mount it
-// safely today without every Phase-2 endpoint 404ing through the generic
-// notFoundHandler with no context.
 const express = require('express');
 const { requireAuth } = require('../middleware/auth.middleware');
+const { requireManager } = require('../middleware/auth.middleware');
+const { validateBody } = require('../middleware/validate.middleware');
+const { PingBatchSchema } = require('../models/route.model');
+const { getRoute, appendPings, setPlannedOutlets } = require('../controllers/routes.controller');
 
 const router = express.Router();
 router.use(requireAuth);
-
-router.all('*', (req, res) => {
-  res.status(501).json({ error: { message: 'Route/GPS tracking endpoints ship in Phase 2' } });
-});
+router.get('/', getRoute);
+router.post('/pings', validateBody(PingBatchSchema), appendPings);
+router.put('/plan', requireManager, setPlannedOutlets);
 
 module.exports = router;

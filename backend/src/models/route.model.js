@@ -17,4 +17,8 @@ const RouteSchema = z.object({
   visitedOutletIds: z.array(z.string()).default([]),
 });
 
-module.exports = { RouteSchema, PingSchema };
+const PingBatchSchema = z.object({
+  pings: z.array(PingSchema).min(1).max(500),
+});
+
+module.exports = { RouteSchema, PingSchema, PingBatchSchema };

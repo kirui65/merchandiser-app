@@ -1,1 +1,0 @@
-// TODO: outlets management page

@@ -1,1 +1,14 @@
-// TODO: reusable sale entry form
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import CameraCapture from './CameraCapture';
+import LabeledInput from './LabeledInput';
+import PrimaryButton from './PrimaryButton';
+import Card from './Card';
+import { colors, spacing, typography } from '../theme/tokens';
+
+export default function SaleForm({ outlet, products, onSubmit, submitting }) {
+  const [productId, setProductId] = useState(products[0]?.id || ''); const [qty, setQty] = useState('1'); const [unitPrice, setUnitPrice] = useState(String(products[0]?.defaultPrice || '')); const [photoUrl, setPhotoUrl] = useState(null); const selected = products.find((product) => product.id === productId); const total = Number(qty || 0) * Number(unitPrice || 0);
+  function selectProduct(product) { setProductId(product.id); setUnitPrice(String(product.defaultPrice)); }
+  return <View><Text style={styles.label}>Outlet</Text><Text style={styles.outlet}>{outlet.name}</Text><Text style={styles.label}>Product</Text><View style={styles.products}>{products.map((product) => <Pressable key={product.id} onPress={() => selectProduct(product)} style={[styles.product, product.id === productId && styles.productSelected]}><Text style={[styles.productText, product.id === productId && styles.productTextSelected]}>{product.name}</Text><Text style={styles.productPrice}>KES {product.defaultPrice}</Text></Pressable>)}</View><LabeledInput label="Quantity" icon="#" value={qty} onChangeText={setQty} keyboardType="numeric" placeholder="1" /><LabeledInput label="Unit price" icon="₵" value={unitPrice} onChangeText={setUnitPrice} keyboardType="decimal-pad" placeholder="0.00" /><Card style={styles.totalCard}><Text style={styles.totalLabel}>Sale total</Text><Text style={styles.total}>{`KES ${total.toLocaleString()}`}</Text></Card><CameraCapture onCapture={setPhotoUrl} /><PrimaryButton title={`Save ${selected?.name || 'sale'}`} loading={submitting} disabled={!productId} onPress={() => onSubmit({ outletId: outlet.id, productId, qty: Number(qty), unitPrice: Number(unitPrice), photoUrl })} /></View>;
+}
+const styles = StyleSheet.create({ label: { color: colors.ink, fontSize: typography.small, fontWeight: '700', marginTop: spacing.md, marginBottom: spacing.xs }, outlet: { color: colors.muted, fontSize: typography.body, marginBottom: spacing.sm }, products: { gap: spacing.sm, marginBottom: spacing.sm }, product: { flexDirection: 'row', justifyContent: 'space-between', padding: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.surface }, productSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft }, productText: { color: colors.ink, fontWeight: '700' }, productTextSelected: { color: colors.primaryDark }, productPrice: { color: colors.muted }, totalCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.md, backgroundColor: colors.primarySoft }, totalLabel: { color: colors.primaryDark, fontWeight: '700' }, total: { color: colors.primaryDark, fontSize: 22, fontWeight: '800' } });

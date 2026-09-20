@@ -18,6 +18,13 @@ async function createDoc(collectionName, data) {
   return { id: snap.id, ...snap.data() };
 }
 
+async function setDoc(collectionName, id, data) {
+  const ref = collection(collectionName).doc(id);
+  await ref.set({ ...data, createdAt: data.createdAt || admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  const snap = await ref.get();
+  return { id: snap.id, ...snap.data() };
+}
+
 async function getDoc(collectionName, id) {
   const snap = await collection(collectionName).doc(id).get();
   if (!snap.exists) return null;
@@ -45,4 +52,4 @@ async function listDocs(collectionName, { where = [], orderBy = null, limit = nu
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-module.exports = { collection, createDoc, getDoc, updateDoc, deleteDoc, listDocs };
+module.exports = { collection, createDoc, setDoc, getDoc, updateDoc, deleteDoc, listDocs };

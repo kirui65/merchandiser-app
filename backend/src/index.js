@@ -10,8 +10,8 @@ const outletsRoutes = require('./routes/outlets.routes');
 const productsRoutes = require('./routes/products.routes');
 const repsRoutes = require('./routes/reps.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
-const routesRoutes = require('./routes/routes.routes'); // Phase 2 (501 stub)
-const mpesaRoutes = require('./routes/mpesa.routes'); // Phase 3 (501 stub)
+const routesRoutes = require('./routes/routes.routes');
+const mpesaRoutes = require('./routes/mpesa.routes');
 
 const app = express();
 

@@ -32,6 +32,17 @@ export function initDb() {
       lastError TEXT,
       createdAt TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS pending_pings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lat REAL NOT NULL,
+      lng REAL NOT NULL,
+      timestamp TEXT NOT NULL,
+      syncStatus TEXT NOT NULL DEFAULT 'pending',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      lastError TEXT,
+      createdAt TEXT NOT NULL,
+      UNIQUE(lat, lng, timestamp)
+    );
   `);
   return db;
 }
