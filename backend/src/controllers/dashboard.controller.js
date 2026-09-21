@@ -1,4 +1,6 @@
 const { listDocs } = require('../services/firestore.service');
+const env = require('../config/env');
+const { ApiError } = require('../middleware/errorHandler');
 
 /**
  * GET /api/dashboard/totals?from=ISO&to=ISO
@@ -45,4 +47,30 @@ async function getTotals(req, res, next) {
   }
 }
 
-module.exports = { getTotals };
+/**
+ * GET /api/dashboard/overdue-outlets?days=7
+ * Manager-only. A visit is the route geofence signal already persisted on a
+ * route document; this deliberately does not infer a visit from a sale.
+ */
+async function getOverdueOutlets(req, res, next) {
+  try {
+    const configuredDays = Number(req.query.days || env.outletOverdueDays);
+    if (!Number.isInteger(configuredDays) || configuredDays < 1 || configuredDays > 365) {
+      throw new ApiError(400, 'days must be an integer between 1 and 365');
+    }
+
+    const cutoff = new Date();
+    cutoff.setUTCHours(0, 0, 0, 0);
+    cutoff.setUTCDate(cutoff.getUTCDate() - configuredDays);
+    const routes = await listDocs('routes', { where: [['date', '>=', cutoff.toISOString().slice(0, 10)]] });
+    const recentlyVisitedIds = new Set(routes.flatMap((route) => route.visitedOutletIds || []));
+    const outlets = await listDocs('outlets');
+    const overdueOutlets = outlets.filter((outlet) => outlet.active !== false && !recentlyVisitedIds.has(outlet.id));
+
+    return res.json({ days: configuredDays, overdueOutlets });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { getTotals, getOverdueOutlets };

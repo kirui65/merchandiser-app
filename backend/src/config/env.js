@@ -39,6 +39,7 @@ module.exports = {
 
   reconciliationWindowMinutes: Number(process.env.RECONCILIATION_WINDOW_MINUTES || 15),
   geofenceRadiusMeters: Number(process.env.GEOFENCE_RADIUS_METERS || 100),
+  outletOverdueDays: Number(process.env.OUTLET_OVERDUE_DAYS || 7),
 
   allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',').map((s) => s.trim()),
 };
