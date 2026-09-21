@@ -18,7 +18,7 @@ function RequireAuth({ children }) {
 function Shell({ children }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  return <div className="app-shell"><header className="topbar"><NavLink className="brand" to="/"><span>●</span> Brandsphere</NavLink><nav className="nav"><NavLink to="/" end>Overview</NavLink><NavLink to="/routes">Routes</NavLink><NavLink to="/reps">Reps</NavLink><NavLink to="/products">Products</NavLink><NavLink to="/outlets">Outlets</NavLink><NavLink to="/reconciliation">Reconciliation</NavLink><NavLink to="/audit-log">Audit log</NavLink></nav><button className="ui-button ui-button-secondary" onClick={() => { signOut(); navigate('/login'); }}>Sign out</button></header><main className="shell-content">{children}</main></div>;
+  return <div className="app-shell"><header className="topbar"><NavLink className="brand" to="/"><span className="brand-mark">●</span><span className="brand-copy">Brandsphere<small>Marketing agency</small></span></NavLink><nav className="nav" aria-label="Dashboard"><NavLink to="/" end>Overview</NavLink><NavLink to="/routes">Routes</NavLink><NavLink to="/outlets">Outlets</NavLink><NavLink to="/reps">Team</NavLink><NavLink to="/products">Products</NavLink><NavLink to="/reconciliation">Reconciliation</NavLink><NavLink to="/audit-log">Audit log</NavLink></nav><div className="account-actions"><span className="account-label"><strong>{user?.name || 'Manager'}</strong>Manager account</span><button className="ui-button ui-button-secondary" onClick={() => { signOut(); navigate('/login'); }}>Sign out</button></div></header><main className="shell-content">{children}</main></div>;
 }
 
 export default function App() {
