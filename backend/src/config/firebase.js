@@ -12,6 +12,7 @@ function initFirebase() {
       clientEmail: env.firebase.clientEmail,
       privateKey: env.firebase.privateKey,
     }),
+    storageBucket: env.firebase.storageBucket,
   });
 
   return app;
@@ -22,4 +23,9 @@ function getFirestore() {
   return admin.firestore();
 }
 
-module.exports = { admin, initFirebase, getFirestore };
+function getStorageBucket() {
+  initFirebase();
+  return admin.storage().bucket(env.firebase.storageBucket);
+}
+
+module.exports = { admin, initFirebase, getFirestore, getStorageBucket };

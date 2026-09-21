@@ -21,6 +21,10 @@ module.exports = {
     clientEmail: required('FIREBASE_CLIENT_EMAIL'),
     // Render/most hosts store the key with literal \n escapes in the env var.
     privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    // Set this to the bucket shown in Firebase Console > Storage. Keeping it
+    // explicit avoids guessing between legacy *.appspot.com and newer
+    // *.firebasestorage.app bucket names.
+    storageBucket: required('FIREBASE_STORAGE_BUCKET'),
   },
 
   daraja: {
