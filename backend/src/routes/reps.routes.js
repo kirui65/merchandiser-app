@@ -5,6 +5,7 @@ const { validateBody } = require('../middleware/validate.middleware');
 const { RepCreateSchema, RepUpdateSchema } = require('../models/rep.model');
 const { createDoc, listDocs, getDoc, updateDoc } = require('../services/firestore.service');
 const { ApiError } = require('../middleware/errorHandler');
+const { recordAudit } = require('../services/audit.service');
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.post('/', requireManager, validateBody(RepCreateSchema), async (req, res,
       passwordHash,
       active: true,
     });
+    await recordAudit(req, { action: 'created', entityType: 'rep', entity: rep, changedFields: Object.keys(rest) });
 
     const { passwordHash: _omit, ...safeRep } = rep;
     return res.status(201).json({ rep: safeRep });
@@ -44,6 +46,7 @@ router.put('/:id', requireManager, validateBody(RepUpdateSchema), async (req, re
     const existing = await getDoc('reps', req.params.id);
     if (!existing) throw new ApiError(404, 'Rep not found');
     const rep = await updateDoc('reps', req.params.id, req.body);
+    await recordAudit(req, { action: 'edited', entityType: 'rep', entity: rep, changedFields: Object.keys(req.body) });
     const { passwordHash: _omit, ...safeRep } = rep;
     return res.json({ rep: safeRep });
   } catch (err) { return next(err); }
@@ -54,6 +57,7 @@ router.patch('/:id/status', requireManager, async (req, res, next) => {
     const existing = await getDoc('reps', req.params.id);
     if (!existing) throw new ApiError(404, 'Rep not found');
     const rep = await updateDoc('reps', req.params.id, { active: req.body.active === true });
+    await recordAudit(req, { action: rep.active ? 'reactivated' : 'deactivated', entityType: 'rep', entity: rep, changedFields: ['active'] });
     const { passwordHash: _omit, ...safeRep } = rep;
     return res.json({ rep: safeRep });
   } catch (err) { return next(err); }
@@ -64,7 +68,8 @@ router.post('/:id/reset-password', requireManager, async (req, res, next) => {
     const existing = await getDoc('reps', req.params.id);
     if (!existing) throw new ApiError(404, 'Rep not found');
     const temporaryPassword = `Bs-${require('crypto').randomBytes(5).toString('base64url')}`;
-    await updateDoc('reps', req.params.id, { passwordHash: await bcrypt.hash(temporaryPassword, 10) });
+    const rep = await updateDoc('reps', req.params.id, { passwordHash: await bcrypt.hash(temporaryPassword, 10) });
+    await recordAudit(req, { action: 'password_reset', entityType: 'rep', entity: rep, changedFields: ['password'] });
     return res.json({ temporaryPassword });
   } catch (err) { return next(err); }
 });

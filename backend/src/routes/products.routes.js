@@ -4,6 +4,7 @@ const { requireAuth, requireManager } = require('../middleware/auth.middleware')
 const { validateBody } = require('../middleware/validate.middleware');
 const { createDoc, listDocs, getDoc, updateDoc } = require('../services/firestore.service');
 const { ApiError } = require('../middleware/errorHandler');
+const { recordAudit } = require('../services/audit.service');
 
 const ProductSchema = z.object({
   name: z.string().min(1),
@@ -34,6 +35,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', requireManager, validateBody(ProductSchema), async (req, res, next) => {
   try {
     const product = await createDoc('products', { ...req.body, active: true });
+    await recordAudit(req, { action: 'created', entityType: 'product', entity: product, changedFields: Object.keys(req.body) });
     return res.status(201).json({ product });
   } catch (err) {
     return next(err);
@@ -45,6 +47,7 @@ router.patch('/:id', requireManager, validateBody(ProductSchema), async (req, re
     const existing = await getDoc('products', req.params.id);
     if (!existing) throw new ApiError(404, 'Product not found');
     const product = await updateDoc('products', req.params.id, req.body);
+    await recordAudit(req, { action: 'edited', entityType: 'product', entity: product, changedFields: Object.keys(req.body) });
     return res.json({ product });
   } catch (err) {
     return next(err);
@@ -56,6 +59,7 @@ router.patch('/:id/status', requireManager, validateBody(ProductStatusSchema), a
     const existing = await getDoc('products', req.params.id);
     if (!existing) throw new ApiError(404, 'Product not found');
     const product = await updateDoc('products', req.params.id, req.body);
+    await recordAudit(req, { action: product.active ? 'reactivated' : 'deactivated', entityType: 'product', entity: product, changedFields: ['active'] });
     return res.json({ product });
   } catch (err) {
     return next(err);

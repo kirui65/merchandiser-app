@@ -31,6 +31,23 @@ sync whenever a model changes.
 }
 ```
 
+## `auditLog`
+
+Manager-only audit entries for roster, product, and outlet mutations:
+
+```js
+{
+  actorId: string,
+  actorRole: 'manager',
+  action: 'created' | 'edited' | 'deactivated' | 'reactivated' | 'password_reset',
+  entityType: 'rep' | 'product' | 'outlet',
+  entityId: string,
+  entityName: string,
+  changedFields: string[],
+  createdAt: Timestamp
+}
+```
+
 ## `products`
 ```
 {
@@ -38,7 +55,8 @@ sync whenever a model changes.
   name: string,
   sku: string,
   defaultPrice: number,
-  category: string
+  category: string,
+  active: boolean
 }
 ```
 
