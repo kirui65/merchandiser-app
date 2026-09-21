@@ -17,7 +17,7 @@ export async function startRouteTracking() {
 	const foreground = await Location.requestForegroundPermissionsAsync();
 	if (foreground.status !== 'granted') throw new Error('Location permission is required to track a route');
 	const background = await Location.requestBackgroundPermissionsAsync();
-	if (background.status !== 'granted') throw new Error('Background location permission is required during an active shift');
+	if (background.status !== 'granted') throw new Error('Background location is required. In Android Settings, choose “Allow all the time” for this app, then start the shift again.');
 	const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
 	if (!alreadyStarted) {
 		await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
@@ -28,6 +28,12 @@ export async function startRouteTracking() {
 			showsBackgroundLocationIndicator: true,
 		});
 	}
+	const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+	enqueuePing({ lat: current.coords.latitude, lng: current.coords.longitude, timestamp: new Date(current.timestamp).toISOString() });
+}
+
+export function isRouteTrackingActive() {
+	return Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
 }
 
 export async function stopRouteTracking() {
