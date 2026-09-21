@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Merchandiser App",
+    "name": "Brandsphere Marketing Agency",
     "slug": "merchandiser-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,11 +29,19 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE"
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
       ],
       "package": "com.kirui65.merchandiserapp"
     },
     "plugins": [
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
       [
         "expo-build-properties",
         {
@@ -45,8 +53,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "384d5f18-6f08-4950-8ee6-b93ae675d6d2"
+        "projectId": "b19a1e38-1d39-4e41-880e-341be74978c4"
       }
-    }
+    },
+    "owner": "kirui321"
   }
 }
