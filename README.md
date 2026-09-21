@@ -1,4 +1,4 @@
-# Merchandiser Sales, Route & Revenue Tracking App
+# Brandsphere Marketing Agency
 
 Full-stack field-sales tracking system: offline-first mobile app for
 merchandisers, an Express/Firestore backend, and an admin dashboard for

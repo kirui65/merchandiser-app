@@ -62,7 +62,7 @@ export default function LoginScreen() {
             <Text style={styles.brandMarkText}>M</Text>
           </View>
         </View>
-        <Text style={styles.title}>Merchandiser App</Text>
+        <Text style={styles.title}>Brandsphere Marketing Agency</Text>
         <Text style={styles.subtitle}>Sign in to start your shift</Text>
 
         <View style={styles.card}>
