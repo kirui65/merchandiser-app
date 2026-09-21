@@ -9,6 +9,7 @@ import OutletListScreen from '../screens/OutletListScreen';
 import SaleEntryScreen from '../screens/SaleEntryScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import RouteMapScreen from '../screens/RouteMapScreen';
+import PendingSalesScreen from '../screens/PendingSalesScreen';
 import { colors } from '../theme/tokens';
 
 const Stack = createNativeStackNavigator();
@@ -22,6 +23,7 @@ export default function AppNavigator() {
 		<Stack.Screen name="SaleEntry" component={SaleEntryScreen} options={{ title: 'Log sale' }} />
 		<Stack.Screen name="History" component={HistoryScreen} />
 		<Stack.Screen name="RouteMap" component={RouteMapScreen} options={{ title: 'Today\'s route' }} />
+		<Stack.Screen name="PendingSales" component={PendingSalesScreen} options={{ title: 'Pending sales' }} />
 	</> : <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />}</Stack.Navigator></NavigationContainer>;
 }
 
