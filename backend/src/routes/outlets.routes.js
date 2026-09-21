@@ -1,7 +1,7 @@
 const express = require('express');
 const { requireAuth, requireManager } = require('../middleware/auth.middleware');
 const { validateBody } = require('../middleware/validate.middleware');
-const { OutletSchema } = require('../models/outlet.model');
+const { OutletSchema, OutletUpdateSchema, OutletStatusSchema } = require('../models/outlet.model');
 const { createDoc, listDocs, getDoc, updateDoc } = require('../services/firestore.service');
 const { ApiError } = require('../middleware/errorHandler');
 
@@ -47,8 +47,21 @@ router.post('/', requireManager, validateBody(OutletSchema), async (req, res, ne
   }
 });
 
-router.patch('/:id', requireManager, async (req, res, next) => {
+router.patch('/:id', requireManager, validateBody(OutletUpdateSchema), async (req, res, next) => {
   try {
+    const existing = await getDoc('outlets', req.params.id);
+    if (!existing) throw new ApiError(404, 'Outlet not found');
+    const outlet = await updateDoc('outlets', req.params.id, req.body);
+    return res.json({ outlet });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.patch('/:id/status', requireManager, validateBody(OutletStatusSchema), async (req, res, next) => {
+  try {
+    const existing = await getDoc('outlets', req.params.id);
+    if (!existing) throw new ApiError(404, 'Outlet not found');
     const outlet = await updateDoc('outlets', req.params.id, req.body);
     return res.json({ outlet });
   } catch (err) {
