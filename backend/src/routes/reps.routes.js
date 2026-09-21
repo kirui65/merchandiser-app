@@ -2,8 +2,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { requireAuth, requireManager } = require('../middleware/auth.middleware');
 const { validateBody } = require('../middleware/validate.middleware');
-const { RepCreateSchema } = require('../models/rep.model');
-const { createDoc, listDocs, getDoc } = require('../services/firestore.service');
+const { RepCreateSchema, RepUpdateSchema } = require('../models/rep.model');
+const { createDoc, listDocs, getDoc, updateDoc } = require('../services/firestore.service');
 const { ApiError } = require('../middleware/errorHandler');
 
 const router = express.Router();
@@ -37,6 +37,36 @@ router.get('/', requireManager, async (req, res, next) => {
   } catch (err) {
     return next(err);
   }
+});
+
+router.put('/:id', requireManager, validateBody(RepUpdateSchema), async (req, res, next) => {
+  try {
+    const existing = await getDoc('reps', req.params.id);
+    if (!existing) throw new ApiError(404, 'Rep not found');
+    const rep = await updateDoc('reps', req.params.id, req.body);
+    const { passwordHash: _omit, ...safeRep } = rep;
+    return res.json({ rep: safeRep });
+  } catch (err) { return next(err); }
+});
+
+router.patch('/:id/status', requireManager, async (req, res, next) => {
+  try {
+    const existing = await getDoc('reps', req.params.id);
+    if (!existing) throw new ApiError(404, 'Rep not found');
+    const rep = await updateDoc('reps', req.params.id, { active: req.body.active === true });
+    const { passwordHash: _omit, ...safeRep } = rep;
+    return res.json({ rep: safeRep });
+  } catch (err) { return next(err); }
+});
+
+router.post('/:id/reset-password', requireManager, async (req, res, next) => {
+  try {
+    const existing = await getDoc('reps', req.params.id);
+    if (!existing) throw new ApiError(404, 'Rep not found');
+    const temporaryPassword = `Bs-${require('crypto').randomBytes(5).toString('base64url')}`;
+    await updateDoc('reps', req.params.id, { passwordHash: await bcrypt.hash(temporaryPassword, 10) });
+    return res.json({ temporaryPassword });
+  } catch (err) { return next(err); }
 });
 
 // A rep can fetch their own profile; managers can fetch any.

@@ -22,4 +22,11 @@ const RepCreateSchema = z.object({
   assignedOutletIds: z.array(z.string()).default([]),
 });
 
-module.exports = { RepSchema, RepCreateSchema };
+const RepUpdateSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().min(1),
+  email: z.string().email(),
+  role: z.enum(['rep', 'manager']),
+});
+
+module.exports = { RepSchema, RepCreateSchema, RepUpdateSchema };
