@@ -14,6 +14,7 @@ const routesRoutes = require('./routes/routes.routes');
 const mpesaRoutes = require('./routes/mpesa.routes');
 const uploadsRoutes = require('./routes/uploads.routes');
 const auditRoutes = require('./routes/audit.routes');
+const targetsRoutes = require('./routes/targets.routes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/routes', routesRoutes);
 app.use('/api/mpesa', mpesaRoutes);
 app.use('/api/uploads', uploadsRoutes);
 app.use('/api/audit-log', auditRoutes);
+app.use('/api/targets', targetsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

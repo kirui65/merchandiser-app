@@ -80,6 +80,19 @@ Manager-only audit entries for roster, product, and outlet mutations:
 Idempotency: `(repId, localId)` must be unique. A duplicate write with the
 same `localId` from the same rep returns the existing record, not an error.
 
+## `salesTargets`
+
+One deterministic document per representative and calendar month (`{repId}_{YYYY-MM}`):
+
+```js
+{
+  repId: string,
+  month: 'YYYY-MM',
+  amount: number,
+  createdAt: Timestamp
+}
+```
+
 ## `routes` (one doc per rep per day)
 ```
 {
