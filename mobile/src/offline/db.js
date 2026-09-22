@@ -43,6 +43,11 @@ export function initDb() {
       createdAt TEXT NOT NULL,
       UNIQUE(lat, lng, timestamp)
     );
+    CREATE TABLE IF NOT EXISTS product_catalog (
+      id TEXT PRIMARY KEY NOT NULL,
+      payload TEXT NOT NULL,
+      cachedAt TEXT NOT NULL
+    );
   `);
   return db;
 }
