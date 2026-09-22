@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { isRouteTrackingActive, startRouteTracking, stopRouteTracking } from '../location/gpsTracker';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import SyncStatusBadge from '../components/SyncStatusBadge';
-import { colors, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import { fetchMyTargetProgress } from '../api/targets';
 
 export default function HomeScreen({ navigation }) {
@@ -13,6 +14,46 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => { fetchMyTargetProgress().then(setTargetProgress).catch(() => {}); }, []);
   async function toggleTracking() { setUpdatingShift(true); setShiftError(null); try { if (tracking) { await stopRouteTracking(); setTracking(false); } else { await startRouteTracking(); setTracking(true); } } catch (error) { setShiftError(error.message || 'Unable to update shift tracking.'); } finally { setUpdatingShift(false); } }
   const targetPercent = targetProgress?.target ? Math.min(100, Math.round((targetProgress.current / targetProgress.target) * 100)) : 0;
-  return <SafeAreaView style={styles.container}><ScrollView contentContainerStyle={styles.content}><Text style={styles.eyebrow}>FIELD OPERATIONS</Text><Text style={styles.title}>Good morning</Text><Text style={styles.subtitle}>Keep your route moving and your records current.</Text><Card style={styles.syncCard}><Text style={styles.cardLabel}>Sync status</Text><SyncStatusBadge status="synced" /></Card>{targetProgress && <Card><Text style={styles.sectionTitle}>Monthly sales target</Text><Text style={styles.targetValue}>KES {targetProgress.current.toLocaleString()} / KES {targetProgress.target.toLocaleString()}</Text><View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${targetPercent}%` }]} /></View><Text style={styles.statLabel}>{targetProgress.target ? `${targetPercent}% of ${targetProgress.month} target` : `No target set for ${targetProgress.month}`}</Text></Card>}<Card><Text style={styles.sectionTitle}>Today at a glance</Text><View style={styles.stats}><View><Text style={styles.statValue}>0 / 0</Text><Text style={styles.statLabel}>Outlets visited</Text></View><View><Text style={styles.statValue}>0</Text><Text style={styles.statLabel}>Sales logged</Text></View><View><Text style={styles.statValue}>KES 0</Text><Text style={styles.statLabel}>Total today</Text></View></View></Card><Card style={styles.shiftCard}><Text style={styles.sectionTitle}>{tracking ? 'Shift in progress' : 'Ready for your shift?'}</Text><Text style={styles.status}>{tracking ? 'Route tracking is active' : 'Start tracking when you leave your base'}</Text>{shiftError ? <Text style={styles.shiftError}>{shiftError}</Text> : null}<PrimaryButton title={tracking ? 'End shift' : 'Start shift'} loading={updatingShift} onPress={toggleTracking} variant={tracking ? 'secondary' : 'primary'} /></Card><Text style={styles.sectionTitle}>Quick access</Text><View style={styles.actions}><PrimaryButton title="My performance" onPress={() => navigation.navigate('Performance')} variant="secondary" /><PrimaryButton title="Assigned outlets" onPress={() => navigation.navigate('Outlets')} variant="secondary" /><PrimaryButton title="Sales history" onPress={() => navigation.navigate('History')} variant="secondary" /><PrimaryButton title="Pending sales" onPress={() => navigation.navigate('PendingSales')} variant="secondary" /><PrimaryButton title="Route summary" onPress={() => navigation.navigate('RouteMap')} variant="secondary" /></View></ScrollView></SafeAreaView>;
+  const quickActions = [
+    { title: 'My performance', icon: 'trending-up', target: 'Performance' },
+    { title: 'Assigned outlets', icon: 'storefront-outline', target: 'Outlets' },
+    { title: 'Sales history', icon: 'time-outline', target: 'History' },
+    { title: 'Pending sales', icon: 'cloud-upload-outline', target: 'PendingSales' },
+    { title: 'Route summary', icon: 'map-outline', target: 'RouteMap' },
+  ];
+  return <SafeAreaView style={styles.container}><ScrollView contentContainerStyle={styles.content}><Text style={styles.eyebrow}>FIELD OPERATIONS</Text><Text style={styles.title}>Good morning</Text><Text style={styles.subtitle}>Keep your route moving and your records current.</Text><Card style={styles.syncCard}><View style={styles.cardHeading}><Ionicons name="checkmark-circle" size={typography.h3} color={colors.success} /><Text style={styles.cardLabel}>Sync status</Text></View><SyncStatusBadge status="synced" /></Card>{targetProgress && <Card style={styles.targetCard}><View style={styles.cardHeading}><Ionicons name="flag-outline" size={typography.h3} color={colors.primary} /><Text style={styles.sectionTitle}>Monthly sales target</Text></View><Text style={styles.targetValue}>KES {targetProgress.current.toLocaleString()} / KES {targetProgress.target.toLocaleString()}</Text><View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${targetPercent}%` }]} /></View><Text style={styles.statLabel}>{targetProgress.target ? `${targetPercent}% of ${targetProgress.month} target` : `No target set for ${targetProgress.month}`}</Text></Card>}<Card style={styles.glanceCard}><Text style={styles.sectionTitle}>Today at a glance</Text><View style={styles.stats}><View style={styles.stat}><Ionicons name="location-outline" size={typography.body} color={colors.primary} /><Text style={styles.statValue}>0 / 0</Text><Text style={styles.statLabel}>Outlets visited</Text></View><View style={styles.stat}><Ionicons name="receipt-outline" size={typography.body} color={colors.primary} /><Text style={styles.statValue}>0</Text><Text style={styles.statLabel}>Sales logged</Text></View><View style={styles.stat}><Ionicons name="cash-outline" size={typography.body} color={colors.primary} /><Text style={styles.statValue}>KES 0</Text><Text style={styles.statLabel}>Total today</Text></View></View></Card><Card style={[styles.shiftCard, tracking && styles.activeShiftCard]}><View style={styles.shiftHeading}><View style={styles.shiftIcon}><Ionicons name={tracking ? 'pause' : 'play'} size={typography.h3} color={tracking ? colors.error : colors.white} /></View><View style={styles.shiftCopy}><Text style={styles.sectionTitle}>{tracking ? 'Shift in progress' : 'Ready for your shift?'}</Text><Text style={styles.status}>{tracking ? 'Route tracking is active' : 'Start tracking when you leave your base'}</Text></View></View>{shiftError ? <Text style={styles.shiftError}>{shiftError}</Text> : null}<PrimaryButton title={tracking ? 'End shift' : 'Start shift'} icon={<Ionicons name={tracking ? 'stop' : 'play'} size={typography.small} color={colors.white} />} loading={updatingShift} onPress={toggleTracking} variant={tracking ? 'danger' : 'primary'} /></Card><Text style={styles.sectionTitle}>Quick access</Text><View style={styles.actions}>{quickActions.map((action) => <Pressable key={action.target} style={({ pressed }) => [styles.actionPressable, pressed && styles.actionPressed]} onPress={() => navigation.navigate(action.target)}><Card style={styles.actionCard}><View style={styles.actionIcon}><Ionicons name={action.icon} size={typography.h3} color={colors.primary} /></View><Text style={styles.actionLabel}>{action.title}</Text></Card></Pressable>)}</View></ScrollView></SafeAreaView>;
 }
-const styles = StyleSheet.create({ container: { flex: 1, backgroundColor: colors.background }, content: { padding: spacing.lg, gap: spacing.md }, eyebrow: { color: colors.primary, fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }, title: { color: colors.ink, fontSize: typography.title, fontWeight: '800' }, subtitle: { color: colors.muted, fontSize: typography.body, lineHeight: 22, marginTop: -spacing.sm }, syncCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, cardLabel: { color: colors.ink, fontSize: typography.h3, fontWeight: '800' }, sectionTitle: { color: colors.ink, fontSize: typography.h3, fontWeight: '800', marginBottom: spacing.md }, stats: { flexDirection: 'row', justifyContent: 'space-between' }, statValue: { color: colors.primary, fontSize: 20, fontWeight: '800' }, statLabel: { color: colors.muted, fontSize: 11, marginTop: 4 }, targetValue: { color: colors.primary, fontSize: 20, fontWeight: '800' }, progressTrack: { height: 8, backgroundColor: colors.border, borderRadius: 999, overflow: 'hidden' }, progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 999 }, shiftCard: { gap: spacing.sm }, status: { color: colors.muted, fontSize: typography.small, marginTop: -spacing.sm, marginBottom: spacing.xs }, shiftError: { color: colors.error, fontSize: typography.small, lineHeight: 19 }, actions: { gap: spacing.sm } });
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, gap: spacing.md },
+  eyebrow: { color: colors.primary, fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
+  title: { color: colors.ink, fontSize: typography.title, fontWeight: '800' },
+  subtitle: { color: colors.muted, fontSize: typography.body, lineHeight: 22, marginTop: -spacing.sm },
+  syncCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm, backgroundColor: colors.successSoft, shadowOpacity: 0, elevation: 0 },
+  cardHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  cardLabel: { color: colors.ink, fontSize: typography.h3, fontWeight: '800' },
+  targetCard: { borderLeftWidth: 4, borderLeftColor: colors.primary },
+  sectionTitle: { color: colors.ink, fontSize: typography.h3, fontWeight: '800', marginBottom: spacing.md },
+  glanceCard: { paddingBottom: spacing.lg },
+  stats: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
+  stat: { flex: 1, alignItems: 'center', gap: spacing.xs },
+  statValue: { color: colors.primary, fontSize: 20, fontWeight: '800' },
+  statLabel: { color: colors.muted, fontSize: 11, marginTop: 1, textAlign: 'center' },
+  targetValue: { color: colors.primary, fontSize: 20, fontWeight: '800' },
+  progressTrack: { height: spacing.xs, marginTop: spacing.md, backgroundColor: colors.border, borderRadius: radius.pill, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: radius.pill },
+  shiftCard: { gap: spacing.md, padding: spacing.lg, borderTopWidth: 4, borderTopColor: colors.primary, shadowColor: colors.primaryDark, shadowOpacity: 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: 9 }, elevation: 6 },
+  activeShiftCard: { borderTopColor: colors.error, shadowColor: colors.error },
+  shiftHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  shiftIcon: { width: spacing.xl, height: spacing.xl, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, borderRadius: radius.pill },
+  shiftCopy: { flex: 1 },
+  status: { color: colors.muted, fontSize: typography.small, marginTop: -spacing.sm },
+  shiftError: { color: colors.error, fontSize: typography.small, lineHeight: 19 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm },
+  actionPressable: { width: '48.5%' },
+  actionPressed: { opacity: 0.78, transform: [{ scale: 0.98 }] },
+  actionCard: { minHeight: spacing.xl * 3, alignItems: 'center', justifyContent: 'center', padding: spacing.md, shadowOpacity: 0.05, elevation: 2 },
+  actionIcon: { width: spacing.xl, height: spacing.xl, marginBottom: spacing.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft, borderRadius: radius.pill },
+  actionLabel: { color: colors.ink, fontSize: typography.small, fontWeight: '800', textAlign: 'center' },
+});
