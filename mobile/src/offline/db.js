@@ -48,6 +48,10 @@ export function initDb() {
       payload TEXT NOT NULL,
       cachedAt TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
+    );
   `);
   return db;
 }

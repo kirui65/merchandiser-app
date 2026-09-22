@@ -2,9 +2,9 @@ import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
-export default function SyncStatusBadge({ status = 'pending' }) {
-	const label = status === 'synced' ? 'Synced' : status === 'failed' ? 'Needs attention' : 'Pending sync';
-	return <Text style={[styles.badge, status === 'synced' ? styles.synced : status === 'failed' ? styles.failed : styles.pending]}>{label}</Text>;
+export default function SyncStatusBadge({ status = 'pending', label }) {
+	const defaultLabel = status === 'synced' ? 'Synced' : status === 'failed' ? 'Needs attention' : 'Pending sync';
+	return <Text style={[styles.badge, status === 'synced' ? styles.synced : status === 'failed' ? styles.failed : styles.pending]}>{label || defaultLabel}</Text>;
 }
 
 const styles = StyleSheet.create({

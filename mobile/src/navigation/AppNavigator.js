@@ -13,21 +13,23 @@ import PendingSalesScreen from '../screens/PendingSalesScreen';
 import PerformanceScreen from '../screens/PerformanceScreen';
 import ShiftHistoryScreen from '../screens/ShiftHistoryScreen';
 import { colors } from '../theme/tokens';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
 	const { user, loading, signOut } = useAuth();
+	const { t } = useLanguage();
 	if (loading) return null;
 	return <NavigationContainer><Stack.Navigator screenOptions={{ headerStyle: styles.header, headerTintColor: colors.ink, headerTitleStyle: styles.headerTitle, contentStyle: { backgroundColor: colors.background } }}>{user ? <>
-		<Stack.Screen name="Home" component={HomeScreen} options={{ headerRight: () => <Pressable onPress={signOut}><Text style={styles.signOut}>Sign out</Text></Pressable> }} />
-		<Stack.Screen name="Outlets" component={OutletListScreen} />
-		<Stack.Screen name="SaleEntry" component={SaleEntryScreen} options={{ title: 'Log sale' }} />
-		<Stack.Screen name="History" component={HistoryScreen} />
-		<Stack.Screen name="RouteMap" component={RouteMapScreen} options={{ title: 'Today\'s route' }} />
-		<Stack.Screen name="PendingSales" component={PendingSalesScreen} options={{ title: 'Pending sales' }} />
-		<Stack.Screen name="Performance" component={PerformanceScreen} options={{ title: 'My performance' }} />
-		<Stack.Screen name="ShiftHistory" component={ShiftHistoryScreen} options={{ title: 'Shift history' }} />
+		<Stack.Screen name="Home" component={HomeScreen} options={{ headerRight: () => <Pressable onPress={signOut}><Text style={styles.signOut}>{t('signOut')}</Text></Pressable> }} />
+		<Stack.Screen name="Outlets" component={OutletListScreen} options={{ title: t('assignedOutlets') }} />
+		<Stack.Screen name="SaleEntry" component={SaleEntryScreen} options={{ title: t('logSale') }} />
+		<Stack.Screen name="History" component={HistoryScreen} options={{ title: t('salesHistory') }} />
+		<Stack.Screen name="RouteMap" component={RouteMapScreen} options={{ title: t('routeMapTitle') }} />
+		<Stack.Screen name="PendingSales" component={PendingSalesScreen} options={{ title: t('pendingSalesTitle') }} />
+		<Stack.Screen name="Performance" component={PerformanceScreen} options={{ title: t('performanceTitle') }} />
+		<Stack.Screen name="ShiftHistory" component={ShiftHistoryScreen} options={{ title: t('shiftHistoryTitle') }} />
 	</> : <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />}</Stack.Navigator></NavigationContainer>;
 }
 
