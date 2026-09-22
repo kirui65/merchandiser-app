@@ -41,6 +41,11 @@ service cloud.firestore {
       allow write: if isManager();
     }
 
+    match /territories/{territoryId} {
+      allow read: if isSignedIn();
+      allow write: if isManager();
+    }
+
     match /sales/{saleId} {
       allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.repId == request.auth.uid;

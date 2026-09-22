@@ -11,6 +11,7 @@ const OutletSchema = z.object({
   location: GeoPointSchema,
   address: z.string().min(1),
   assignedRepId: z.string().optional(),
+  territoryId: z.string().min(1).optional(),
   active: z.boolean().default(true),
 });
 
@@ -19,6 +20,7 @@ const OutletUpdateSchema = z.object({
   location: GeoPointSchema,
   address: z.string().min(1),
   assignedRepId: z.string().optional(),
+  territoryId: z.string().min(1).optional(),
 });
 
 const OutletStatusSchema = z.object({

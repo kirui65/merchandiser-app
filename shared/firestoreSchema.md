@@ -27,7 +27,17 @@ sync whenever a model changes.
   location: GeoPoint,
   address: string,
   assignedRepId: string,
+  territoryId?: string,
   active: boolean
+}
+```
+
+## `territories`
+```
+{
+  id: string,
+  name: string,
+  description?: string
 }
 ```
 
