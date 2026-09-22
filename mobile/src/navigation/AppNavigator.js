@@ -14,14 +14,16 @@ import PerformanceScreen from '../screens/PerformanceScreen';
 import ShiftHistoryScreen from '../screens/ShiftHistoryScreen';
 import { colors } from '../theme/tokens';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useTheme } from '../theme/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
 	const { user, loading, signOut } = useAuth();
 	const { t } = useLanguage();
+	const { colors: activeColors } = useTheme();
 	if (loading) return null;
-	return <NavigationContainer><Stack.Navigator screenOptions={{ headerStyle: styles.header, headerTintColor: colors.ink, headerTitleStyle: styles.headerTitle, contentStyle: { backgroundColor: colors.background } }}>{user ? <>
+	return <NavigationContainer><Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: activeColors.surface }, headerTintColor: activeColors.ink, headerTitleStyle: styles.headerTitle, contentStyle: { backgroundColor: activeColors.background } }}>{user ? <>
 		<Stack.Screen name="Home" component={HomeScreen} options={{ headerRight: () => <Pressable onPress={signOut}><Text style={styles.signOut}>{t('signOut')}</Text></Pressable> }} />
 		<Stack.Screen name="Outlets" component={OutletListScreen} options={{ title: t('assignedOutlets') }} />
 		<Stack.Screen name="SaleEntry" component={SaleEntryScreen} options={{ title: t('logSale') }} />
@@ -33,4 +35,4 @@ export default function AppNavigator() {
 	</> : <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />}</Stack.Navigator></NavigationContainer>;
 }
 
-const styles = StyleSheet.create({ header: { backgroundColor: colors.surface }, headerTitle: { fontWeight: '800' }, signOut: { color: colors.primary, fontWeight: '800', padding: 8 } });
+const styles = StyleSheet.create({ headerTitle: { fontWeight: '800' }, signOut: { color: colors.primary, fontWeight: '800', padding: 8 } });
