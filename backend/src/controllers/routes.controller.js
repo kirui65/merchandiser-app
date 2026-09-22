@@ -1,4 +1,4 @@
-const { getDoc, setDoc } = require('../services/firestore.service');
+const { getDoc, listDocs, setDoc } = require('../services/firestore.service');
 const { findVisitedOutletIds, DEFAULT_GEOFENCE_RADIUS_METERS } = require('../services/geo.service');
 const { ApiError } = require('../middleware/errorHandler');
 const env = require('../config/env');
@@ -12,6 +12,20 @@ async function getRoute(req, res, next) {
 		const repId = req.user.role === 'manager' ? (req.query.repId || req.user.uid) : req.user.uid;
 		const route = await getDoc('routes', `${repId}_${dateFromRequest(req)}`);
 		return res.json({ route: route || { id: `${repId}_${dateFromRequest(req)}`, repId, date: dateFromRequest(req), pings: [], plannedOutletIds: [], visitedOutletIds: [] } });
+	} catch (err) {
+		return next(err);
+	}
+}
+
+async function getRouteHistory(req, res, next) {
+	try {
+		const repId = req.user.role === 'manager' ? (req.query.repId || req.user.uid) : req.user.uid;
+		const routes = await listDocs('routes', {
+			where: [['repId', '==', repId]],
+			orderBy: { field: 'date', direction: 'desc' },
+			limit: Math.min(Number(req.query.limit) || 30, 90),
+		});
+		return res.json({ routes });
 	} catch (err) {
 		return next(err);
 	}
@@ -56,4 +70,4 @@ async function setPlannedOutlets(req, res, next) {
 	}
 }
 
-module.exports = { getRoute, appendPings, setPlannedOutlets };
+module.exports = { getRoute, getRouteHistory, appendPings, setPlannedOutlets };

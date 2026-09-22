@@ -10,3 +10,8 @@ export async function getRoute(date) {
   const response = await client.get('/routes', { params: { date } });
   return response.data.route;
 }
+
+export async function getRouteHistory() {
+  const response = await client.get('/routes/history');
+  return response.data.routes;
+}

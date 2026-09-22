@@ -18,6 +18,7 @@ export default function HomeScreen({ navigation }) {
     { title: 'My performance', icon: 'trending-up', target: 'Performance' },
     { title: 'Assigned outlets', icon: 'storefront-outline', target: 'Outlets' },
     { title: 'Sales history', icon: 'time-outline', target: 'History' },
+    { title: 'Shift history', icon: 'trail-sign-outline', target: 'ShiftHistory' },
     { title: 'Pending sales', icon: 'cloud-upload-outline', target: 'PendingSales' },
     { title: 'Route summary', icon: 'map-outline', target: 'RouteMap' },
   ];
