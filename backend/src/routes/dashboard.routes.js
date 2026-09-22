@@ -4,8 +4,8 @@ const { getTotals, getOverdueOutlets } = require('../controllers/dashboard.contr
 
 const router = express.Router();
 
-router.use(requireAuth, requireManager);
+router.use(requireAuth);
 router.get('/totals', getTotals);
-router.get('/overdue-outlets', getOverdueOutlets);
+router.get('/overdue-outlets', requireManager, getOverdueOutlets);
 
 module.exports = router;

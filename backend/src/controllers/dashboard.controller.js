@@ -4,7 +4,8 @@ const { ApiError } = require('../middleware/errorHandler');
 
 /**
  * GET /api/dashboard/totals?from=ISO&to=ISO
- * Manager-only. Aggregates sales by rep / outlet / product / day in-memory.
+ * Managers receive the full aggregate. Reps receive only their own current
+ * monthly standing, so the mobile leaderboard never exposes colleagues' sales.
  * Fine at Phase-1 scale (single-tenant, modest daily sale volume); if this
  * becomes a bottleneck, precompute daily rollup docs on write instead of
  * aggregating on read.
@@ -12,8 +13,16 @@ const { ApiError } = require('../middleware/errorHandler');
 async function getTotals(req, res, next) {
   try {
     const where = [];
-    if (req.query.from) where.push(['timestamp', '>=', req.query.from]);
-    if (req.query.to) where.push(['timestamp', '<=', req.query.to]);
+    const isRep = req.user.role !== 'manager';
+    const monthStart = new Date();
+    monthStart.setUTCDate(1);
+    monthStart.setUTCHours(0, 0, 0, 0);
+    if (isRep) {
+      where.push(['timestamp', '>=', monthStart.toISOString()]);
+    } else {
+      if (req.query.from) where.push(['timestamp', '>=', req.query.from]);
+      if (req.query.to) where.push(['timestamp', '<=', req.query.to]);
+    }
 
     const sales = await listDocs('sales', { where });
 
@@ -32,6 +41,21 @@ async function getTotals(req, res, next) {
 
       const day = String(sale.timestamp).slice(0, 10);
       byDay[day] = (byDay[day] || 0) + sale.total;
+    }
+
+    if (isRep) {
+      const reps = await listDocs('reps');
+      const standings = reps
+        .filter((rep) => rep.role === 'rep' && rep.active !== false)
+        .map((rep) => ({ repId: rep.id, total: Number(byRep[rep.id] || 0) }))
+        .sort((a, b) => b.total - a.total || a.repId.localeCompare(b.repId));
+      const rank = Math.max(1, standings.findIndex((entry) => entry.repId === req.user.uid) + 1);
+      return res.json({
+        month: monthStart.toISOString().slice(0, 7),
+        rank,
+        total: Number(byRep[req.user.uid] || 0),
+        participantCount: standings.length,
+      });
     }
 
     return res.json({
