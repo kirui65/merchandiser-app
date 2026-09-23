@@ -2,13 +2,12 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-// Set EXPO_PUBLIC_API_URL in mobile/.env (see .env.example) — e.g.
-// https://your-backend.onrender.com/api for a deployed Render backend,
-// or http://<your-lan-ip>:4000/api when running the backend locally
-// (localhost won't resolve from a physical device).
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000/api';
+// Set EXPO_PUBLIC_API_URL in mobile/.env (see .env.example). The deployed
+// backend is the safe fallback, so release builds never point at localhost.
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://brandsphere-backend.onrender.com/api';
 
-const client = axios.create({ baseURL: BASE_URL, timeout: 15000 });
+// Free Render instances can take around a minute to wake after being idle.
+const client = axios.create({ baseURL: BASE_URL, timeout: 75000 });
 
 client.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('authToken');

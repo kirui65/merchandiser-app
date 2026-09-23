@@ -40,7 +40,7 @@ export default function LoginScreen() {
     } catch (err) {
       setError(
         err?.response?.data?.error?.message
-          || (err?.response ? 'Login failed. Check your credentials.' : 'Cannot reach the server. Connect to the same Wi-Fi as the backend.')
+          || (err?.response ? 'Login failed. Check your credentials.' : 'Cannot reach the server. It may be waking up; wait a minute and try again.')
       );
     } finally {
       setSubmitting(false);
