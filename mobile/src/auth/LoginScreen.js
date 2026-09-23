@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   KeyboardAvoidingView,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -57,12 +58,8 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.brandMark}>
-          <View style={styles.brandMarkInner}>
-            <Text style={styles.brandMarkText}>M</Text>
-          </View>
-        </View>
-        <Text style={styles.title}>Brandsphere Marketing Agency</Text>
+        <Image source={require('../../assets/brandsphere-wordmark.jpg')} style={styles.brandLogo} resizeMode="contain" accessibilityLabel="Brandsphere Marketing Agency" />
+        <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.subtitle}>Sign in to start your shift</Text>
 
         <View style={styles.card}>
@@ -147,32 +144,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.xl,
   },
-  brandMark: {
+  brandLogo: {
     alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 72,
-    height: 72,
+    width: '100%',
+    maxWidth: 330,
+    height: 116,
     marginBottom: theme.spacing.md,
-    borderRadius: 24,
-    backgroundColor: theme.colors.primary,
-    transform: [{ rotate: '-6deg' }],
-    shadowColor: theme.colors.primaryDark,
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
   },
-  brandMarkInner: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 50,
-    height: 50,
-    borderWidth: 2,
-    borderColor: theme.colors.primarySoft,
-    borderRadius: 17,
-  },
-  brandMarkText: { color: theme.colors.white, fontSize: 30, fontWeight: '800', transform: [{ rotate: '6deg' }] },
   title: { color: theme.colors.ink, fontSize: theme.typography.title, fontWeight: '800', letterSpacing: 0.2, textAlign: 'center' },
   subtitle: { color: theme.colors.muted, fontSize: theme.typography.subtitle, marginTop: theme.spacing.xs, marginBottom: theme.spacing.xl, textAlign: 'center' },
   card: {

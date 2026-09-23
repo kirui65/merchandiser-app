@@ -3,6 +3,7 @@
     "name": "Brandsphere Marketing Agency",
     "slug": "merchandiser-app",
     "version": "1.0.0",
+    "icon": "./assets/brandsphere-app-icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
@@ -24,6 +25,10 @@
       }
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brandsphere-adaptive-icon.png",
+        "backgroundColor": "#F8F5EC"
+      },
       "permissions": [
         "CAMERA",
         "ACCESS_FINE_LOCATION",

@@ -27,7 +27,7 @@ export default function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-story">
-        <div className="login-brand"><span className="brand-mark">●</span> Brandsphere</div>
+        <div className="login-brand"><img src="/brandsphere-wordmark.png" alt="Brandsphere Marketing Agency" /></div>
         <div className="login-hero"><span className="login-kicker">Manager workspace</span><h1>See every field decision clearly.</h1><p>Monitor sales performance, route coverage, collections, and the team behind the work—all in one focused workspace.</p></div>
         <div className="login-proof"><span><strong>Field-first</strong>Route & outlet intelligence</span><span><strong>Money-aware</strong>M-Pesa reconciliation</span><span><strong>Accountable</strong>Team audit history</span></div>
       </section>
