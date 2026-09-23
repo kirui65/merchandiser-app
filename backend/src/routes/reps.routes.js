@@ -4,6 +4,7 @@ const { requireAuth, requireManager } = require('../middleware/auth.middleware')
 const { validateBody } = require('../middleware/validate.middleware');
 const { RepCreateSchema, RepUpdateSchema } = require('../models/rep.model');
 const { createDoc, listDocs, getDoc, updateDoc } = require('../services/firestore.service');
+const { getFirestore, admin } = require('../config/firebase');
 const { ApiError } = require('../middleware/errorHandler');
 const { recordAudit } = require('../services/audit.service');
 
@@ -11,14 +12,65 @@ const router = express.Router();
 
 router.use(requireAuth);
 
+function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+function emailIndexId(email) {
+  return Buffer.from(email).toString('base64url');
+}
+
+async function assertEmailIsAvailable(email, excludeRepId = null) {
+  // Older documents predate the email index, so include them in the check.
+  const reps = await listDocs('reps');
+  const duplicate = reps.find((rep) => rep.id !== excludeRepId && normalizeEmail(rep.email || '') === email);
+  if (duplicate) throw new ApiError(409, 'An account already uses this email address');
+}
+
+async function createRepWithUniqueEmail(data) {
+  const db = getFirestore();
+  const repRef = db.collection('reps').doc();
+  const emailRef = db.collection('repEmailIndex').doc(emailIndexId(data.email));
+
+  await db.runTransaction(async (transaction) => {
+    const emailSnap = await transaction.get(emailRef);
+    if (emailSnap.exists) throw new ApiError(409, 'An account already uses this email address');
+    transaction.create(repRef, { ...data, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+    transaction.create(emailRef, { repId: repRef.id, email: data.email, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+  });
+
+  const snap = await repRef.get();
+  return { id: snap.id, ...snap.data() };
+}
+
+async function updateRepWithUniqueEmail(repId, data) {
+  const db = getFirestore();
+  const repRef = db.collection('reps').doc(repId);
+  const emailRef = db.collection('repEmailIndex').doc(emailIndexId(data.email));
+
+  await db.runTransaction(async (transaction) => {
+    const emailSnap = await transaction.get(emailRef);
+    if (emailSnap.exists && emailSnap.data().repId !== repId) {
+      throw new ApiError(409, 'An account already uses this email address');
+    }
+    if (!emailSnap.exists) transaction.create(emailRef, { repId, email: data.email, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+    transaction.update(repRef, data);
+  });
+
+  return getDoc('reps', repId);
+}
+
 // Only managers can create/list reps — this is the rep roster, not sales data.
 router.post('/', requireManager, validateBody(RepCreateSchema), async (req, res, next) => {
   try {
     const { password, ...rest } = req.body;
+    const email = normalizeEmail(rest.email);
+    await assertEmailIsAvailable(email);
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const rep = await createDoc('reps', {
+    const rep = await createRepWithUniqueEmail({
       ...rest,
+      email,
       passwordHash,
       active: true,
     });
@@ -45,7 +97,9 @@ router.put('/:id', requireManager, validateBody(RepUpdateSchema), async (req, re
   try {
     const existing = await getDoc('reps', req.params.id);
     if (!existing) throw new ApiError(404, 'Rep not found');
-    const rep = await updateDoc('reps', req.params.id, req.body);
+    const email = normalizeEmail(req.body.email);
+    await assertEmailIsAvailable(email, req.params.id);
+    const rep = await updateRepWithUniqueEmail(req.params.id, { ...req.body, email });
     await recordAudit(req, { action: 'edited', entityType: 'rep', entity: rep, changedFields: Object.keys(req.body) });
     const { passwordHash: _omit, ...safeRep } = rep;
     return res.json({ rep: safeRep });

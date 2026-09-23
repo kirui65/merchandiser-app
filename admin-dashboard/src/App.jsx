@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import LoginPage from './auth/LoginPage';
@@ -10,6 +10,7 @@ import ReconciliationPage from './pages/ReconciliationPage.jsx';
 import ProductsPage from './pages/ProductsPage.jsx';
 import AuditLogPage from './pages/AuditLogPage.jsx';
 import TerritoriesPage from './pages/TerritoriesPage.jsx';
+import PasswordChangeDialog from './components/PasswordChangeDialog.jsx';
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -19,7 +20,8 @@ function RequireAuth({ children }) {
 function Shell({ children }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  return <div className="app-shell"><header className="topbar"><NavLink className="brand" to="/"><span className="brand-mark">●</span><span className="brand-copy">Brandsphere<small>Marketing agency</small></span></NavLink><nav className="nav" aria-label="Dashboard"><NavLink to="/" end>Overview</NavLink><NavLink to="/routes">Routes</NavLink><NavLink to="/outlets">Outlets</NavLink><NavLink to="/territories">Territories</NavLink><NavLink to="/reps">Team</NavLink><NavLink to="/products">Products</NavLink><NavLink to="/reconciliation">Reconciliation</NavLink><NavLink to="/audit-log">Audit log</NavLink></nav><div className="account-actions"><span className="account-label"><strong>{user?.name || 'Manager'}</strong>Manager account</span><button className="ui-button ui-button-secondary" onClick={() => { signOut(); navigate('/login'); }}>Sign out</button></div></header><main className="shell-content">{children}</main></div>;
+  const [changingPassword, setChangingPassword] = useState(false);
+  return <div className="app-shell"><header className="topbar"><NavLink className="brand" to="/"><span className="brand-mark">●</span><span className="brand-copy">Brandsphere<small>Marketing agency</small></span></NavLink><nav className="nav" aria-label="Dashboard"><NavLink to="/" end>Overview</NavLink><NavLink to="/routes">Routes</NavLink><NavLink to="/outlets">Outlets</NavLink><NavLink to="/territories">Territories</NavLink><NavLink to="/reps">Team</NavLink><NavLink to="/products">Products</NavLink><NavLink to="/reconciliation">Reconciliation</NavLink><NavLink to="/audit-log">Audit log</NavLink></nav><div className="account-actions"><span className="account-label"><strong>{user?.name || 'Manager'}</strong>Manager account</span><button className="ui-button ui-button-secondary" onClick={() => setChangingPassword(true)}>Change password</button><button className="ui-button ui-button-secondary" onClick={() => { signOut(); navigate('/login'); }}>Sign out</button></div></header><main className="shell-content">{children}</main>{changingPassword && <PasswordChangeDialog onClose={() => setChangingPassword(false)} />}</div>;
 }
 
 export default function App() {
