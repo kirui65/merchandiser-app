@@ -1,5 +1,6 @@
 import { MapContainer, Marker, Polyline, Popup, TileLayer, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import { colors } from '../theme/tokens';
 
 function pointForLocation(location) {
   if (!location) return null;
@@ -17,8 +18,8 @@ export default function MapView({ pings = [], outlets = [], visitedOutletIds = [
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {routePoints.length > 1 && <Polyline positions={routePoints} pathOptions={{ color: '#d35400', weight: 4 }} />}
-      {pings.length > 0 && <CircleMarker center={routePoints[routePoints.length - 1]} radius={8} pathOptions={{ color: '#1f7a8c' }}><Popup>Latest ping</Popup></CircleMarker>}
+      {routePoints.length > 1 && <Polyline positions={routePoints} pathOptions={{ color: colors.accent, weight: 4 }} />}
+      {pings.length > 0 && <CircleMarker center={routePoints[routePoints.length - 1]} radius={8} pathOptions={{ color: colors.primary, fillColor: colors.primary, fillOpacity: 1 }}><Popup>Latest ping</Popup></CircleMarker>}
       {outlets.map((outlet) => {
         const position = pointForLocation(outlet.location);
         if (!position) return null;
