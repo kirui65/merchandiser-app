@@ -22,6 +22,17 @@ const app = express();
 app.use(cors({ origin: env.allowedOrigins }));
 app.use(express.json({ limit: '5mb' })); // generous-ish for base64 photo payloads if used before object storage
 
+// Makes the deployed service URL useful when opened in a browser. API clients
+// should use the routes under /api; hosting health checks can use /health.
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'Brandsphere API',
+    health: '/health',
+    api: '/api',
+  });
+});
+
 app.get('/health', (req, res) => res.json({ status: 'ok', env: env.nodeEnv }));
 
 app.use('/api/auth', authRoutes);
