@@ -36,4 +36,16 @@ export const darkColors = {
 
 export const spacing = { xs: 6, sm: 10, md: 16, lg: 24, xl: 32 };
 export const radius = { sm: 8, md: 12, lg: 18, pill: 999 };
-export const typography = { title: 30, h2: 22, h3: 17, body: 16, small: 13, button: 15 };
+export const typography = {
+  fontFamily: 'Manrope_400Regular',
+  fontFamilyMedium: 'Manrope_500Medium',
+  fontFamilySemiBold: 'Manrope_600SemiBold',
+  fontFamilyBold: 'Manrope_700Bold',
+  fontFamilyExtraBold: 'Manrope_800ExtraBold',
+  title: 30,
+  h2: 22,
+  h3: 17,
+  body: 16,
+  small: 13,
+  button: 15,
+};

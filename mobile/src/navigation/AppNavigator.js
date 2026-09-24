@@ -12,7 +12,7 @@ import RouteMapScreen from '../screens/RouteMapScreen';
 import PendingSalesScreen from '../screens/PendingSalesScreen';
 import PerformanceScreen from '../screens/PerformanceScreen';
 import ShiftHistoryScreen from '../screens/ShiftHistoryScreen';
-import { colors } from '../theme/tokens';
+import { colors, typography } from '../theme/tokens';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -35,4 +35,4 @@ export default function AppNavigator() {
 	</> : <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />}</Stack.Navigator></NavigationContainer>;
 }
 
-const styles = StyleSheet.create({ headerTitle: { fontWeight: '800' }, signOut: { color: colors.primary, fontWeight: '800', padding: 8 } });
+const styles = StyleSheet.create({ headerTitle: { fontFamily: typography.fontFamilyExtraBold }, signOut: { color: colors.primary, fontFamily: typography.fontFamilyExtraBold, padding: 8 } });
