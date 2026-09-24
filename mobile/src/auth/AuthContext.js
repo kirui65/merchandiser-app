@@ -7,6 +7,7 @@ import { getPendingSales, markFailed, markSynced } from '../offline/salesQueue';
 import { postSale } from '../api/sales';
 import { createSyncManager } from '../offline/syncManager';
 import { subscribeToConnectivity, isCurrentlyOnline } from '../utils/netInfo';
+import { authenticateBiometric, isBiometricUnlockEnabled } from './biometric';
 
 const AuthContext = createContext(null);
 
@@ -39,10 +40,14 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   useEffect(() => {
-    getStoredUser().then((u) => {
-      setUser(u);
+    (async () => {
+      const storedUser = await getStoredUser();
+      if (storedUser && await isBiometricUnlockEnabled()) {
+        const result = await authenticateBiometric();
+        setUser(result.success ? storedUser : null);
+      } else setUser(storedUser);
       setLoading(false);
-    });
+    })().catch(() => setLoading(false));
   }, []);
 
   async function signIn(email, password) {

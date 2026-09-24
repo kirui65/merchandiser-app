@@ -55,7 +55,13 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Brandsphere to use Face ID to unlock your account."
+        }
+      ]
     ],
     "extra": {
       "eas": {
