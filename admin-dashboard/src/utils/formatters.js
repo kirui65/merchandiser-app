@@ -13,8 +13,12 @@ export function formatKes(value) {
   return currency.format(Number(value) || 0);
 }
 
-export function formatNumber(value) {
-  return new Intl.NumberFormat('en-KE').format(Number(value) || 0);
+export function formatNumber(value, options) {
+  return new Intl.NumberFormat('en-KE', options).format(Number(value) || 0);
+}
+
+export function formatDate(value) {
+  return new Intl.DateTimeFormat('en-KE', { dateStyle: 'medium' }).format(new Date(value));
 }
 
 export function formatDateTime(value) {
