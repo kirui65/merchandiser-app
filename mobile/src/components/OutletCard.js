@@ -10,5 +10,5 @@ export default function OutletCard({ outlet, onPress }) {
 
 const styles = StyleSheet.create({
 	card: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-	copy: { flex: 1, marginRight: spacing.md }, titleRow: { flexDirection: 'row', alignItems: 'center' }, statusDot: { width: 9, height: 9, marginRight: spacing.sm, borderRadius: 5, backgroundColor: colors.warning }, name: { color: colors.ink, fontSize: typography.h3, fontWeight: '800', marginBottom: 4 }, address: { color: colors.muted, fontSize: typography.small }, status: { marginTop: spacing.xs, color: colors.warning, fontSize: 12, fontWeight: '700' },
+	copy: { flex: 1, marginRight: spacing.md }, titleRow: { flexDirection: 'row', alignItems: 'center' }, statusDot: { width: 9, height: 9, marginRight: spacing.sm, borderRadius: 5, backgroundColor: colors.warning }, name: { color: colors.ink, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.h3, fontWeight: '800', marginBottom: 4 }, address: { color: colors.muted, fontFamily: typography.fontFamily, fontSize: typography.small }, status: { marginTop: spacing.xs, color: colors.warning, fontFamily: typography.fontFamilyBold, fontSize: 12, fontWeight: '700' },
 });
