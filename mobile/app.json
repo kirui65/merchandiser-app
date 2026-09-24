@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#FCF6F1"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -27,7 +27,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/brandsphere-adaptive-icon.png",
-        "backgroundColor": "#F8F5EC"
+        "backgroundColor": "#913B2F"
       },
       "permissions": [
         "CAMERA",
