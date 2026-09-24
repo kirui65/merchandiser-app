@@ -12,10 +12,13 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from './AuthContext';
-import { theme } from '../theme';
+import { radius, spacing, typography } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -77,7 +80,7 @@ export default function LoginScreen() {
                 onFocus={() => setFocusedField('email')}
                 onBlur={() => setFocusedField(null)}
                 placeholder="you@company.com"
-                placeholderTextColor={theme.colors.muted}
+                placeholderTextColor={colors.muted}
               />
             </View>
           </View>
@@ -94,7 +97,7 @@ export default function LoginScreen() {
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 placeholder="Enter your password"
-                placeholderTextColor={theme.colors.muted}
+                placeholderTextColor={colors.muted}
               />
               <Pressable
                 accessibilityRole="button"
@@ -136,48 +139,48 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
+const createStyles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   brandLogo: {
     alignSelf: 'center',
     width: '100%',
     maxWidth: 330,
     height: 116,
-    marginBottom: theme.spacing.md,
+    marginBottom: spacing.md,
   },
-  title: { color: theme.colors.ink, fontSize: theme.typography.title, fontWeight: '800', letterSpacing: 0.2, textAlign: 'center' },
-  subtitle: { color: theme.colors.muted, fontSize: theme.typography.subtitle, marginTop: theme.spacing.xs, marginBottom: theme.spacing.xl, textAlign: 'center' },
+  title: { color: colors.ink, fontSize: typography.title, fontWeight: '800', letterSpacing: 0.2, textAlign: 'center' },
+  subtitle: { color: colors.muted, fontSize: 15, marginTop: spacing.xs, marginBottom: spacing.xl, textAlign: 'center' },
   card: {
     width: '100%',
-    padding: theme.spacing.lg,
-    borderRadius: theme.radii.lg,
-    backgroundColor: theme.colors.surface,
-    shadowColor: theme.colors.primaryDark,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    shadowColor: colors.primaryDark,
     shadowOpacity: 0.08,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 10 },
     elevation: 4,
   },
-  fieldGroup: { marginBottom: theme.spacing.md },
-  label: { color: theme.colors.ink, fontSize: theme.typography.label, fontWeight: '700', marginBottom: theme.spacing.xs },
-  inputShell: { flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingHorizontal: theme.spacing.md, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.radii.md, backgroundColor: theme.colors.surface },
-  inputShellFocused: { borderColor: theme.colors.primary, backgroundColor: theme.colors.white },
-  inputIcon: { width: 24, color: theme.colors.primary, fontSize: 18, textAlign: 'left' },
-  input: { flex: 1, color: theme.colors.ink, fontSize: theme.typography.body, paddingVertical: 0 },
-  visibilityButton: { alignItems: 'center', justifyContent: 'center', width: 28, marginLeft: theme.spacing.sm },
-  visibilityIcon: { color: theme.colors.muted, fontSize: 20 },
-  errorBanner: { flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing.md, padding: theme.spacing.sm, borderRadius: theme.radii.md, backgroundColor: theme.colors.errorSoft },
-  errorIcon: { width: 22, height: 22, marginRight: theme.spacing.sm, borderRadius: 11, backgroundColor: theme.colors.error, color: theme.colors.white, fontSize: 14, fontWeight: '800', lineHeight: 22, textAlign: 'center' },
-  errorText: { flex: 1, color: theme.colors.error, fontSize: theme.typography.label, lineHeight: 18 },
-  button: { alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: theme.radii.md, backgroundColor: theme.colors.primary, shadowColor: theme.colors.primaryDark, shadowOpacity: 0.22, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-  buttonPressed: { backgroundColor: theme.colors.primaryDark, transform: [{ scale: 0.99 }] },
-  buttonText: { color: theme.colors.white, fontSize: theme.typography.button, fontWeight: '800', letterSpacing: 1 },
-  spinner: { width: 20, height: 20, borderWidth: 2, borderColor: 'rgba(255,255,255,0.45)', borderTopColor: theme.colors.white, borderRadius: 10 },
-  footer: { color: theme.colors.muted, fontSize: 12, marginTop: theme.spacing.lg, textAlign: 'center' },
+  fieldGroup: { marginBottom: spacing.md },
+  label: { color: colors.ink, fontSize: typography.small, fontWeight: '700', marginBottom: spacing.xs },
+  inputShell: { flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface },
+  inputShellFocused: { borderColor: colors.primary, backgroundColor: colors.white },
+  inputIcon: { width: 24, color: colors.primary, fontSize: 18, textAlign: 'left' },
+  input: { flex: 1, color: colors.ink, fontSize: typography.body, paddingVertical: 0 },
+  visibilityButton: { alignItems: 'center', justifyContent: 'center', width: 28, marginLeft: spacing.sm },
+  visibilityIcon: { color: colors.muted, fontSize: 20 },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, padding: spacing.sm, borderRadius: radius.md, backgroundColor: colors.errorSoft },
+  errorIcon: { width: 22, height: 22, marginRight: spacing.sm, borderRadius: 11, backgroundColor: colors.error, color: colors.white, fontSize: 14, fontWeight: '800', lineHeight: 22, textAlign: 'center' },
+  errorText: { flex: 1, color: colors.error, fontSize: typography.small, lineHeight: 18 },
+  button: { alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: radius.md, backgroundColor: colors.primary, shadowColor: colors.primaryDark, shadowOpacity: 0.22, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  buttonPressed: { backgroundColor: colors.primaryDark, transform: [{ scale: 0.99 }] },
+  buttonText: { color: colors.white, fontSize: typography.button, fontWeight: '800', letterSpacing: 1 },
+  spinner: { width: 20, height: 20, borderWidth: 2, borderColor: 'rgba(255,255,255,0.45)', borderTopColor: colors.white, borderRadius: 10 },
+  footer: { color: colors.muted, fontSize: 12, marginTop: spacing.lg, textAlign: 'center' },
 });
