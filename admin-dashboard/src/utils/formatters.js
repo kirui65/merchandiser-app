@@ -13,6 +13,10 @@ export function formatKes(value) {
   return currency.format(Number(value) || 0);
 }
 
+export function formatNumber(value) {
+  return new Intl.NumberFormat('en-KE').format(Number(value) || 0);
+}
+
 export function formatDateTime(value) {
   return dateTime.format(new Date(value));
 }
