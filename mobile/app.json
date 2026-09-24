@@ -63,11 +63,11 @@
         }
       ]
     ],
+    "owner": "haruna_dev",
     "extra": {
       "eas": {
-        "projectId": "b19a1e38-1d39-4e41-880e-341be74978c4"
+        "projectId": "2a98c14c-cfae-4cdc-a051-af111f30392e"
       }
-    },
-    "owner": "kirui321"
+    }
   }
 }
