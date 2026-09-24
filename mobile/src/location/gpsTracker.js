@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { enqueuePing } from '../offline/gpsQueue';
+import { getDb, initDb } from '../offline/db';
 
 export const LOCATION_TASK_NAME = 'merchandiser-route-location';
 export const LOCATION_INTERVAL_MS = 3 * 60 * 1000;
@@ -30,6 +31,8 @@ export async function startRouteTracking() {
 	}
 	const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
 	enqueuePing({ lat: current.coords.latitude, lng: current.coords.longitude, timestamp: new Date(current.timestamp).toISOString() });
+	initDb();
+	getDb().runSync("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('shiftStartedAt', ?);", [new Date().toISOString()]);
 }
 
 export function isRouteTrackingActive() {
@@ -40,4 +43,6 @@ export async function stopRouteTracking() {
 	if (await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME)) {
 		await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
 	}
+	initDb();
+	getDb().runSync("DELETE FROM app_settings WHERE key = 'shiftStartedAt';");
 }
