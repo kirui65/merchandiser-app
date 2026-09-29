@@ -235,3 +235,48 @@ table { border-color: #D8E0EA; }th { color: #5D6B7E; background: #E9EEF4; border
 	.dashboard-panel-card .dashboard-leaders,.dashboard-panel-card .dashboard-compact-list,.dashboard-panel-card .rank-list { overflow: visible; }
 	.dashboard-table-clip { overflow-x: auto; }
 }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.dashboard-loading { isolation: isolate; }
+.dashboard-skeleton { position: relative; display: block; overflow: hidden; background: #E8EDF1; border-radius: 5px; }
+.dashboard-skeleton::after { position: absolute; inset: 0; background: linear-gradient(100deg,transparent 15%,rgba(255,255,255,.72) 48%,transparent 82%); content: ''; transform: translateX(-100%); animation: dashboard-shimmer 1.45s ease-in-out infinite; }
+@keyframes dashboard-shimmer { to { transform: translateX(100%); } }
+.dashboard-skeleton-label { width: 116px; height: 9px; }
+.dashboard-skeleton-title { width: min(210px,55vw); height: 25px; margin: 7px 0 6px; }
+.dashboard-skeleton-copy { width: 175px; height: 9px; }
+.dashboard-skeleton-filters { display: flex; align-items: center; gap: 5px; padding: 4px; background: #E9EEF2; border: 1px solid #DCE3E8; border-radius: 8px; }
+.dashboard-skeleton-filters .dashboard-skeleton { width: 54px; height: 28px; }
+.dashboard-skeleton-stat { min-height: 98px; padding: 15px 17px; background: #FFF; border: 1px solid #E1E7EC; border-radius: 8px; }
+.dashboard-skeleton-value { width: min(132px,70%); height: 23px; margin: 8px 0 6px; }
+.dashboard-skeleton-stat .dashboard-skeleton-copy { width: min(106px,70%); }
+.dashboard-skeleton-tabs { display: flex; width: 310px; max-width: 100%; gap: 4px; padding: 4px; background: #E9EEF2; border-radius: 8px; }
+.dashboard-skeleton-tabs span { height: 25px; flex: 1; background: #FFF; border-radius: 5px; opacity: .72; }
+.dashboard-loading-panel { height: auto; min-height: 0; flex: 1; }
+.dashboard-skeleton-card { min-width: 0; padding: 18px; background: #FFF; border: 1px solid #E1E7EC; border-radius: 8px; }
+.dashboard-skeleton-card-title { width: 128px; height: 12px; margin-bottom: 16px; }
+.dashboard-skeleton-chart { display: flex; flex-direction: column; }
+.dashboard-skeleton-bars { display: flex; min-height: 0; flex: 1; align-items: end; justify-content: space-around; gap: 12px; padding: 12px 12px 0; border-bottom: 1px solid #E8EDF1; }
+.dashboard-skeleton-bars .dashboard-skeleton { width: min(34px,10%); min-height: 18px; border-radius: 5px 5px 0 0; }
+.dashboard-skeleton-team { display: flex; flex-direction: column; }
+.dashboard-skeleton-team-row { display: flex; align-items: center; gap: 10px; min-height: 46px; border-bottom: 1px solid #EDF0F3; }
+.dashboard-skeleton-team-row .dashboard-skeleton:first-child { width: 24px; height: 24px; border-radius: 7px; }
+.dashboard-skeleton-team-row .dashboard-skeleton:nth-child(2) { width: 45%; height: 10px; }
+.dashboard-skeleton-team-row .dashboard-skeleton:last-child { width: 55px; height: 10px; margin-left: auto; }
+.dashboard-refresh-status { display: inline-flex; align-items: center; gap: 5px; margin-left: 9px; color: #08766D; font-size: 10px; font-weight: 700; }
+.dashboard-refresh-spinner { width: 11px; height: 11px; border: 1.5px solid #B9DAD4; border-top-color: #08766D; border-radius: 50%; animation: dashboard-spin .7s linear infinite; }
+@keyframes dashboard-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+	.dashboard-skeleton::after,.dashboard-refresh-spinner { animation-duration: 3s; }
+	.dashboard-skeleton::after { animation-name: none; }
+	.dashboard-refresh-spinner { animation-name: none; }
+}
+@media (max-height:760px) and (min-width:901px) {
+	.dashboard-skeleton-stat { min-height: 76px; padding: 9px 13px; }
+	.dashboard-skeleton-value { height: 19px; margin: 4px 0; }
+}
+@media (max-width:760px) {
+	.dashboard-skeleton-filters { width: 100%; justify-content: space-between; }
+	.dashboard-skeleton-filters .dashboard-skeleton { flex: 1; }
+	.dashboard-loading-panel { gap: 10px; }
+	.dashboard-skeleton-card { min-height: 210px; }
+}
