@@ -16,11 +16,13 @@ import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, verifyMfa } = useAuth();
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaChallenge, setMfaChallenge] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +42,8 @@ export default function LoginScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      await signIn(email, password);
+      const result = await signIn(email, password);
+      if (result.mfaRequired) { setMfaChallenge(result.challenge); setPassword(''); return; }
     } catch (err) {
       setError(
         err?.response?.data?.error?.message
@@ -49,6 +52,14 @@ export default function LoginScreen() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleVerifyMfa() {
+    setError(null);
+    setSubmitting(true);
+    try { await verifyMfa(mfaChallenge, mfaCode); }
+    catch (err) { setError(err?.response?.data?.error?.message || 'Authenticator verification failed.'); }
+    finally { setSubmitting(false); }
   }
 
   return (
@@ -62,11 +73,17 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Image source={require('../../assets/brandsphere-wordmark.jpg')} style={styles.brandLogo} resizeMode="contain" accessibilityLabel="Brandsphere Marketing Agency" />
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to start your shift</Text>
+        <Text style={styles.title}>{mfaChallenge ? 'Verify it’s you' : 'Welcome back'}</Text>
+        <Text style={styles.subtitle}>{mfaChallenge ? 'Enter your current authenticator code' : 'Sign in to start your shift'}</Text>
 
         <View style={styles.card}>
-          <View style={styles.fieldGroup}>
+          {mfaChallenge ? <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Authenticator code</Text>
+            <View style={[styles.inputShell, focusedField === 'mfa' && styles.inputShellFocused]}>
+              <Text style={styles.inputIcon}>#</Text>
+              <TextInput style={styles.input} keyboardType="number-pad" value={mfaCode} onChangeText={(value) => setMfaCode(value.replace(/\D/g, '').slice(0, 6))} onFocus={() => setFocusedField('mfa')} onBlur={() => setFocusedField(null)} placeholder="6-digit code" placeholderTextColor={colors.muted} maxLength={6} />
+            </View>
+          </View> : <View style={styles.fieldGroup}>
             <Text style={styles.label}>Email</Text>
             <View style={[styles.inputShell, focusedField === 'email' && styles.inputShellFocused]}>
               <Text style={styles.inputIcon}>✉</Text>
@@ -83,9 +100,9 @@ export default function LoginScreen() {
                 placeholderTextColor={colors.muted}
               />
             </View>
-          </View>
+          </View>}
 
-          <View style={styles.fieldGroup}>
+          {!mfaChallenge && <View style={styles.fieldGroup}>
             <Text style={styles.label}>Password</Text>
             <View style={[styles.inputShell, focusedField === 'password' && styles.inputShellFocused]}>
               <Text style={styles.inputIcon}>●</Text>
@@ -109,7 +126,7 @@ export default function LoginScreen() {
                 <Text style={styles.visibilityIcon}>{showPassword ? '◉' : '◌'}</Text>
               </Pressable>
             </View>
-          </View>
+          </View>}
 
           {error ? (
             <Animated.View
@@ -127,11 +144,12 @@ export default function LoginScreen() {
             accessibilityRole="button"
             accessibilityState={{ disabled: submitting, busy: submitting }}
             disabled={submitting}
-            onPress={handleSubmit}
+            onPress={mfaChallenge ? handleVerifyMfa : handleSubmit}
             style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
           >
-            {submitting ? <View style={styles.spinner} /> : <Text style={styles.buttonText}>SIGN IN</Text>}
+            {submitting ? <View style={styles.spinner} /> : <Text style={styles.buttonText}>{mfaChallenge ? 'VERIFY CODE' : 'SIGN IN'}</Text>}
           </Pressable>
+          {mfaChallenge && <Pressable accessibilityRole="button" onPress={() => { setMfaChallenge(null); setMfaCode(''); setError(null); }}><Text style={styles.loginBack}>Back to sign in</Text></Pressable>}
         </View>
         <Text style={styles.footer}>Secure access for your field team</Text>
       </ScrollView>
@@ -183,4 +201,5 @@ const createStyles = (colors) => StyleSheet.create({
   buttonText: { color: colors.white, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.button, fontWeight: '800', letterSpacing: 1 },
   spinner: { width: 20, height: 20, borderWidth: 2, borderColor: 'rgba(255,255,255,0.45)', borderTopColor: colors.white, borderRadius: 10 },
   footer: { color: colors.muted, fontFamily: typography.fontFamily, fontSize: 12, marginTop: spacing.lg, textAlign: 'center' },
+  loginBack: { color: colors.primary, fontFamily: typography.fontFamilyBold, fontSize: typography.small, marginTop: spacing.md, textAlign: 'center' },
 });

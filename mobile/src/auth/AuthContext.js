@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { login as apiLogin, logout as apiLogout, getStoredUser } from '../api/auth';
+import { login as apiLogin, verifyMfaLogin, logout as apiLogout, getStoredUser } from '../api/auth';
 import { initDb } from '../offline/db';
 import { getPendingPings, markPingsFailed, markPingsSynced } from '../offline/gpsQueue';
 import { createGpsSyncManager } from '../offline/gpsSyncManager';
@@ -52,6 +52,13 @@ export function AuthProvider({ children }) {
 
   async function signIn(email, password) {
     const loggedInUser = await apiLogin(email, password);
+    if (loggedInUser.mfaRequired) return loggedInUser;
+    setUser(loggedInUser);
+    return loggedInUser;
+  }
+
+  async function verifyMfa(challenge, code) {
+    const loggedInUser = await verifyMfaLogin(challenge, code);
     setUser(loggedInUser);
     return loggedInUser;
   }
@@ -62,7 +69,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, verifyMfa, signOut }}>
       {children}
     </AuthContext.Provider>
   );

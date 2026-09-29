@@ -3,25 +3,35 @@ import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
-  const { signIn } = useAuth();
+  const { signIn, verifyMfa } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [mfaChallenge, setMfaChallenge] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      await signIn(email, password);
+      const result = await signIn(email, password);
+      if (result.mfaRequired) { setMfaChallenge(result.challenge); setPassword(''); return; }
       navigate('/');
     } catch (err) {
       setError(err?.response?.data?.error?.message || err.message || 'Login failed');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleMfaSubmit(event) {
+    event.preventDefault(); setError(null); setSubmitting(true);
+    try { await verifyMfa(mfaChallenge, mfaCode); navigate('/'); }
+    catch (err) { setError(err?.response?.data?.error?.message || err.message || 'Authenticator verification failed'); }
+    finally { setSubmitting(false); }
   }
 
   return (
@@ -31,7 +41,7 @@ export default function LoginPage() {
         <div className="login-hero"><span className="login-kicker">Manager workspace</span><h1>See every field decision clearly.</h1><p>Monitor sales performance, route coverage, collections, and the team behind the work—all in one focused workspace.</p></div>
         <div className="login-proof"><span><strong>Field-first</strong>Route & outlet intelligence</span><span><strong>Money-aware</strong>M-Pesa reconciliation</span><span><strong>Accountable</strong>Team audit history</span></div>
       </section>
-      <section className="login-panel"><div className="login-card"><span className="eyebrow">Secure access</span><h1>Welcome back</h1><p>Sign in with your manager account to continue.</p><form className="form-grid" onSubmit={handleSubmit}><div className="field"><label htmlFor="email">Work email</label><input id="email" autoComplete="email" type="email" placeholder="you@company.com" required value={email} onChange={(e) => setEmail(e.target.value)} /></div><div className="field"><label htmlFor="password">Password</label><input id="password" autoComplete="current-password" placeholder="Enter your password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>{error && <div className="error-banner">{error}</div>}<button className="ui-button ui-button-primary" disabled={submitting} type="submit">{submitting ? 'Signing in…' : 'Sign in to dashboard'}</button></form><p className="login-help">This workspace is available to Brandsphere managers only.</p></div></section>
+      <section className="login-panel"><div className="login-card"><span className="eyebrow">Secure access</span><h1>{mfaChallenge ? 'Verify it’s you' : 'Welcome back'}</h1><p>{mfaChallenge ? 'Enter the current code from your authenticator app.' : 'Sign in with your manager account to continue.'}</p><form className="form-grid" onSubmit={mfaChallenge ? handleMfaSubmit : handleSubmit}>{mfaChallenge ? <div className="field"><label htmlFor="mfa-code">Authenticator code</label><input id="mfa-code" autoComplete="one-time-code" inputMode="numeric" pattern="[0-9]{6}" maxLength="6" placeholder="6-digit code" required value={mfaCode} onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, '').slice(0, 6))} /></div> : <><div className="field"><label htmlFor="email">Work email</label><input id="email" autoComplete="email" type="email" placeholder="you@company.com" required value={email} onChange={(e) => setEmail(e.target.value)} /></div><div className="field"><label htmlFor="password">Password</label><input id="password" autoComplete="current-password" placeholder="Enter your password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div></>}{error && <div className="error-banner">{error}</div>}<button className="ui-button ui-button-primary" disabled={submitting} type="submit">{submitting ? 'Verifying…' : mfaChallenge ? 'Verify and continue' : 'Sign in to dashboard'}</button>{mfaChallenge && <button className="ui-button ui-button-secondary" type="button" onClick={() => { setMfaChallenge(null); setMfaCode(''); setError(null); }}>Back to sign in</button>}</form><p className="login-help">This workspace is available to Brandsphere managers only.</p></div></section>
     </main>
   );
 }

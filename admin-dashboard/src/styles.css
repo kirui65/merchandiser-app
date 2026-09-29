@@ -189,6 +189,17 @@ table { border-color: #D8E0EA; }th { color: #5D6B7E; background: #E9EEF4; border
 .dashboard-chart .recharts-responsive-container { height: calc(100% - 31px) !important; min-height: 140px; }
 .dashboard-panel-card .rank-list { min-height: 0; flex: 1; overflow: hidden; }
 .dashboard-panel-link { display: inline-block; margin-top: 10px; color: #08766D; font-size: 11px; font-weight: 800; text-decoration: none; }
+.dashboard-security-coverage { display: flex; align-items: baseline; gap: 8px; flex: 0 0 auto; padding: 7px 10px; color: #52657A; background: #E8F3F0; border-radius: 6px; font-size: 10px; }
+.dashboard-security-coverage strong { color: #08766D; font-size: 13px; }
+.dashboard-security-coverage small { margin-left: auto; color: #718096; font-size: 9px; }
+.integration-state { flex: 0 0 auto; padding: 4px 7px; border-radius: 5px; font-size: 9px; font-weight: 800; }
+.integration-state.is-connected,.integration-state.is-configured { color: #126B46; background: #E6F4EC; }
+.integration-state.is-unconfigured { color: #8B5A12; background: #FBF1DE; }
+.mfa-secret-panel { display: grid; gap: 7px; padding: 11px; background: #F5F7F8; border: 1px solid #E1E7EC; border-radius: 7px; }
+.mfa-secret-panel strong { color: #25384C; font-size: 11px; }
+.mfa-secret-panel code { overflow-wrap: anywhere; color: #172D43; font-size: 13px; font-weight: 800; }
+.mfa-secret-panel small { color: #68778A; font-size: 10px; }
+.mfa-setup-start { display: grid; justify-items: start; gap: 10px; margin-bottom: 15px; }
 .dashboard-compact-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; border-bottom: 1px solid #EDF0F3; font-size: 12px; }
 .dashboard-compact-row > span:first-child { display: grid; gap: 3px; }
 .dashboard-compact-row small { color: #788597; font-size: 10px; }
@@ -206,6 +217,8 @@ table { border-color: #D8E0EA; }th { color: #5D6B7E; background: #E9EEF4; border
 .dashboard-table-clip td input { min-width: 74px; min-height: 32px; }
 .dashboard-tools-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 11px; }
 .dashboard-tools-fields input,.dashboard-tools-fields select { width: 100%; min-width: 0; min-height: 36px; padding: 0 9px; color: #172033; background: #F8FAFB; border: 1px solid #D8E0EA; border-radius: 6px; font: inherit; }
+.dashboard-filter-fields { grid-template-columns: 1fr; gap: 8px; }
+.dashboard-filter-fields .ui-button { justify-self: start; min-height: 32px; padding: 0 10px; font-size: 10px; }
 .dashboard-note-field { grid-column: 1 / -1; }
 .dashboard-tool-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
 .dashboard-tool-actions .ui-button,.dashboard-tool-actions .toggle-button { min-height: 34px; padding: 0 10px; font-size: 10px; }
@@ -279,4 +292,36 @@ table { border-color: #D8E0EA; }th { color: #5D6B7E; background: #E9EEF4; border
 	.dashboard-skeleton-filters .dashboard-skeleton { flex: 1; }
 	.dashboard-loading-panel { gap: 10px; }
 	.dashboard-skeleton-card { min-height: 210px; }
+}
+
+.dashboard-heading-controls { display: flex; align-items: center; gap: 10px; }
+.dashboard-territory-filter { display: flex; align-items: center; gap: 7px; color: #65758A; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.dashboard-territory-filter select,.dashboard-inline-select select { min-height: 32px; padding: 0 26px 0 9px; color: #25384C; background: #FFF; border: 1px solid #DCE3E8; border-radius: 6px; font: inherit; }
+.dashboard-panel-grid.dashboard-single-grid { grid-template-columns: minmax(0,1fr); }
+.dashboard-panel-grid.dashboard-single-grid > .dashboard-panel-card { max-width: 100%; }
+.dashboard-payment-grid,.dashboard-security-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
+.dashboard-payment-grid > div,.dashboard-security-stats > div { display: grid; gap: 3px; min-width: 0; padding: 10px; background: #F5F7F8; border-radius: 6px; }
+.dashboard-payment-grid strong,.dashboard-security-stats strong { color: #172D43; font-size: 18px; }
+.dashboard-payment-grid span,.dashboard-security-stats span { color: #68778A; font-size: 9px; line-height: 1.3; }
+.dashboard-security-stats { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.dashboard-panel-card > h3,.dashboard-sales-rankings h3 { margin: 7px 0 8px; color: #53657A; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.dashboard-sales-rankings { display: grid; min-height: 0; flex: 1; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.dashboard-sales-rankings > div { min-width: 0; overflow: hidden; }
+.dashboard-sales-rankings .rank-list li { grid-template-columns: 22px minmax(0,1fr) auto; gap: 6px; padding: 7px 0; font-size: 10px; }
+.dashboard-visit-stats { display: flex; gap: 16px; margin: -4px 0 13px; color: #68778A; font-size: 11px; }
+.dashboard-inline-select { display: flex; align-items: center; justify-content: space-between; color: #53657A; font-size: 10px; font-weight: 800; }
+.dashboard-sale-total { color: #172D43; font-weight: 750; white-space: nowrap; }
+.dashboard-review-flag { background: #FFF7E8; }
+.dashboard-review-flag a { color: #9B5708; font-size: 10px; font-weight: 800; text-decoration: none; }
+.account-settings-tabs { display: flex; gap: 4px; margin: 16px 0; padding: 4px; background: #F0F3F5; border-radius: 8px; }
+.account-settings-tabs button { min-height: 34px; flex: 1; color: #5D6B7E; background: transparent; border: 0; border-radius: 6px; font-size: 11px; font-weight: 800; }
+.account-settings-tabs button.is-active { color: #172D43; background: #FFF; box-shadow: 0 1px 3px rgba(23,45,67,.12); }
+.account-session-warning { margin: 0; padding: 12px; color: #596A7E; background: #F5F7F8; border-radius: 7px; font-size: 12px; }
+.dashboard-tools-grid { grid-template-columns: 1.05fr 1fr 1.05fr .9fr; }
+@media (max-width:900px) {
+	.dashboard-heading-controls { width: 100%; align-items: stretch; flex-direction: column; }
+	.dashboard-territory-filter { justify-content: space-between; }
+	.dashboard-territory-filter select { flex: 1; }
+	.dashboard-panel-grid.dashboard-single-grid > .dashboard-panel-card { width: 100%; }
+	.dashboard-payment-grid,.dashboard-security-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }

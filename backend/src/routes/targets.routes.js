@@ -3,6 +3,7 @@ const { z } = require('zod');
 const { requireAuth, requireManager } = require('../middleware/auth.middleware');
 const { getDoc, listDocs, setDoc } = require('../services/firestore.service');
 const { ApiError } = require('../middleware/errorHandler');
+const { recordAudit } = require('../services/audit.service');
 
 const TargetSchema = z.object({
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Month must be YYYY-MM'),
@@ -67,6 +68,7 @@ router.put('/:repId', requireManager, async (req, res, next) => {
       amount,
       ...(existing?.createdAt ? { createdAt: existing.createdAt } : {}),
     });
+    await recordAudit(req, { action: 'target_updated', entityType: 'rep', entity: { ...rep, name: rep.name }, changedFields: ['target', 'month'] });
     return res.json({ target });
   } catch (err) {
     return next(err);

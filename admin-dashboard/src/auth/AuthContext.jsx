@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
 
   async function signIn(email, password) {
     const { data } = await client.post('/auth/login', { email, password });
+    if (data.mfaRequired) return data;
     if (data.user.role !== 'manager') {
       throw new Error('Only managers can access the admin dashboard');
     }
@@ -20,13 +21,26 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function verifyMfa(challenge, code) {
+    const { data } = await client.post('/auth/mfa/verify-login', { challenge, code });
+    if (data.user.role !== 'manager') throw new Error('Only managers can access the admin dashboard');
+    updateSession(data);
+    return data.user;
+  }
+
   function signOut() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('authUser');
     setUser(null);
   }
 
-  return <AuthContext.Provider value={{ user, signIn, signOut }}>{children}</AuthContext.Provider>;
+  function updateSession({ token, user: updatedUser }) {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('authUser', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  }
+
+  return <AuthContext.Provider value={{ user, signIn, verifyMfa, signOut, updateSession }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

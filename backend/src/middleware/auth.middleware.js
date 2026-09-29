@@ -1,13 +1,14 @@
 const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 const { ApiError } = require('./errorHandler');
+const { getDoc } = require('../services/firestore.service');
 
 /**
  * Verifies the JWT and attaches { uid, role } to req.user.
  * This is the REAL authorization boundary for the app (see shared/firestoreSchema.md
  * — firestore.rules is a backstop only, since all writes use the Admin SDK).
  */
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const [scheme, token] = header.split(' ');
 
@@ -15,12 +16,22 @@ function requireAuth(req, res, next) {
     return next(new ApiError(401, 'Missing or malformed Authorization header'));
   }
 
+  let payload;
   try {
-    const payload = jwt.verify(token, env.jwtSecret);
-    req.user = { uid: payload.uid, role: payload.role };
-    return next();
+    payload = jwt.verify(token, env.jwtSecret);
   } catch (err) {
     return next(new ApiError(401, 'Invalid or expired token'));
+  }
+
+  try {
+    const rep = await getDoc('reps', payload.uid);
+    if (!rep || rep.active === false || Number(rep.authVersion || 0) !== Number(payload.authVersion || 0)) {
+      return next(new ApiError(401, 'Session is no longer valid'));
+    }
+    req.user = { uid: payload.uid, role: rep.role };
+    return next();
+  } catch (err) {
+    return next(err);
   }
 }
 

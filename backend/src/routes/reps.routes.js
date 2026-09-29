@@ -99,7 +99,7 @@ router.put('/:id', requireManager, validateBody(RepUpdateSchema), async (req, re
     if (!existing) throw new ApiError(404, 'Rep not found');
     const email = normalizeEmail(req.body.email);
     await assertEmailIsAvailable(email, req.params.id);
-    const rep = await updateRepWithUniqueEmail(req.params.id, { ...req.body, email });
+    const rep = await updateRepWithUniqueEmail(req.params.id, { ...req.body, email, authVersion: Number(existing.authVersion || 0) + 1 });
     await recordAudit(req, { action: 'edited', entityType: 'rep', entity: rep, changedFields: Object.keys(req.body) });
     const { passwordHash: _omit, ...safeRep } = rep;
     return res.json({ rep: safeRep });
@@ -110,7 +110,7 @@ router.patch('/:id/status', requireManager, async (req, res, next) => {
   try {
     const existing = await getDoc('reps', req.params.id);
     if (!existing) throw new ApiError(404, 'Rep not found');
-    const rep = await updateDoc('reps', req.params.id, { active: req.body.active === true });
+    const rep = await updateDoc('reps', req.params.id, { active: req.body.active === true, authVersion: Number(existing.authVersion || 0) + 1 });
     await recordAudit(req, { action: rep.active ? 'reactivated' : 'deactivated', entityType: 'rep', entity: rep, changedFields: ['active'] });
     const { passwordHash: _omit, ...safeRep } = rep;
     return res.json({ rep: safeRep });
@@ -122,9 +122,20 @@ router.post('/:id/reset-password', requireManager, async (req, res, next) => {
     const existing = await getDoc('reps', req.params.id);
     if (!existing) throw new ApiError(404, 'Rep not found');
     const temporaryPassword = `Bs-${require('crypto').randomBytes(5).toString('base64url')}`;
-    const rep = await updateDoc('reps', req.params.id, { passwordHash: await bcrypt.hash(temporaryPassword, 10) });
+    const rep = await updateDoc('reps', req.params.id, { passwordHash: await bcrypt.hash(temporaryPassword, 10), authVersion: Number(existing.authVersion || 0) + 1 });
     await recordAudit(req, { action: 'password_reset', entityType: 'rep', entity: rep, changedFields: ['password'] });
     return res.json({ temporaryPassword });
+  } catch (err) { return next(err); }
+});
+
+router.post('/:id/reset-mfa', requireManager, async (req, res, next) => {
+  try {
+    const existing = await getDoc('reps', req.params.id);
+    if (!existing) throw new ApiError(404, 'Rep not found');
+    if (!existing.mfaEnabled) throw new ApiError(409, 'MFA is not enabled for this account');
+    const rep = await updateDoc('reps', req.params.id, { mfaEnabled: false, mfaSecretEncrypted: null, mfaSetupSecretEncrypted: null, authVersion: Number(existing.authVersion || 0) + 1 });
+    await recordAudit(req, { action: 'mfa_reset', entityType: 'rep', entity: rep, changedFields: ['mfaEnabled', 'sessions'] });
+    return res.json({ message: `MFA reset for ${rep.name}. The account must sign in again.` });
   } catch (err) { return next(err); }
 });
 

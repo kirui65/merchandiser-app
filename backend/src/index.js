@@ -19,6 +19,7 @@ const territoriesRoutes = require('./routes/territories.routes');
 
 const app = express();
 
+app.set('trust proxy', 1);
 app.use(cors({ origin: env.allowedOrigins }));
 app.use(express.json({ limit: '5mb' })); // generous-ish for base64 photo payloads if used before object storage
 
