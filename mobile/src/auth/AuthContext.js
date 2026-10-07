@@ -3,6 +3,13 @@ import { login as apiLogin, verifyMfaLogin, logout as apiLogout, getStoredUser, 
 import { initDb } from '../offline/db';
 import { getPendingPings, markPingsFailed, markPingsSynced } from '../offline/gpsQueue';
 import { createGpsSyncManager } from '../offline/gpsSyncManager';
+import {
+  getPendingActivations,
+  markActivationFailed,
+  markActivationSynced,
+} from '../offline/activationsQueue';
+import { createActivationSyncManager } from '../offline/activationSyncManager';
+import { createActivation, updateActivation, uploadActivationMedia } from '../api/activations';
 import { getPendingSales, markFailed, markSynced } from '../offline/salesQueue';
 import { postSale } from '../api/sales';
 import { createSyncManager } from '../offline/syncManager';
@@ -33,9 +40,20 @@ export function AuthProvider({ children }) {
     });
     const stopSalesSync = salesSyncManager.start();
     const stopGpsSync = syncManager?.start();
+    const activationSyncManager = user.role === 'brand_ambassador'
+      ? createActivationSyncManager({
+        queue: { getPendingActivations, markActivationSynced, markActivationFailed },
+        api: { createActivation, updateActivation },
+        uploadMedia: uploadActivationMedia,
+        isOnline: isCurrentlyOnline,
+        subscribeToConnectivity,
+      })
+      : null;
+    const stopActivationSync = activationSyncManager?.start();
     return () => {
       stopSalesSync();
       stopGpsSync?.();
+      stopActivationSync?.();
     };
   }, [user]);
 
