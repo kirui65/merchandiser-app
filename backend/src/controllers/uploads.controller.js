@@ -13,6 +13,7 @@ const ActivationMediaUploadSchema = z.object({
   contentType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
   mediaId: z.string().uuid(),
 });
+const MerchandisingMediaUploadSchema = ActivationMediaUploadSchema;
 
 /**
  * Creates a short-lived, write-only URL for a receipt image. The object name
@@ -80,4 +81,33 @@ async function createActivationMediaUploadUrl(req, res, next) {
   }
 }
 
-module.exports = { createSalePhotoUploadUrl, createActivationMediaUploadUrl };
+async function createMerchandisingMediaUploadUrl(req, res, next) {
+  try {
+    if (req.user.role !== 'rep') throw new ApiError(403, 'Merchandiser role required');
+    const parsed = MerchandisingMediaUploadSchema.safeParse(req.body);
+    if (!parsed.success) throw new ApiError(400, 'Merchandising photo must be a JPEG, PNG, or WebP image with a valid mediaId');
+
+    const { contentType, mediaId } = parsed.data;
+    const extension = ALLOWED_CONTENT_TYPES[contentType];
+    const bucket = getStorageBucket();
+    const objectPath = `merchandising/${req.user.uid}/${mediaId}.${extension}`;
+    const file = bucket.file(objectPath);
+    const expiresAt = Date.now() + SIGNED_URL_LIFETIME_MS;
+    const [uploadUrl] = await file.getSignedUrl({
+      version: 'v4',
+      action: 'write',
+      expires: expiresAt,
+      contentType,
+    });
+
+    return res.status(201).json({
+      uploadUrl,
+      storageUri: `gs://${bucket.name}/${objectPath}`,
+      expiresAt: new Date(expiresAt).toISOString(),
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { createSalePhotoUploadUrl, createActivationMediaUploadUrl, createMerchandisingMediaUploadUrl };

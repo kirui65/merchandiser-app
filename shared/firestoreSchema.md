@@ -169,6 +169,65 @@ their activation records; they can edit drafts and submit them. Managers
 can approve/reject submitted activations. Team-leader review scope is
 deferred to Phase 4.
 
+## `merchandisingAudits`
+```
+{
+  id: string,
+  merchandiserId: string,
+  teamId: string | null,
+  outletId: string,
+  campaignId?: string,
+  location?: { lat: number, lng: number },
+  observedAt: Timestamp,
+  stockChecks: [{ productId: string, shelfQuantity?: number, backroomQuantity?: number, lowStock: boolean, reorderRequested: boolean }],
+  planogram: { standardId?: string, compliant: boolean, compliancePercent?: number, deviations: [{ productId?: string, expectedPosition?: string, actualPosition?: string, description?: string }] },
+  photoStorageUris: string[],
+  notes?: string,
+  createdAt: Timestamp
+}
+```
+
+## `competitorPrices`
+```
+{
+  id: string,
+  merchandiserId: string,
+  teamId: string | null,
+  outletId: string,
+  campaignId?: string,
+  competitorName: string,
+  competitorProductName: string,
+  competitorSku?: string,
+  ourProductId?: string,
+  price: number,
+  observedAt: Timestamp,
+  photoStorageUri?: string,
+  createdAt: Timestamp
+}
+```
+Prices are plain float KES values, consistent with `sales.total`.
+
+## `outletOnboarding`
+```
+{
+  id: string,
+  submittedBy: string,
+  name: string,
+  address: string,
+  location: { lat: number, lng: number },
+  photoStorageUri: string,
+  status: 'pending_review' | 'approved' | 'rejected',
+  outletId?: string,
+  createdAt: Timestamp,
+  reviewedAt?: Timestamp,
+  reviewedBy?: string
+}
+```
+New field-sourced outlets remain in `outletOnboarding` until a manager
+approves them. Approval creates the active `outlets` document and links its
+ID back to the request; rejected/pending submissions never appear in the
+operational outlet list.
+
 ## `salesTargets`
 
 One deterministic document per representative and calendar month (`{repId}_{YYYY-MM}`):
@@ -224,6 +283,10 @@ controller:
 - A telemarketer may only read and update leads/calls owned by their JWT uid.
 - A brand ambassador may only read/write activations owned by their JWT uid.
 - A manager may read all activations and review submitted activations.
+- A merchandiser (`role === 'rep'`) may only read/write their own
+  merchandising audits, competitor prices, and outlet onboarding requests.
+- Managers can read and manage all merchandising records, review outlet
+  onboarding, and create the approved outlet.
 - No client role may write `mpesaTransactions` directly.
 
 Required composite indexes for telemarketer queries:
@@ -233,3 +296,12 @@ Required composite indexes for telemarketer queries:
 - `calls(telemarketerId ASC, startedAt DESC)`
 - `activations(ambassadorId ASC, startedAt DESC)`
 - `activations(teamId ASC, startedAt DESC)`
+- `merchandisingAudits(merchandiserId ASC, observedAt DESC)`
+- `merchandisingAudits(outletId ASC, observedAt DESC)`
+- `competitorPrices(outletId ASC, observedAt DESC)`
+- `competitorPrices(ourProductId ASC, observedAt DESC)`
+- `outletOnboarding(submittedBy ASC, createdAt DESC)`
+
+The new composites are defined in `firestore/firestore.indexes.json` but
+are not live until a project administrator deploys them with
+`firebase deploy --only firestore:indexes`.

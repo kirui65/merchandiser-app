@@ -19,6 +19,7 @@ const territoriesRoutes = require('./routes/territories.routes');
 const leadsRoutes = require('./routes/leads.routes');
 const callsRoutes = require('./routes/calls.routes');
 const activationsRoutes = require('./routes/activations.routes');
+const merchandisingRoutes = require('./routes/merchandising.routes');
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use('/api/territories', territoriesRoutes);
 app.use('/api/leads', leadsRoutes);
 app.use('/api/calls', callsRoutes);
 app.use('/api/activations', activationsRoutes);
+app.use('/api/merchandising', merchandisingRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

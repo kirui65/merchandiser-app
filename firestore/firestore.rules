@@ -32,6 +32,11 @@ service cloud.firestore {
         get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'brand_ambassador';
     }
 
+    function isMerchandiser() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'rep';
+    }
+
     function isOwner(repId) {
       return isSignedIn() && request.auth.uid == repId;
     }
@@ -100,6 +105,42 @@ service cloud.firestore {
           request.resource.data.ambassadorId == request.auth.uid &&
           resource.data.status == 'draft' &&
           request.resource.data.status in ['draft', 'submitted']);
+      allow delete: if isManager();
+    }
+
+    match /merchandisingAudits/{auditId} {
+      allow read: if isManager() ||
+        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid);
+      allow create: if isMerchandiser() &&
+        request.resource.data.merchandiserId == request.auth.uid;
+      allow update: if isManager() ||
+        (isMerchandiser() &&
+          resource.data.merchandiserId == request.auth.uid &&
+          request.resource.data.merchandiserId == request.auth.uid);
+      allow delete: if isManager() ||
+        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid);
+    }
+
+    match /competitorPrices/{observationId} {
+      allow read: if isManager() ||
+        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid);
+      allow create: if isMerchandiser() &&
+        request.resource.data.merchandiserId == request.auth.uid;
+      allow update: if isManager() ||
+        (isMerchandiser() &&
+          resource.data.merchandiserId == request.auth.uid &&
+          request.resource.data.merchandiserId == request.auth.uid);
+      allow delete: if isManager() ||
+        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid);
+    }
+
+    match /outletOnboarding/{requestId} {
+      allow read: if isManager() ||
+        (isMerchandiser() && resource.data.submittedBy == request.auth.uid);
+      allow create: if isMerchandiser() &&
+        request.resource.data.submittedBy == request.auth.uid &&
+        request.resource.data.status == 'pending_review';
+      allow update: if isManager();
       allow delete: if isManager();
     }
 
