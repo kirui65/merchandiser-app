@@ -14,9 +14,12 @@ import {
 import { useAuth } from './AuthContext';
 import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
+import { hasStoredAuthToken, getStoredUser } from '../api/auth';
+import { getBiometricUnlockLabel, isBiometricUnlockEnabled } from './biometric';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
-  const { signIn, verifyMfa } = useAuth();
+  const { signIn, verifyMfa, unlockWithBiometric } = useAuth();
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [email, setEmail] = useState('');
@@ -25,12 +28,15 @@ export default function LoginScreen() {
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [authenticatingBiometric, setAuthenticatingBiometric] = useState(false);
   const [slowRequest, setSlowRequest] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const errorAnimation = useRef(new Animated.Value(0)).current;
   const spinnerAnimation = useRef(new Animated.Value(0)).current;
   const spinnerRotation = spinnerAnimation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const busy = submitting || authenticatingBiometric;
 
   useEffect(() => {
     Animated.spring(errorAnimation, {
@@ -42,13 +48,13 @@ export default function LoginScreen() {
   }, [error, errorAnimation]);
 
   useEffect(() => {
-    if (!submitting) {
+    if (!busy) {
       setSlowRequest(false);
       return undefined;
     }
 
     setSlowRequest(false);
-    const timeout = setTimeout(() => setSlowRequest(true), 2000);
+    const timeout = submitting ? setTimeout(() => setSlowRequest(true), 2000) : null;
     const animation = Animated.loop(Animated.timing(spinnerAnimation, {
       toValue: 1,
       duration: 850,
@@ -57,11 +63,23 @@ export default function LoginScreen() {
     animation.start();
 
     return () => {
-      clearTimeout(timeout);
+      if (timeout) clearTimeout(timeout);
       animation.stop();
       spinnerAnimation.setValue(0);
     };
-  }, [submitting, spinnerAnimation]);
+  }, [submitting, busy, spinnerAnimation]);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([isBiometricUnlockEnabled(), getStoredUser(), hasStoredAuthToken(), getBiometricUnlockLabel()])
+      .then(([enabled, storedUser, hasToken, label]) => {
+        if (mounted && enabled && storedUser && hasToken) setBiometricLabel(label);
+      })
+      .catch(() => {
+        if (mounted) setBiometricLabel(null);
+      });
+    return () => { mounted = false; };
+  }, []);
 
   async function handleSubmit() {
     setError(null);
@@ -87,6 +105,18 @@ export default function LoginScreen() {
     finally { setSubmitting(false); }
   }
 
+  async function handleBiometricLogin() {
+    setError(null);
+    setAuthenticatingBiometric(true);
+    try {
+      await unlockWithBiometric();
+    } catch {
+      setError('Biometric sign-in is unavailable. Use your email and password instead.');
+    } finally {
+      setAuthenticatingBiometric(false);
+    }
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -102,6 +132,19 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>{mfaChallenge ? 'Enter your current authenticator code' : 'Sign in to start your shift'}</Text>
 
         <View style={styles.card}>
+          {!mfaChallenge && biometricLabel ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: busy, busy }}
+              disabled={busy}
+              onPress={handleBiometricLogin}
+              style={({ pressed }) => [styles.biometricButton, pressed && styles.biometricButtonPressed, busy && styles.buttonDisabled]}
+            >
+              {authenticatingBiometric ? <Animated.View style={[styles.spinner, styles.biometricSpinner, { transform: [{ rotate: spinnerRotation }] }]} /> : <Ionicons name={biometricLabel.includes('face') ? 'scan-outline' : 'finger-print-outline'} size={23} color={colors.white} />}
+              <Text style={styles.biometricButtonText}>SIGN IN WITH {biometricLabel.toUpperCase()}</Text>
+            </Pressable>
+          ) : null}
+
           {mfaChallenge ? <View style={styles.fieldGroup}>
             <Text style={styles.label}>Authenticator code</Text>
             <View style={[styles.inputShell, focusedField === 'mfa' && styles.inputShellFocused]}>
@@ -167,10 +210,10 @@ export default function LoginScreen() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: submitting, busy: submitting }}
-            disabled={submitting}
+            accessibilityState={{ disabled: busy, busy }}
+            disabled={busy}
             onPress={mfaChallenge ? handleVerifyMfa : handleSubmit}
-            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, submitting && styles.buttonDisabled]}
+            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, busy && styles.buttonDisabled]}
           >
             {submitting ? <Animated.View style={[styles.spinner, { transform: [{ rotate: spinnerRotation }] }]} /> : <Text style={styles.buttonText}>{mfaChallenge ? 'VERIFY CODE' : 'SIGN IN'}</Text>}
           </Pressable>
@@ -227,6 +270,10 @@ const createStyles = (colors) => StyleSheet.create({
   buttonDisabled: { opacity: 0.78 },
   buttonText: { color: colors.white, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.button, fontWeight: '800', letterSpacing: 1 },
   spinner: { width: 22, height: 22, borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.35)', borderTopColor: colors.white, borderRightColor: colors.success, borderRadius: 11 },
+  biometricButton: { minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginBottom: spacing.lg, borderRadius: radius.md, backgroundColor: colors.success, shadowColor: colors.primaryDark, shadowOpacity: 0.16, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  biometricButtonPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
+  biometricButtonText: { color: colors.white, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.small, fontWeight: '800', letterSpacing: 0.5 },
+  biometricSpinner: { borderRightColor: colors.primary },
   connecting: { color: colors.muted, fontFamily: typography.fontFamilyMedium, fontSize: typography.small, marginTop: spacing.sm, textAlign: 'center' },
   footer: { color: colors.muted, fontFamily: typography.fontFamily, fontSize: 12, marginTop: spacing.lg, textAlign: 'center' },
   loginBack: { color: colors.primary, fontFamily: typography.fontFamilyBold, fontSize: typography.small, marginTop: spacing.md, textAlign: 'center' },

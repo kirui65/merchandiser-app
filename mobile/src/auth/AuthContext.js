@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { login as apiLogin, verifyMfaLogin, logout as apiLogout, getStoredUser } from '../api/auth';
+import { login as apiLogin, verifyMfaLogin, logout as apiLogout, getStoredUser, hasStoredAuthToken } from '../api/auth';
 import { initDb } from '../offline/db';
 import { getPendingPings, markPingsFailed, markPingsSynced } from '../offline/gpsQueue';
 import { createGpsSyncManager } from '../offline/gpsSyncManager';
@@ -63,13 +63,24 @@ export function AuthProvider({ children }) {
     return loggedInUser;
   }
 
+  async function unlockWithBiometric() {
+    if (!(await isBiometricUnlockEnabled())) return false;
+    const result = await authenticateBiometric();
+    if (!result.success) return false;
+
+    const [storedUser, hasToken] = await Promise.all([getStoredUser(), hasStoredAuthToken()]);
+    if (!storedUser || !hasToken) return false;
+    setUser(storedUser);
+    return true;
+  }
+
   async function signOut() {
     await apiLogout();
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, verifyMfa, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, verifyMfa, unlockWithBiometric, signOut }}>
       {children}
     </AuthContext.Provider>
   );

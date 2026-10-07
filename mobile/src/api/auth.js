@@ -25,3 +25,7 @@ export async function getStoredUser() {
   const raw = await SecureStore.getItemAsync('authUser');
   return raw ? JSON.parse(raw) : null;
 }
+
+export async function hasStoredAuthToken() {
+  return Boolean(await SecureStore.getItemAsync('authToken'));
+}
