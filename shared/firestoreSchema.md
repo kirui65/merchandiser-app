@@ -12,7 +12,7 @@ sync whenever a model changes.
   phone: string,
   email: string,
   passwordHash: string,
-  role: 'rep' | 'manager',
+  role: 'rep' | 'manager' | 'brand_ambassador' | 'telemarketer' | 'team_leader',
   assignedOutletIds: string[],
   active: boolean,
   createdAt: Timestamp
@@ -90,6 +90,55 @@ Manager-only audit entries for roster, product, and outlet mutations:
 Idempotency: `(repId, localId)` must be unique. A duplicate write with the
 same `localId` from the same rep returns the existing record, not an error.
 
+## `leads`
+```
+{
+  id: string,
+  telemarketerId: string,
+  teamId: string | null,
+  campaignId: string | null,
+  name: string,
+  organization?: string,
+  phone: string,
+  email?: string,
+  source?: string,
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'not_interested' | 'closed',
+  score: 'hot' | 'warm' | 'cold' | 'unscored',
+  scoreValue?: number,
+  nextFollowUpAt?: Timestamp,
+  lastCalledAt?: Timestamp,
+  callCount: number,
+  notes?: string,
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+`telemarketerId` is always taken from the authenticated user. `teamId` is
+stored as `null` until team membership scoping is introduced.
+
+## `calls`
+```
+{
+  id: string,
+  leadId: string,
+  telemarketerId: string,
+  teamId: string | null,
+  campaignId?: string,
+  startedAt: Timestamp,
+  endedAt?: Timestamp,
+  durationSeconds?: number,
+  outcome: 'answered' | 'no_answer' | 'busy' | 'voicemail' | 'callback_requested' | 'wrong_number',
+  notes?: string,
+  followUpAt?: Timestamp,
+  statusAfterCall?: 'new' | 'contacted' | 'qualified' | 'converted' | 'not_interested' | 'closed',
+  scoreAfterCall?: 'hot' | 'warm' | 'cold' | 'unscored',
+  createdAt: Timestamp
+}
+```
+Calls are created in the same Firestore transaction that increments the
+lead's `callCount`, sets `lastCalledAt`, and applies any follow-up/status/
+score changes.
+
 ## `salesTargets`
 
 One deterministic document per representative and calendar month (`{repId}_{YYYY-MM}`):
@@ -142,4 +191,11 @@ controller:
 - A rep may only read/write `sales` and `routes` docs where `repId` matches
   their own JWT-authenticated `uid`.
 - A manager (`role === 'manager'`) may read everything.
+- A telemarketer may only read and update leads/calls owned by their JWT uid.
 - No client role may write `mpesaTransactions` directly.
+
+Required composite indexes for telemarketer queries:
+- `leads(telemarketerId ASC, status ASC, updatedAt DESC)`
+- `leads(teamId ASC, nextFollowUpAt ASC)`
+- `calls(leadId ASC, startedAt DESC)`
+- `calls(telemarketerId ASC, startedAt DESC)`

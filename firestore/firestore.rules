@@ -22,6 +22,11 @@ service cloud.firestore {
         get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'manager';
     }
 
+    function isTelemarketer() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'telemarketer';
+    }
+
     function isOwner(repId) {
       return isSignedIn() && request.auth.uid == repId;
     }
@@ -50,6 +55,30 @@ service cloud.firestore {
       allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.repId == request.auth.uid;
       allow update: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
+      allow delete: if isManager();
+    }
+
+    match /leads/{leadId} {
+      allow read: if isManager() ||
+        (isTelemarketer() && resource.data.telemarketerId == request.auth.uid);
+      allow create: if isManager() ||
+        (isTelemarketer() && request.resource.data.telemarketerId == request.auth.uid);
+      allow update: if isManager() ||
+        (isTelemarketer() &&
+          resource.data.telemarketerId == request.auth.uid &&
+          request.resource.data.telemarketerId == request.auth.uid);
+      allow delete: if isManager();
+    }
+
+    match /calls/{callId} {
+      allow read: if isManager() ||
+        (isTelemarketer() && resource.data.telemarketerId == request.auth.uid);
+      allow create: if isManager() ||
+        (isTelemarketer() && request.resource.data.telemarketerId == request.auth.uid);
+      allow update: if isManager() ||
+        (isTelemarketer() &&
+          resource.data.telemarketerId == request.auth.uid &&
+          request.resource.data.telemarketerId == request.auth.uid);
       allow delete: if isManager();
     }
 
