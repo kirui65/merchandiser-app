@@ -41,10 +41,10 @@ export function AuthProvider({ children }) {
       isOnline: isCurrentlyOnline,
       subscribeToConnectivity,
     });
-    const syncManager = user.role === 'telemarketer' ? null : createGpsSyncManager({
+    const syncManager = ['rep', 'brand_ambassador'].includes(user.role) ? createGpsSyncManager({
       queue: { getPendingPings, markPingsFailed, markPingsSynced },
       isOnline: () => true,
-    });
+    }) : null;
     const stopSalesSync = salesSyncManager.start();
     const stopGpsSync = syncManager?.start();
     const activationSyncManager = user.role === 'brand_ambassador'
