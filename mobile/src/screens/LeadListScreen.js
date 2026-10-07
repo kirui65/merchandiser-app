@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { createLead, fetchLeads } from '../api/leads';
+import CampaignPicker from '../components/CampaignPicker';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import PrimaryButton from '../components/PrimaryButton';
@@ -22,6 +23,7 @@ export default function LeadListScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ name: '', organization: '', phone: '', email: '', source: '' });
+  const [campaignId, setCampaignId] = useState(null);
   const [saving, setSaving] = useState(false);
 
   async function load(refresh = false) {
@@ -53,8 +55,10 @@ export default function LeadListScreen({ navigation }) {
         ...(form.organization.trim() ? { organization: form.organization.trim() } : {}),
         ...(form.email.trim() ? { email: form.email.trim() } : {}),
         ...(form.source.trim() ? { source: form.source.trim() } : {}),
+        campaignId,
       });
       setForm({ name: '', organization: '', phone: '', email: '', source: '' });
+      setCampaignId(null);
       setShowCreate(false);
       await load();
     } catch (requestError) {
@@ -94,6 +98,7 @@ export default function LeadListScreen({ navigation }) {
         <LeadInput label="Organization" value={form.organization} onChangeText={(organization) => setForm({ ...form, organization })} colors={colors} styles={styles} />
         <LeadInput label="Email" value={form.email} onChangeText={(email) => setForm({ ...form, email })} keyboardType="email-address" colors={colors} styles={styles} />
         <LeadInput label="Source" value={form.source} onChangeText={(source) => setForm({ ...form, source })} colors={colors} styles={styles} />
+        <CampaignPicker value={campaignId} onChange={setCampaignId} />
         <PrimaryButton title="Save lead" onPress={submitLead} loading={saving} />
       </Card>}
       <FlatList

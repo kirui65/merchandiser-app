@@ -12,6 +12,7 @@ import EmptyState from '../components/EmptyState';
 import PrimaryButton from '../components/PrimaryButton';
 import { useTheme } from '../theme/ThemeContext';
 import { radius, spacing, typography } from '../theme/tokens';
+import CampaignPicker from '../components/CampaignPicker';
 
 export default function CompetitorPriceScreen({ route, navigation }) {
   const outlet = route.params?.outlet;
@@ -22,6 +23,7 @@ export default function CompetitorPriceScreen({ route, navigation }) {
   const [competitorSku, setCompetitorSku] = useState('');
   const [price, setPrice] = useState('');
   const [ourProductId, setOurProductId] = useState('');
+  const [campaignId, setCampaignId] = useState(null);
   const [products, setProducts] = useState([]);
   const [photoUri, setPhotoUri] = useState(null);
   const [savingPhoto, setSavingPhoto] = useState(false);
@@ -62,6 +64,7 @@ export default function CompetitorPriceScreen({ route, navigation }) {
     try {
       enqueueMerchandisingRecord(createLocalId(), 'competitorPrice', {
         outletId: outlet.id,
+        campaignId,
         competitorName: competitorName.trim(),
         competitorProductName: competitorProductName.trim(),
         ...(competitorSku.trim() ? { competitorSku: competitorSku.trim() } : {}),
@@ -86,6 +89,7 @@ export default function CompetitorPriceScreen({ route, navigation }) {
         <Text style={styles.subtitle}>{outlet.name}</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Card style={styles.card}>
+          <CampaignPicker value={campaignId} onChange={setCampaignId} />
           <Text style={styles.label}>COMPETITOR NAME</Text>
           <TextInput value={competitorName} onChangeText={setCompetitorName} style={styles.input} placeholder="Competitor brand" />
           <Text style={styles.label}>COMPETITOR PRODUCT</Text>

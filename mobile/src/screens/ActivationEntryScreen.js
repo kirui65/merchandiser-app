@@ -27,6 +27,7 @@ import { ErrorState, LoadingState } from '../components/ScreenState';
 import { createLocalId } from '../utils/ids';
 import { useTheme } from '../theme/ThemeContext';
 import { radius, spacing, typography } from '../theme/tokens';
+import CampaignPicker from '../components/CampaignPicker';
 
 const ACTIVITY_TYPES = [
   ['product_sampling', 'Product sampling'],
@@ -64,6 +65,7 @@ export default function ActivationEntryScreen({ navigation }) {
   const [activation, setActivation] = useState(null);
   const [localId, setLocalId] = useState(null);
   const [selectedActivity, setSelectedActivity] = useState(ACTIVITY_TYPES[0][0]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
   const [products, setProducts] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [sampleQuantity, setSampleQuantity] = useState('1');
@@ -98,6 +100,7 @@ export default function ActivationEntryScreen({ navigation }) {
         setLocalId(saved.localId);
         setActivation(saved.payload);
         setSelectedActivity(saved.payload.activityType);
+        setSelectedCampaignId(saved.payload.campaignId || null);
         setFootfallText(String(saved.payload.footfallCount || 0));
         setFloatText(String(saved.payload.floatAmount || 0));
         try {
@@ -152,6 +155,7 @@ export default function ActivationEntryScreen({ navigation }) {
       const id = createLocalId();
       const draft = {
         ...emptyActivation(selectedActivity),
+        campaignId: selectedCampaignId,
         startedAt,
         location: {
           latitude: position.coords.latitude,
@@ -346,6 +350,7 @@ export default function ActivationEntryScreen({ navigation }) {
               colors={colors}
               styles={styles}
             />
+            <CampaignPicker value={selectedCampaignId} onChange={setSelectedCampaignId} />
             <PrimaryButton title="Start activation and GPS" onPress={startActivation} loading={starting} />
           </Card>
           {notice ? <Text style={styles.notice}>{notice}</Text> : null}
@@ -379,6 +384,7 @@ export default function ActivationEntryScreen({ navigation }) {
 
           <Card style={styles.card}>
             <Text style={styles.sectionTitle}>Activation details</Text>
+            <CampaignPicker value={activation.campaignId || null} onChange={(campaignId) => updateField('campaignId', campaignId)} />
             <Text style={styles.label}>ACTIVITY TYPE</Text>
             <ChoiceList values={ACTIVITY_TYPES} selected={activation.activityType} onSelect={(value) => updateField('activityType', value)} colors={colors} styles={styles} />
             <Text style={styles.label}>FOOTFALL / CONSUMERS REACHED</Text>

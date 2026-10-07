@@ -13,6 +13,7 @@ import EmptyState from '../components/EmptyState';
 import PrimaryButton from '../components/PrimaryButton';
 import { useTheme } from '../theme/ThemeContext';
 import { radius, spacing, typography } from '../theme/tokens';
+import CampaignPicker from '../components/CampaignPicker';
 
 export default function OutletAuditScreen({ route, navigation }) {
   const outlet = route.params?.outlet;
@@ -24,6 +25,7 @@ export default function OutletAuditScreen({ route, navigation }) {
   const [compliancePercent, setCompliancePercent] = useState('100');
   const [deviation, setDeviation] = useState('');
   const [notes, setNotes] = useState('');
+  const [campaignId, setCampaignId] = useState(null);
   const [photoUri, setPhotoUri] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingPhoto, setSavingPhoto] = useState(false);
@@ -123,6 +125,7 @@ export default function OutletAuditScreen({ route, navigation }) {
       }).filter((check) => check.shelfQuantity !== undefined || check.backroomQuantity !== undefined || check.lowStock);
       enqueueMerchandisingRecord(createLocalId(), 'audit', {
         outletId: outlet.id,
+        campaignId,
         observedAt: new Date().toISOString(),
         ...(auditLocation ? { location: auditLocation } : {}),
         stockChecks,
@@ -152,6 +155,7 @@ export default function OutletAuditScreen({ route, navigation }) {
         <Text style={styles.subtitle}>Stock availability and shelf compliance</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Card style={styles.card}>
+          <CampaignPicker value={campaignId} onChange={setCampaignId} />
           <Text style={styles.sectionTitle}>Stock check</Text>
           {products.length ? products.map((product) => {
             const values = stock[product.id] || {};

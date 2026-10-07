@@ -70,6 +70,13 @@ export function initDb() {
       payload TEXT NOT NULL,
       cachedAt TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS campaign_catalog (
+      ownerId TEXT NOT NULL,
+      id TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      cachedAt TEXT NOT NULL,
+      PRIMARY KEY (ownerId, id)
+    );
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY NOT NULL,
       value TEXT NOT NULL
