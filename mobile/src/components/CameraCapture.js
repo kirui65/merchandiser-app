@@ -7,7 +7,7 @@ import PrimaryButton from './PrimaryButton';
 import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
-export default function CameraCapture({ onCapture }) {
+export default function CameraCapture({ onCapture, label = 'receipt' }) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [permission, requestPermission] = useCameraPermissions();
@@ -47,7 +47,7 @@ export default function CameraCapture({ onCapture }) {
       setPreview(photo.uri);
       setOpen(false);
     } catch {
-      Alert.alert('Photo not captured', 'Please try taking the receipt photo again.');
+      Alert.alert('Photo not captured', `Please try taking the ${label} photo again.`);
     } finally {
       setCapturing(false);
     }
@@ -62,7 +62,7 @@ export default function CameraCapture({ onCapture }) {
   if (preview) {
     return (
       <Card style={styles.previewCard}>
-        <Image source={{ uri: preview }} style={styles.previewImage} accessibilityLabel="Receipt photo preview" />
+        <Image source={{ uri: preview }} style={styles.previewImage} accessibilityLabel={`${label} photo preview`} />
         <View style={styles.actions}>
           <View style={styles.action}>
             <PrimaryButton
@@ -89,7 +89,7 @@ export default function CameraCapture({ onCapture }) {
       <View style={styles.cameraFrame}>
         <CameraView ref={camera} style={StyleSheet.absoluteFillObject} facing="back" />
         <View style={styles.cameraHeader}>
-          <Text style={styles.cameraLabel}>CAPTURE RECEIPT</Text>
+          <Text style={styles.cameraLabel}>CAPTURE {label.toUpperCase()}</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Close camera"
@@ -103,7 +103,7 @@ export default function CameraCapture({ onCapture }) {
         <View style={styles.cameraControls}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Take receipt photo"
+            accessibilityLabel={`Take ${label} photo`}
             accessibilityState={{ disabled: capturing, busy: capturing }}
             disabled={capturing}
             onPress={capture}

@@ -44,6 +44,16 @@ export function initDb() {
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS pending_merchandising (
+      localId TEXT PRIMARY KEY NOT NULL,
+      recordType TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      syncStatus TEXT NOT NULL DEFAULT 'pending',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      lastError TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS pending_pings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       lat REAL NOT NULL,

@@ -10,6 +10,13 @@ import {
 } from '../offline/activationsQueue';
 import { createActivationSyncManager } from '../offline/activationSyncManager';
 import { createActivation, updateActivation, uploadActivationMedia } from '../api/activations';
+import {
+  getPendingMerchandisingRecords,
+  markMerchandisingFailed,
+  markMerchandisingSynced,
+} from '../offline/merchandisingQueue';
+import { createMerchandisingSyncManager } from '../offline/merchandisingSyncManager';
+import { createMerchandisingRecord, uploadMerchandisingPhoto } from '../api/merchandising';
 import { getPendingSales, markFailed, markSynced } from '../offline/salesQueue';
 import { postSale } from '../api/sales';
 import { createSyncManager } from '../offline/syncManager';
@@ -50,10 +57,21 @@ export function AuthProvider({ children }) {
       })
       : null;
     const stopActivationSync = activationSyncManager?.start();
+    const merchandisingSyncManager = user.role === 'rep'
+      ? createMerchandisingSyncManager({
+        queue: { getPendingMerchandisingRecords, markMerchandisingSynced, markMerchandisingFailed },
+        api: { createRecord: createMerchandisingRecord },
+        uploadPhoto: uploadMerchandisingPhoto,
+        isOnline: isCurrentlyOnline,
+        subscribeToConnectivity,
+      })
+      : null;
+    const stopMerchandisingSync = merchandisingSyncManager?.start();
     return () => {
       stopSalesSync();
       stopGpsSync?.();
       stopActivationSync?.();
+      stopMerchandisingSync?.();
     };
   }, [user]);
 
