@@ -228,6 +228,11 @@ service cloud.firestore {
           resource.data.status == 'pending');
     }
 
+    match /campaigns/{campaignId} {
+      allow read: if isManager();
+      allow write: if isManager();
+    }
+
     match /routes/{routeId} {
       allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
       allow create, update: if (isMerchandiser() || isBrandAmbassador()) &&

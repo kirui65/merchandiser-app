@@ -11,6 +11,7 @@ const SaleCreateSchema = z.object({
   unitPrice: z.number().nonnegative(),
   timestamp: z.string().datetime().or(z.number()), // ISO string or epoch ms, client's local capture time
   photoUrl: z.string().url().nullable().optional(),
+  campaignId: z.string().nullable().optional(),
 });
 
 const SaleSchema = SaleCreateSchema.extend({

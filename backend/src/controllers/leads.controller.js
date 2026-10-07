@@ -5,6 +5,7 @@ const { listTeamDocs } = require('../services/teamScope.service');
 const { ApiError } = require('../middleware/errorHandler');
 const { LeadStatusSchema } = require('../models/lead.model');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
+const { assertCampaignForTeam } = require('../services/campaign.service');
 
 const leadStatuses = LeadStatusSchema.options;
 
@@ -18,10 +19,12 @@ function timestampValue(value) {
 
 async function createLead(req, res, next) {
   try {
+    const teamId = await getActiveTeamIdForUser(req.user.uid);
+    await assertCampaignForTeam(req.body.campaignId, teamId);
     const lead = await createDoc('leads', {
       ...req.body,
       telemarketerId: req.user.uid,
-      teamId: await getActiveTeamIdForUser(req.user.uid),
+      teamId,
       callCount: 0,
       lastCalledAt: null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -93,9 +96,13 @@ async function updateLead(req, res, next) {
     if (!existing) throw new ApiError(404, 'Lead not found');
     if (!scopeCheck(req.user, existing.telemarketerId)) throw new ApiError(403, 'Not authorized to update this lead');
 
+    const teamId = await getActiveTeamIdForUser(req.user.uid);
+    if (Object.prototype.hasOwnProperty.call(req.body, 'campaignId')) {
+      await assertCampaignForTeam(req.body.campaignId, teamId);
+    }
     const lead = await updateDoc('leads', req.params.id, {
       ...req.body,
-      teamId: await getActiveTeamIdForUser(req.user.uid),
+      teamId,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     return res.json({ lead });

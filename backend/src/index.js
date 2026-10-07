@@ -24,6 +24,8 @@ const teamsRoutes = require('./routes/teams.routes');
 const teamLeaderRoutes = require('./routes/teamLeader.routes');
 const broadcastsRoutes = require('./routes/broadcasts.routes');
 const fieldRequestsRoutes = require('./routes/fieldRequests.routes');
+const campaignsRoutes = require('./routes/campaigns.routes');
+const reportsRoutes = require('./routes/reports.routes');
 
 const app = express();
 
@@ -64,6 +66,8 @@ app.use('/api/teams', teamsRoutes);
 app.use('/api/team-leader', teamLeaderRoutes);
 app.use('/api/broadcasts', broadcastsRoutes);
 app.use('/api/field-requests', fieldRequestsRoutes);
+app.use('/api/campaigns', campaignsRoutes);
+app.use('/api/reports', reportsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

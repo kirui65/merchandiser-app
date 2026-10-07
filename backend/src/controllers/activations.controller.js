@@ -6,6 +6,7 @@ const { ActivationStatusSchema } = require('../models/activation.model');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
 const { teamScopeCheck } = require('../middleware/auth.middleware');
 const { listTeamDocs } = require('../services/teamScope.service');
+const { assertCampaignForTeam } = require('../services/campaign.service');
 
 function toDate(value, field) {
   const date = value && typeof value.toDate === 'function'
@@ -54,7 +55,9 @@ async function createActivation(req, res, next) {
     const id = req.activationRequestId;
     const activationRef = id ? db.collection('activations').doc(id) : db.collection('activations').doc();
     assertStorageUrisBelongToUser(req.body, req.user.uid);
-    const stored = toStoredActivation(req.body, req.user.uid, await getActiveTeamIdForUser(req.user.uid));
+    const teamId = await getActiveTeamIdForUser(req.user.uid);
+    await assertCampaignForTeam(req.body.campaignId, teamId);
+    const stored = toStoredActivation(req.body, req.user.uid, teamId);
 
     const result = await db.runTransaction(async (transaction) => {
       const existing = await transaction.get(activationRef);
@@ -165,6 +168,9 @@ async function updateActivation(req, res, next) {
       assertStorageUrisBelongToUser(req.body, req.user.uid);
       const { status = current.status, ...fields } = req.body;
       const teamId = await getActiveTeamIdForUser(req.user.uid);
+      if (Object.prototype.hasOwnProperty.call(fields, 'campaignId')) {
+        await assertCampaignForTeam(fields.campaignId, teamId);
+      }
       const normalized = toStoredActivation({
         ...current,
         ...fields,
@@ -176,7 +182,7 @@ async function updateActivation(req, res, next) {
         surveyResponses: fields.surveyResponses || current.surveyResponses || [],
         expenses: fields.expenses || current.expenses || [],
         samplesDistributed: fields.samplesDistributed || current.samplesDistributed || [],
-      }, current.ambassadorId);
+      }, current.ambassadorId, teamId);
       transaction.update(ref, { ...normalized, status });
       return;
     });

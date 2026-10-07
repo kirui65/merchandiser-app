@@ -4,6 +4,7 @@ const { scopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
 const { listTeamDocs } = require('../services/teamScope.service');
+const { assertCampaignForTeam } = require('../services/campaign.service');
 
 function asTimestamp(value, field) {
   const date = value && typeof value.toDate === 'function' ? value.toDate() : new Date(value);
@@ -40,10 +41,12 @@ async function createMerchandisingAudit(req, res, next) {
     const db = getFirestore();
     const collection = db.collection('merchandisingAudits');
     const ref = req.recordId ? collection.doc(req.recordId) : collection.doc();
+    const teamId = await getActiveTeamIdForUser(req.user.uid);
+    await assertCampaignForTeam(req.body.campaignId, teamId);
     const data = {
       ...req.body,
       merchandiserId: req.user.uid,
-      teamId: await getActiveTeamIdForUser(req.user.uid),
+      teamId,
       observedAt: asTimestamp(req.body.observedAt, 'observedAt'),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
@@ -111,6 +114,9 @@ async function updateMerchandisingAudit(req, res, next) {
       ),
       ...(req.body.observedAt ? { observedAt: asTimestamp(req.body.observedAt, 'observedAt') } : {}),
     };
+    if (Object.prototype.hasOwnProperty.call(req.body, 'campaignId')) {
+      await assertCampaignForTeam(req.body.campaignId, updates.teamId);
+    }
     await ref.update(updates);
     const updated = await ref.get();
     return res.json({ audit: { id: updated.id, ...updated.data() } });
@@ -141,10 +147,12 @@ async function createCompetitorPrice(req, res, next) {
     const db = getFirestore();
     const collection = db.collection('competitorPrices');
     const ref = req.recordId ? collection.doc(req.recordId) : collection.doc();
+    const teamId = await getActiveTeamIdForUser(req.user.uid);
+    await assertCampaignForTeam(req.body.campaignId, teamId);
     const data = {
       ...req.body,
       merchandiserId: req.user.uid,
-      teamId: await getActiveTeamIdForUser(req.user.uid),
+      teamId,
       observedAt: asTimestamp(req.body.observedAt, 'observedAt'),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
@@ -186,6 +194,9 @@ async function updateCompetitorPrice(req, res, next) {
       ),
       ...(req.body.observedAt ? { observedAt: asTimestamp(req.body.observedAt, 'observedAt') } : {}),
     };
+    if (Object.prototype.hasOwnProperty.call(req.body, 'campaignId')) {
+      await assertCampaignForTeam(req.body.campaignId, updates.teamId);
+    }
     await ref.update(updates);
     const updated = await ref.get();
     return res.json({ observation: { id: updated.id, ...updated.data() } });

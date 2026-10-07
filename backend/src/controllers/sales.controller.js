@@ -5,6 +5,7 @@ const { listTeamDocs } = require('../services/teamScope.service');
 const { ApiError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
+const { assertCampaignForTeam } = require('../services/campaign.service');
 
 /**
  * POST /api/sales
@@ -21,8 +22,9 @@ async function createSale(req, res, next) {
       throw new ApiError(403, 'Sales can only be recorded by field representatives');
     }
     const repId = req.user.uid;
-    const { localId, outletId, productId, qty, unitPrice, timestamp, photoUrl } = req.body;
+    const { localId, outletId, productId, qty, unitPrice, timestamp, photoUrl, campaignId } = req.body;
     const teamId = await getActiveTeamIdForUser(repId);
+    await assertCampaignForTeam(campaignId, teamId);
 
     const existing = await findExistingSaleByLocalId(repId, localId);
     if (existing) {
@@ -36,6 +38,7 @@ async function createSale(req, res, next) {
       localId,
       repId,
       teamId,
+      campaignId: campaignId || null,
       outletId,
       productId,
       qty,

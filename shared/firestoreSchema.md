@@ -18,6 +18,10 @@ sync whenever a model changes.
   createdAt: Timestamp
 }
 ```
+The `rep` role string is retained for existing accounts and is presented as
+“Merchandiser” in role-management UI. The five provisionable user types are
+merchandiser (`rep`), brand ambassador, telemarketer, team leader, and
+manager (`manager` remains the admin-equivalent).
 
 ## `outlets`
 ```
@@ -127,6 +131,7 @@ Manager-only audit entries for roster, product, and outlet mutations:
   qty: number,
   unitPrice: number,
   total: number,
+  campaignId?: string | null,
   timestamp: Timestamp,
   photoUrl: string | null,
   syncStatus: 'pending' | 'synced' | 'failed',
@@ -134,6 +139,8 @@ Manager-only audit entries for roster, product, and outlet mutations:
 }
 ```
 `teamId` is resolved server-side from the rep's active team membership.
+When supplied, `campaignId` must reference a campaign assigned to that
+active team. Existing sales without a campaign ID remain unattributed.
 Idempotency: `(repId, localId)` must be unique. A duplicate write with the
 same `localId` from the same rep returns the existing record, not an error.
 
@@ -189,7 +196,7 @@ resolved from the authenticated user's active team membership at write time.
 ```
 Calls are created in the same Firestore transaction that increments the
 lead's `callCount`, sets `lastCalledAt`, and applies any follow-up/status/
-score changes.
+score changes. Their `campaignId` is copied from the associated lead.
 
 ## `activations`
 ```
@@ -319,6 +326,37 @@ The backend resolves `teamId` from the requester's active membership.
 Team leaders may approve/reject requests for their active teams; managers
 may review across teams.
 
+## `campaigns`
+```
+{
+  id: string,
+  clientName: string,
+  name: string,
+  description?: string,
+  regionIds: string[],
+  teamIds: string[],
+  status: 'draft' | 'active' | 'paused' | 'completed' | 'archived',
+  startsAt: Timestamp,
+  endsAt?: Timestamp | null,
+  createdBy: string,
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+Managers (`role === 'manager'`) create, update, and archive campaigns.
+Campaign team assignments are validated against active teams, and assigned
+teams must belong to one of the campaign's assigned regions. When a field
+record includes `campaignId`, the backend verifies the campaign is assigned
+to the writer's server-resolved team. Historical field records without a
+campaign ID remain unattributed rather than being guessed from current
+team assignments. Region filtering in the company report uses each team's
+current `regionId`; historical team-region changes are not snapshotted.
+
+The company report filters each collection using its activity date:
+`sales.timestamp`, `activations.startedAt`, `leads.createdAt`, and
+`merchandisingAudits.observedAt`. Sales from the legacy numeric, ISO-string,
+and Firestore Timestamp date encodings are included.
+
 ## `salesTargets`
 
 One deterministic document per representative and calendar month (`{repId}_{YYYY-MM}`):
@@ -407,6 +445,7 @@ Required composite indexes for telemarketer queries:
 - `broadcasts(teamId ASC, status ASC, publishedAt DESC)`
 - `fieldRequests(teamId ASC, status ASC, createdAt DESC)`
 - `fieldRequests(requesterId ASC, status ASC, createdAt DESC)`
+- `campaigns(status ASC, startsAt DESC)`
 
 The new composites are defined in `firestore/firestore.indexes.json` but
 are not live until a project administrator deploys them with
