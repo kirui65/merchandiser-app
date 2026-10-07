@@ -1,5 +1,5 @@
 const express = require('express');
-const { requireAuth, requireManager } = require('../middleware/auth.middleware');
+const { requireAuth, requireManager, scopeCheck } = require('../middleware/auth.middleware');
 const { validateBody } = require('../middleware/validate.middleware');
 const { OutletSchema, OutletUpdateSchema, OutletStatusSchema } = require('../models/outlet.model');
 const { createDoc, listDocs, getDoc, updateDoc } = require('../services/firestore.service');
@@ -36,6 +36,9 @@ router.get('/:id', async (req, res, next) => {
   try {
     const outlet = await getDoc('outlets', req.params.id);
     if (!outlet) throw new ApiError(404, 'Outlet not found');
+    if (!scopeCheck(req.user, outlet.assignedRepId)) {
+      throw new ApiError(403, 'Not authorized to view this outlet');
+    }
     return res.json({ outlet });
   } catch (err) {
     return next(err);
