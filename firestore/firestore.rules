@@ -27,6 +27,11 @@ service cloud.firestore {
         get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'telemarketer';
     }
 
+    function isBrandAmbassador() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'brand_ambassador';
+    }
+
     function isOwner(repId) {
       return isSignedIn() && request.auth.uid == repId;
     }
@@ -79,6 +84,22 @@ service cloud.firestore {
         (isTelemarketer() &&
           resource.data.telemarketerId == request.auth.uid &&
           request.resource.data.telemarketerId == request.auth.uid);
+      allow delete: if isManager();
+    }
+
+    match /activations/{activationId} {
+      allow read: if isManager() ||
+        (isBrandAmbassador() && resource.data.ambassadorId == request.auth.uid);
+      allow create: if isManager() ||
+        (isBrandAmbassador() &&
+          request.resource.data.ambassadorId == request.auth.uid &&
+          request.resource.data.status in ['draft', 'submitted']);
+      allow update: if isManager() ||
+        (isBrandAmbassador() &&
+          resource.data.ambassadorId == request.auth.uid &&
+          request.resource.data.ambassadorId == request.auth.uid &&
+          resource.data.status == 'draft' &&
+          request.resource.data.status in ['draft', 'submitted']);
       allow delete: if isManager();
     }
 

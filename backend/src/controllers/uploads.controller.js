@@ -1,6 +1,7 @@
 const { randomUUID } = require('crypto');
 const { getStorageBucket } = require('../config/firebase');
 const { ApiError } = require('../middleware/errorHandler');
+const { z } = require('zod');
 
 const ALLOWED_CONTENT_TYPES = {
   'image/jpeg': 'jpg',
@@ -8,6 +9,10 @@ const ALLOWED_CONTENT_TYPES = {
   'image/webp': 'webp',
 };
 const SIGNED_URL_LIFETIME_MS = 10 * 60 * 1000;
+const ActivationMediaUploadSchema = z.object({
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+  mediaId: z.string().uuid(),
+});
 
 /**
  * Creates a short-lived, write-only URL for a receipt image. The object name
@@ -44,4 +49,35 @@ async function createSalePhotoUploadUrl(req, res, next) {
   }
 }
 
-module.exports = { createSalePhotoUploadUrl };
+async function createActivationMediaUploadUrl(req, res, next) {
+  try {
+    if (req.user.role !== 'brand_ambassador') {
+      throw new ApiError(403, 'Brand ambassador role required');
+    }
+    const parsed = ActivationMediaUploadSchema.safeParse(req.body);
+    if (!parsed.success) throw new ApiError(400, 'Activation media must be a JPEG, PNG, or WebP photo with a valid mediaId');
+
+    const { contentType, mediaId } = parsed.data;
+    const extension = ALLOWED_CONTENT_TYPES[contentType];
+    const bucket = getStorageBucket();
+    const objectPath = `activations/${req.user.uid}/${mediaId}.${extension}`;
+    const file = bucket.file(objectPath);
+    const expiresAt = Date.now() + SIGNED_URL_LIFETIME_MS;
+    const [uploadUrl] = await file.getSignedUrl({
+      version: 'v4',
+      action: 'write',
+      expires: expiresAt,
+      contentType,
+    });
+
+    return res.status(201).json({
+      uploadUrl,
+      storageUri: `gs://${bucket.name}/${objectPath}`,
+      expiresAt: new Date(expiresAt).toISOString(),
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { createSalePhotoUploadUrl, createActivationMediaUploadUrl };
