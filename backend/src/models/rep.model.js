@@ -1,12 +1,14 @@
 const { z } = require('zod');
 
+const RepRoleSchema = z.enum(['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader']);
+
 const RepSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1),
   phone: z.string().min(1),
   email: z.string().email(),
   passwordHash: z.string().optional(), // set server-side, never accepted from client input
-  role: z.enum(['rep', 'manager']),
+  role: RepRoleSchema,
   assignedOutletIds: z.array(z.string()).default([]),
   active: z.boolean().default(true),
   createdAt: z.any().optional(),
@@ -18,7 +20,7 @@ const RepCreateSchema = z.object({
   phone: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['rep', 'manager']).default('rep'),
+  role: RepRoleSchema.default('rep'),
   assignedOutletIds: z.array(z.string()).default([]),
 });
 
@@ -26,7 +28,7 @@ const RepUpdateSchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(1),
   email: z.string().email(),
-  role: z.enum(['rep', 'manager']),
+  role: RepRoleSchema,
 });
 
-module.exports = { RepSchema, RepCreateSchema, RepUpdateSchema };
+module.exports = { RepRoleSchema, RepSchema, RepCreateSchema, RepUpdateSchema };
