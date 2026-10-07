@@ -25,9 +25,12 @@ export default function LoginScreen() {
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [slowRequest, setSlowRequest] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const errorAnimation = useRef(new Animated.Value(0)).current;
+  const spinnerAnimation = useRef(new Animated.Value(0)).current;
+  const spinnerRotation = spinnerAnimation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
   useEffect(() => {
     Animated.spring(errorAnimation, {
@@ -37,6 +40,28 @@ export default function LoginScreen() {
       friction: 10,
     }).start();
   }, [error, errorAnimation]);
+
+  useEffect(() => {
+    if (!submitting) {
+      setSlowRequest(false);
+      return undefined;
+    }
+
+    setSlowRequest(false);
+    const timeout = setTimeout(() => setSlowRequest(true), 2000);
+    const animation = Animated.loop(Animated.timing(spinnerAnimation, {
+      toValue: 1,
+      duration: 850,
+      useNativeDriver: true,
+    }));
+    animation.start();
+
+    return () => {
+      clearTimeout(timeout);
+      animation.stop();
+      spinnerAnimation.setValue(0);
+    };
+  }, [submitting, spinnerAnimation]);
 
   async function handleSubmit() {
     setError(null);
@@ -145,10 +170,11 @@ export default function LoginScreen() {
             accessibilityState={{ disabled: submitting, busy: submitting }}
             disabled={submitting}
             onPress={mfaChallenge ? handleVerifyMfa : handleSubmit}
-            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, submitting && styles.buttonDisabled]}
           >
-            {submitting ? <View style={styles.spinner} /> : <Text style={styles.buttonText}>{mfaChallenge ? 'VERIFY CODE' : 'SIGN IN'}</Text>}
+            {submitting ? <Animated.View style={[styles.spinner, { transform: [{ rotate: spinnerRotation }] }]} /> : <Text style={styles.buttonText}>{mfaChallenge ? 'VERIFY CODE' : 'SIGN IN'}</Text>}
           </Pressable>
+          {submitting && slowRequest ? <Text accessibilityLiveRegion="polite" style={styles.connecting}>Connecting…</Text> : null}
           {mfaChallenge && <Pressable accessibilityRole="button" onPress={() => { setMfaChallenge(null); setMfaCode(''); setError(null); }}><Text style={styles.loginBack}>Back to sign in</Text></Pressable>}
         </View>
         <Text style={styles.footer}>Secure access for your field team</Text>
@@ -198,8 +224,10 @@ const createStyles = (colors) => StyleSheet.create({
   errorText: { flex: 1, color: colors.error, fontFamily: typography.fontFamily, fontSize: typography.small, lineHeight: 18 },
   button: { alignItems: 'center', justifyContent: 'center', minHeight: 52, borderRadius: radius.md, backgroundColor: colors.primary, shadowColor: colors.primaryDark, shadowOpacity: 0.22, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
   buttonPressed: { backgroundColor: colors.primaryDark, transform: [{ scale: 0.99 }] },
+  buttonDisabled: { opacity: 0.78 },
   buttonText: { color: colors.white, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.button, fontWeight: '800', letterSpacing: 1 },
-  spinner: { width: 20, height: 20, borderWidth: 2, borderColor: 'rgba(255,255,255,0.45)', borderTopColor: colors.white, borderRadius: 10 },
+  spinner: { width: 22, height: 22, borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.35)', borderTopColor: colors.white, borderRightColor: colors.success, borderRadius: 11 },
+  connecting: { color: colors.muted, fontFamily: typography.fontFamilyMedium, fontSize: typography.small, marginTop: spacing.sm, textAlign: 'center' },
   footer: { color: colors.muted, fontFamily: typography.fontFamily, fontSize: 12, marginTop: spacing.lg, textAlign: 'center' },
   loginBack: { color: colors.primary, fontFamily: typography.fontFamilyBold, fontSize: typography.small, marginTop: spacing.md, textAlign: 'center' },
 });
