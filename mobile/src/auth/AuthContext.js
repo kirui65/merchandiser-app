@@ -27,15 +27,15 @@ export function AuthProvider({ children }) {
       isOnline: isCurrentlyOnline,
       subscribeToConnectivity,
     });
-    const syncManager = createGpsSyncManager({
+    const syncManager = user.role === 'telemarketer' ? null : createGpsSyncManager({
       queue: { getPendingPings, markPingsFailed, markPingsSynced },
       isOnline: () => true,
     });
     const stopSalesSync = salesSyncManager.start();
-    const stopGpsSync = syncManager.start();
+    const stopGpsSync = syncManager?.start();
     return () => {
       stopSalesSync();
-      stopGpsSync();
+      stopGpsSync?.();
     };
   }, [user]);
 
