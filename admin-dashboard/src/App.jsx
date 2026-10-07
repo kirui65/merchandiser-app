@@ -10,6 +10,7 @@ import ReconciliationPage from './pages/ReconciliationPage.jsx';
 import ProductsPage from './pages/ProductsPage.jsx';
 import AuditLogPage from './pages/AuditLogPage.jsx';
 import TerritoriesPage from './pages/TerritoriesPage.jsx';
+import LeadsPage from './pages/LeadsPage.jsx';
 import PasswordChangeDialog from './components/PasswordChangeDialog.jsx';
 
 function RequireAuth({ children }) {
@@ -25,7 +26,7 @@ function Shell({ children }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const closeMenu = () => setMenuOpen(false);
-  const navItems = [['/','Overview'],['/routes','Routes'],['/outlets','Outlets'],['/territories','Territories'],['/reps','Team'],['/products','Products'],['/reconciliation','Reconciliation'],['/audit-log','Audit log']];
+  const navItems = [['/','Overview'],['/routes','Routes'],['/outlets','Outlets'],['/territories','Territories'],['/reps','Team'],['/leads','Leads'],['/products','Products'],['/reconciliation','Reconciliation'],['/audit-log','Audit log']];
   useEffect(() => { const onKeyDown = (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setCommandOpen(true); } if (event.key === 'Escape') setCommandOpen(false); }; window.addEventListener('keydown', onKeyDown); return () => window.removeEventListener('keydown', onKeyDown); }, []);
   const navigation = navItems.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'} onClick={closeMenu}>{label}</NavLink>);
   const commands = navItems.filter(([, label]) => label.toLowerCase().includes(commandQuery.toLowerCase()));
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/products" element={<RequireAuth><Shell><ProductsPage /></Shell></RequireAuth>} />
           <Route path="/outlets" element={<RequireAuth><Shell><OutletsPage /></Shell></RequireAuth>} />
           <Route path="/territories" element={<RequireAuth><Shell><TerritoriesPage /></Shell></RequireAuth>} />
+          <Route path="/leads" element={<RequireAuth><Shell><LeadsPage /></Shell></RequireAuth>} />
           <Route path="/reconciliation" element={<RequireAuth><Shell><ReconciliationPage /></Shell></RequireAuth>} />
           <Route path="/audit-log" element={<RequireAuth><Shell><AuditLogPage /></Shell></RequireAuth>} />
         </Routes>
