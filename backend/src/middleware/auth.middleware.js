@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const env = require('../config/env');
 const { ApiError } = require('./errorHandler');
 const { getDoc } = require('../services/firestore.service');
+const { getFirestore } = require('../config/firebase');
 
 /**
  * Verifies the JWT and attaches { uid, role } to req.user.
@@ -29,6 +30,9 @@ async function requireAuth(req, res, next) {
       return next(new ApiError(401, 'Session is no longer valid'));
     }
     req.user = { uid: payload.uid, role: rep.role };
+    if (rep.role === 'team_leader') {
+      req.user.teamIds = await attachActiveTeamIds(payload.uid);
+    }
     return next();
   } catch (err) {
     return next(err);
@@ -57,4 +61,35 @@ function scopeCheck(user, targetRepId) {
   return user.uid === targetRepId;
 }
 
-module.exports = { requireAuth, requireManager, scopeCheck };
+function teamScopeCheck(user, recordTeamId) {
+  if (user.role === 'manager') return true;
+  return user.role === 'team_leader'
+    && typeof recordTeamId === 'string'
+    && Array.isArray(user.teamIds)
+    && user.teamIds.includes(recordTeamId);
+}
+
+async function attachActiveTeamIds(uid, firestore = getFirestore()) {
+  const teams = await firestore.collection('teams')
+    .where('teamLeaderId', '==', uid)
+    .get();
+  return teams.docs
+    .filter((team) => team.data().active === true)
+    .map((team) => team.id);
+}
+
+function requireTeamLeader(req, res, next) {
+  if (!req.user || req.user.role !== 'team_leader') {
+    return next(new ApiError(403, 'Team leader role required'));
+  }
+  return next();
+}
+
+module.exports = {
+  requireAuth,
+  requireManager,
+  scopeCheck,
+  teamScopeCheck,
+  attachActiveTeamIds,
+  requireTeamLeader,
+};

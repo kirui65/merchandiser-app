@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { getActiveTeamIdForUser } = require('../src/services/teamMembership.service');
+const { attachActiveTeamIds, teamScopeCheck } = require('../src/middleware/auth.middleware');
 
 function fakeFirestore(memberships, teams) {
   return {
@@ -70,4 +71,37 @@ test('rejects ambiguous multiple active team memberships', async () => {
     )),
     { statusCode: 409 },
   );
+});
+
+test('loads active team IDs from current team documents instead of claims', async () => {
+  const firestore = {
+    collection(name) {
+      assert.equal(name, 'teams');
+      return {
+        where(field, operator, value) {
+          assert.deepEqual([field, operator, value], ['teamLeaderId', '==', 'leader-1']);
+          return {
+            async get() {
+              return {
+                docs: [
+                  { id: 'team-active', data: () => ({ active: true }) },
+                  { id: 'team-paused', data: () => ({ active: false }) },
+                ],
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+  assert.deepEqual(await attachActiveTeamIds('leader-1', firestore), ['team-active']);
+});
+
+test('team scoping grants leaders only records with a stored assigned team ID', () => {
+  const leader = { uid: 'leader-1', role: 'team_leader', teamIds: ['team-a'] };
+  assert.equal(teamScopeCheck(leader, 'team-a'), true);
+  assert.equal(teamScopeCheck(leader, 'team-b'), false);
+  assert.equal(teamScopeCheck(leader, null), false);
+  assert.equal(teamScopeCheck({ uid: 'rep-1', role: 'rep', teamIds: ['team-a'] }, 'team-a'), false);
+  assert.equal(teamScopeCheck({ uid: 'manager-1', role: 'manager' }, 'team-b'), true);
 });

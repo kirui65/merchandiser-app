@@ -41,6 +41,51 @@ sync whenever a model changes.
 }
 ```
 
+## `regions`
+```
+{
+  id: string,
+  name: string,
+  countryCode: string,
+  active: boolean,
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+
+## `teams`
+```
+{
+  id: string,
+  name: string,
+  teamLeaderId: string,
+  regionId: string,
+  active: boolean,
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+Only managers can create or manage teams and regions. A team leader's
+`teamIds` are loaded from active team documents on every authenticated API
+request; they are intentionally not stored in JWT claims.
+
+## `teamMemberships`
+```
+{
+  id: string, // deterministic `${teamId}_${repId}`
+  teamId: string,
+  repId: string,
+  status: 'active' | 'ended',
+  startedAt: Timestamp,
+  endedAt?: Timestamp | null,
+  createdAt: Timestamp
+}
+```
+Field users may have one active team membership at a time because field
+records have a singular `teamId`. Membership changes are manager-managed.
+Ending a membership preserves its history; reassignments create/reactivate
+the deterministic membership for the selected team.
+
 ## `auditLog`
 
 Manager-only audit entries for roster, product, and outlet mutations:
@@ -235,6 +280,45 @@ approves them. Approval creates the active `outlets` document and links its
 ID back to the request; rejected/pending submissions never appear in the
 operational outlet list.
 
+## `broadcasts`
+```
+{
+  id: string,
+  teamId: string,
+  senderId: string,
+  title: string,
+  message: string,
+  status: 'draft' | 'published' | 'archived',
+  publishedAt?: Timestamp,
+  expiresAt?: Timestamp | null,
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+Team leaders can create broadcasts only for teams they lead. Team members
+can read published, unexpired broadcasts for their active team.
+
+## `fieldRequests`
+```
+{
+  id: string,
+  requesterId: string,
+  teamId: string,
+  requestType: 'leave' | 'field',
+  startsAt: Timestamp,
+  endsAt?: Timestamp | null,
+  reason?: string,
+  status: 'pending' | 'approved' | 'rejected',
+  reviewedBy?: string | null,
+  reviewedAt?: Timestamp | null,
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+The backend resolves `teamId` from the requester's active membership.
+Team leaders may approve/reject requests for their active teams; managers
+may review across teams.
+
 ## `salesTargets`
 
 One deterministic document per representative and calendar month (`{repId}_{YYYY-MM}`):
@@ -287,6 +371,15 @@ controller:
 - A rep may only read/write `sales` and `routes` docs where `repId` matches
   their own JWT-authenticated `uid`.
 - A manager (`role === 'manager'`) may read everything.
+- A team leader's active `teamIds` are read from Firestore after every JWT
+  verification. Team leaders can only read records with stored `teamId`
+  values belonging to those teams and cannot write field sales, activations,
+  leads, calls, or merchandising records.
+- Team and membership changes take effect on the next request because team
+  IDs are never embedded in JWT claims. Field workers have one active team
+  membership so new records receive an unambiguous server-derived `teamId`.
+- Team leaders can publish broadcasts for their teams and review field
+  requests only for those teams.
 - A telemarketer may only read and update leads/calls owned by their JWT uid.
 - A brand ambassador may only read/write activations owned by their JWT uid.
 - A manager may read all activations and review submitted activations.
@@ -308,6 +401,12 @@ Required composite indexes for telemarketer queries:
 - `competitorPrices(outletId ASC, observedAt DESC)`
 - `competitorPrices(ourProductId ASC, observedAt DESC)`
 - `outletOnboarding(submittedBy ASC, createdAt DESC)`
+- `teamMemberships(teamId ASC, status ASC, startedAt DESC)`
+- `teamMemberships(repId ASC, status ASC, startedAt DESC)`
+- `teams(regionId ASC, active ASC, name ASC)`
+- `broadcasts(teamId ASC, status ASC, publishedAt DESC)`
+- `fieldRequests(teamId ASC, status ASC, createdAt DESC)`
+- `fieldRequests(requesterId ASC, status ASC, createdAt DESC)`
 
 The new composites are defined in `firestore/firestore.indexes.json` but
 are not live until a project administrator deploys them with

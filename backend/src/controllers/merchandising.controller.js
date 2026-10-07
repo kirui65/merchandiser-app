@@ -3,6 +3,7 @@ const { listDocs } = require('../services/firestore.service');
 const { scopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
+const { listTeamDocs } = require('../services/teamScope.service');
 
 function asTimestamp(value, field) {
   const date = value && typeof value.toDate === 'function' ? value.toDate() : new Date(value);
@@ -18,8 +19,8 @@ function assertStorageUrisBelongToUser(uris, uid) {
 }
 
 function requireRepOrManager(req, res, next) {
-  if (!['rep', 'manager'].includes(req.user.role)) {
-    return next(new ApiError(403, 'Merchandiser or manager role required'));
+  if (!['rep', 'manager', 'team_leader'].includes(req.user.role)) {
+    return next(new ApiError(403, 'Merchandiser, team leader, or manager role required'));
   }
   return next();
 }
@@ -64,12 +65,18 @@ async function createMerchandisingAudit(req, res, next) {
 
 async function listMerchandisingAudits(req, res, next) {
   try {
-    const where = req.user.role === 'manager' ? [] : [['merchandiserId', '==', req.user.uid]];
-    let audits = await listDocs('merchandisingAudits', {
-      where,
-      orderBy: { field: 'observedAt', direction: 'desc' },
-    });
+    let audits = req.user.role === 'manager'
+      ? await listDocs('merchandisingAudits', { orderBy: { field: 'observedAt', direction: 'desc' } })
+      : req.user.role === 'team_leader'
+        ? await listTeamDocs('merchandisingAudits', req.user.teamIds || [])
+        : await listDocs('merchandisingAudits', {
+          where: [['merchandiserId', '==', req.user.uid]],
+          orderBy: { field: 'observedAt', direction: 'desc' },
+        });
     if (req.user.role === 'manager' && req.query.merchandiserId) {
+      audits = audits.filter((audit) => audit.merchandiserId === req.query.merchandiserId);
+    }
+    if (req.user.role === 'team_leader' && req.query.merchandiserId) {
       audits = audits.filter((audit) => audit.merchandiserId === req.query.merchandiserId);
     }
     if (req.query.outletId) audits = audits.filter((audit) => audit.outletId === req.query.outletId);
@@ -204,11 +211,14 @@ async function deleteCompetitorPrice(req, res, next) {
 
 async function listCompetitorPrices(req, res, next) {
   try {
-    const where = req.user.role === 'manager' ? [] : [['merchandiserId', '==', req.user.uid]];
-    let observations = await listDocs('competitorPrices', {
-      where,
-      orderBy: { field: 'observedAt', direction: 'desc' },
-    });
+    let observations = req.user.role === 'manager'
+      ? await listDocs('competitorPrices', { orderBy: { field: 'observedAt', direction: 'desc' } })
+      : req.user.role === 'team_leader'
+        ? await listTeamDocs('competitorPrices', req.user.teamIds || [])
+        : await listDocs('competitorPrices', {
+          where: [['merchandiserId', '==', req.user.uid]],
+          orderBy: { field: 'observedAt', direction: 'desc' },
+        });
     if (req.query.outletId) observations = observations.filter((item) => item.outletId === req.query.outletId);
     if (req.query.ourProductId) observations = observations.filter((item) => item.ourProductId === req.query.ourProductId);
     return res.json({ observations });

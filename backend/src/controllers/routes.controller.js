@@ -33,6 +33,9 @@ async function getRouteHistory(req, res, next) {
 
 async function appendPings(req, res, next) {
 	try {
+		if (!['rep', 'brand_ambassador'].includes(req.user.role)) {
+			throw new ApiError(403, 'Route location updates are unavailable for this role');
+		}
 		const date = dateFromRequest(req);
 		const repId = req.user.uid;
 		const routeId = `${repId}_${date}`;

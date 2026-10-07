@@ -1,10 +1,10 @@
 const { createDoc, getDoc, listDocs } = require('../services/firestore.service');
 const { findExistingSaleByLocalId } = require('../utils/dedupe');
-const { scopeCheck } = require('../middleware/auth.middleware');
+const { scopeCheck, teamScopeCheck } = require('../middleware/auth.middleware');
+const { listTeamDocs } = require('../services/teamScope.service');
 const { ApiError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
-const { ApiError } = require('../middleware/errorHandler');
 
 /**
  * POST /api/sales
@@ -60,16 +60,19 @@ async function listSales(req, res, next) {
   try {
     const { role, uid } = req.user;
     const where = [];
-
-    if (role === 'manager') {
+    let sales;
+    if (role === 'team_leader') {
+      sales = await listTeamDocs('sales', req.user.teamIds || []);
+      if (req.query.repId) sales = sales.filter((sale) => sale.repId === req.query.repId);
+    } else if (role === 'manager') {
       if (req.query.repId) where.push(['repId', '==', req.query.repId]);
+      sales = await listDocs('sales', { where, orderBy: { field: 'timestamp', direction: 'desc' } });
     } else {
       where.push(['repId', '==', uid]);
+      sales = await listDocs('sales', { where, orderBy: { field: 'timestamp', direction: 'desc' } });
     }
 
-    if (req.query.outletId) where.push(['outletId', '==', req.query.outletId]);
-
-    const sales = await listDocs('sales', { where, orderBy: { field: 'timestamp', direction: 'desc' } });
+    if (req.query.outletId) sales = sales.filter((sale) => sale.outletId === req.query.outletId);
     return res.json({ sales });
   } catch (err) {
     return next(err);
@@ -84,7 +87,10 @@ async function getSale(req, res, next) {
     const sale = await getDoc('sales', req.params.id);
     if (!sale) throw new ApiError(404, 'Sale not found');
 
-    if (!scopeCheck(req.user, sale.repId)) {
+    const allowed = req.user.role === 'team_leader'
+      ? teamScopeCheck(req.user, sale.teamId)
+      : scopeCheck(req.user, sale.repId);
+    if (!allowed) {
       throw new ApiError(403, 'Not authorized to view this sale');
     }
 

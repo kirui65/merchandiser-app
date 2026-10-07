@@ -25,10 +25,17 @@ const {
 const router = express.Router();
 const RequestIdSchema = z.string().uuid();
 
-router.use(requireAuth, requireRepOrManager);
+router.use(requireAuth);
 
 function requireRep(req, res, next) {
   if (req.user.role !== 'rep') return next(new ApiError(403, 'Merchandiser role required'));
+  return next();
+}
+
+function requireMerchandiserOrManager(req, res, next) {
+  if (!['rep', 'manager'].includes(req.user.role)) {
+    return next(new ApiError(403, 'Team leaders have read-only access to field records'));
+  }
   return next();
 }
 
@@ -42,15 +49,15 @@ function setRequestId(req, res, next) {
   return next();
 }
 
-router.get('/audits', listMerchandisingAudits);
+router.get('/audits', requireRepOrManager, listMerchandisingAudits);
 router.post('/audits', requireRep, setRequestId, validateBody(MerchandisingAuditCreateSchema), createMerchandisingAudit);
-router.patch('/audits/:id', validateBody(MerchandisingAuditUpdateSchema), updateMerchandisingAudit);
-router.delete('/audits/:id', deleteMerchandisingAudit);
-router.get('/competitor-prices', listCompetitorPrices);
+router.patch('/audits/:id', requireMerchandiserOrManager, validateBody(MerchandisingAuditUpdateSchema), updateMerchandisingAudit);
+router.delete('/audits/:id', requireMerchandiserOrManager, deleteMerchandisingAudit);
+router.get('/competitor-prices', requireRepOrManager, listCompetitorPrices);
 router.post('/competitor-prices', requireRep, setRequestId, validateBody(CompetitorPriceCreateSchema), createCompetitorPrice);
-router.patch('/competitor-prices/:id', validateBody(CompetitorPriceUpdateSchema), updateCompetitorPrice);
-router.delete('/competitor-prices/:id', deleteCompetitorPrice);
-router.get('/outlet-onboarding', listOutletOnboarding);
+router.patch('/competitor-prices/:id', requireMerchandiserOrManager, validateBody(CompetitorPriceUpdateSchema), updateCompetitorPrice);
+router.delete('/competitor-prices/:id', requireMerchandiserOrManager, deleteCompetitorPrice);
+router.get('/outlet-onboarding', requireRepOrManager, listOutletOnboarding);
 router.post('/outlet-onboarding', requireRep, setRequestId, validateBody(OutletOnboardingCreateSchema), createOutletOnboarding);
 router.get('/outlet-onboarding/:id/photo-url', getOutletOnboardingPhotoUrl);
 router.patch('/outlet-onboarding/:id/review', requireManager, validateBody(z.object({

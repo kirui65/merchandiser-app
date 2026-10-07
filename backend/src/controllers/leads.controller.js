@@ -1,6 +1,7 @@
 const { getFirestore, admin } = require('../config/firebase');
 const { createDoc, getDoc, listDocs, updateDoc } = require('../services/firestore.service');
-const { scopeCheck } = require('../middleware/auth.middleware');
+const { scopeCheck, teamScopeCheck } = require('../middleware/auth.middleware');
+const { listTeamDocs } = require('../services/teamScope.service');
 const { ApiError } = require('../middleware/errorHandler');
 const { LeadStatusSchema } = require('../models/lead.model');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
@@ -44,6 +45,10 @@ async function listLeads(req, res, next) {
         leads = leads.filter((lead) => lead.telemarketerId === req.query.telemarketerId);
       }
       if (req.query.status) leads = leads.filter((lead) => lead.status === req.query.status);
+    } else if (req.user.role === 'team_leader') {
+      leads = await listTeamDocs('leads', req.user.teamIds || []);
+      if (req.query.status) leads = leads.filter((lead) => lead.status === req.query.status);
+      if (req.query.telemarketerId) leads = leads.filter((lead) => lead.telemarketerId === req.query.telemarketerId);
     } else if (req.query.status) {
       leads = await listDocs('leads', {
         where: [['telemarketerId', '==', req.user.uid], ['status', '==', req.query.status]],
@@ -70,7 +75,12 @@ async function getLead(req, res, next) {
   try {
     const lead = await getDoc('leads', req.params.id);
     if (!lead) throw new ApiError(404, 'Lead not found');
-    if (!scopeCheck(req.user, lead.telemarketerId)) throw new ApiError(403, 'Not authorized to view this lead');
+    const allowed = req.user.role === 'team_leader'
+      ? teamScopeCheck(req.user, lead.teamId)
+      : scopeCheck(req.user, lead.telemarketerId);
+    if (!allowed) {
+      throw new ApiError(403, 'Not authorized to view this lead');
+    }
     return res.json({ lead });
   } catch (err) {
     return next(err);
@@ -100,18 +110,26 @@ async function listCalls(req, res, next) {
     if (req.query.leadId) {
       const lead = await getDoc('leads', req.query.leadId);
       if (!lead) throw new ApiError(404, 'Lead not found');
-      if (!scopeCheck(req.user, lead.telemarketerId)) throw new ApiError(403, 'Not authorized to view this lead');
+      const allowed = req.user.role === 'team_leader'
+        ? teamScopeCheck(req.user, lead.teamId)
+        : scopeCheck(req.user, lead.telemarketerId);
+      if (!allowed) {
+        throw new ApiError(403, 'Not authorized to view this lead');
+      }
       where.push(['leadId', '==', req.query.leadId]);
     } else if (req.user.role !== 'manager') {
-      where.push(['telemarketerId', '==', req.user.uid]);
+      if (req.user.role === 'team_leader') where.push(['teamId', 'in', req.user.teamIds || []]);
+      else where.push(['telemarketerId', '==', req.user.uid]);
     } else if (req.query.telemarketerId) {
       where.push(['telemarketerId', '==', req.query.telemarketerId]);
     }
 
-    const calls = await listDocs('calls', {
-      where,
-      orderBy: { field: 'startedAt', direction: 'desc' },
-    });
+    let calls = req.user.role === 'team_leader' && !req.query.leadId
+      ? await listTeamDocs('calls', req.user.teamIds || [])
+      : await listDocs('calls', { where, orderBy: { field: 'startedAt', direction: 'desc' } });
+    if (req.user.role === 'team_leader') {
+      calls = calls.filter((call) => teamScopeCheck(req.user, call.teamId));
+    }
     return res.json({ calls });
   } catch (err) {
     return next(err);

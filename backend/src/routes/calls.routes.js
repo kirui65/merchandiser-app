@@ -13,7 +13,7 @@ const router = express.Router();
 router.use(requireAuth);
 
 function requireTelemarketerOrManager(req, res, next) {
-  if (!['telemarketer', 'manager'].includes(req.user.role)) {
+  if (!['telemarketer', 'manager', 'team_leader'].includes(req.user.role)) {
     return next(new ApiError(403, 'Telemarketer or manager role required'));
   }
   return next();

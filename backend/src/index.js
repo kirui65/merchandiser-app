@@ -20,6 +20,10 @@ const leadsRoutes = require('./routes/leads.routes');
 const callsRoutes = require('./routes/calls.routes');
 const activationsRoutes = require('./routes/activations.routes');
 const merchandisingRoutes = require('./routes/merchandising.routes');
+const teamsRoutes = require('./routes/teams.routes');
+const teamLeaderRoutes = require('./routes/teamLeader.routes');
+const broadcastsRoutes = require('./routes/broadcasts.routes');
+const fieldRequestsRoutes = require('./routes/fieldRequests.routes');
 
 const app = express();
 
@@ -56,6 +60,10 @@ app.use('/api/leads', leadsRoutes);
 app.use('/api/calls', callsRoutes);
 app.use('/api/activations', activationsRoutes);
 app.use('/api/merchandising', merchandisingRoutes);
+app.use('/api/teams', teamsRoutes);
+app.use('/api/team-leader', teamLeaderRoutes);
+app.use('/api/broadcasts', broadcastsRoutes);
+app.use('/api/field-requests', fieldRequestsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

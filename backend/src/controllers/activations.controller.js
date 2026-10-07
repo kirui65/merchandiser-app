@@ -4,6 +4,8 @@ const { scopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
 const { ActivationStatusSchema } = require('../models/activation.model');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
+const { teamScopeCheck } = require('../middleware/auth.middleware');
+const { listTeamDocs } = require('../services/teamScope.service');
 
 function toDate(value, field) {
   const date = value && typeof value.toDate === 'function'
@@ -84,14 +86,21 @@ async function listActivations(req, res, next) {
     if (req.query.status && !ActivationStatusSchema.safeParse(req.query.status).success) {
       throw new ApiError(400, 'Invalid activation status filter');
     }
-    const where = req.user.role === 'manager'
-      ? []
-      : [['ambassadorId', '==', req.user.uid]];
-    let activations = await listDocs('activations', {
-      where,
-      orderBy: { field: 'startedAt', direction: 'desc' },
-    });
+    let activations;
+    if (req.user.role === 'manager') {
+      activations = await listDocs('activations', { orderBy: { field: 'startedAt', direction: 'desc' } });
+    } else if (req.user.role === 'team_leader') {
+      activations = await listTeamDocs('activations', req.user.teamIds || []);
+    } else {
+      activations = await listDocs('activations', {
+        where: [['ambassadorId', '==', req.user.uid]],
+        orderBy: { field: 'startedAt', direction: 'desc' },
+      });
+    }
     if (req.query.ambassadorId && req.user.role === 'manager') {
+      activations = activations.filter((item) => item.ambassadorId === req.query.ambassadorId);
+    }
+    if (req.user.role === 'team_leader' && req.query.ambassadorId) {
       activations = activations.filter((item) => item.ambassadorId === req.query.ambassadorId);
     }
     if (req.query.status) activations = activations.filter((item) => item.status === req.query.status);
@@ -120,6 +129,9 @@ function timestampMillis(value) {
 
 async function updateActivation(req, res, next) {
   try {
+    if (req.user.role === 'team_leader') {
+      throw new ApiError(403, 'Team leaders have read-only access to activation records');
+    }
     const db = getFirestore();
     const ref = db.collection('activations').doc(req.params.id);
     await db.runTransaction(async (transaction) => {

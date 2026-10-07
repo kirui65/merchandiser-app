@@ -37,8 +37,28 @@ service cloud.firestore {
         get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'rep';
     }
 
+    function isTeamLeader() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/reps/$(request.auth.uid)).data.role == 'team_leader';
+    }
+
     function isOwner(repId) {
       return isSignedIn() && request.auth.uid == repId;
+    }
+
+    function isTeamLeaderFor(teamId) {
+      return teamId is string &&
+        isTeamLeader() &&
+        get(/databases/$(database)/documents/teams/$(teamId)).data.teamLeaderId == request.auth.uid &&
+        get(/databases/$(database)/documents/teams/$(teamId)).data.active == true;
+    }
+
+    function isActiveTeamMember(teamId) {
+      return teamId is string &&
+        isSignedIn() &&
+        get(/databases/$(database)/documents/teams/$(teamId)).data.active == true &&
+        exists(/databases/$(database)/documents/teamMemberships/$(teamId + '_' + request.auth.uid)) &&
+        get(/databases/$(database)/documents/teamMemberships/$(teamId + '_' + request.auth.uid)).data.status == 'active';
     }
 
     match /reps/{repId} {
@@ -61,16 +81,40 @@ service cloud.firestore {
       allow write: if isManager();
     }
 
+    match /regions/{regionId} {
+      allow read: if isSignedIn();
+      allow write: if isManager();
+    }
+
+    match /teams/{teamId} {
+      allow read: if isManager() || isTeamLeaderFor(teamId) || isActiveTeamMember(teamId);
+      allow write: if isManager();
+    }
+
+    match /teamMemberships/{membershipId} {
+      allow read: if isManager() ||
+        (isSignedIn() && resource.data.repId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
+      allow write: if isManager();
+    }
+
     match /sales/{saleId} {
-      allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.repId == request.auth.uid;
-      allow update: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
+      allow read: if isManager() ||
+        (isSignedIn() && resource.data.repId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
+      allow create: if isMerchandiser() &&
+        request.resource.data.repId == request.auth.uid &&
+        (request.resource.data.get('teamId', null) == null ||
+          isActiveTeamMember(request.resource.data.get('teamId', null)));
+      allow update: if isManager() ||
+        (isMerchandiser() && resource.data.repId == request.auth.uid);
       allow delete: if isManager();
     }
 
     match /leads/{leadId} {
       allow read: if isManager() ||
-        (isTelemarketer() && resource.data.telemarketerId == request.auth.uid);
+        (isTelemarketer() && resource.data.telemarketerId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
       allow create: if isManager() ||
         (isTelemarketer() && request.resource.data.telemarketerId == request.auth.uid);
       allow update: if isManager() ||
@@ -82,7 +126,8 @@ service cloud.firestore {
 
     match /calls/{callId} {
       allow read: if isManager() ||
-        (isTelemarketer() && resource.data.telemarketerId == request.auth.uid);
+        (isTelemarketer() && resource.data.telemarketerId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
       allow create: if isManager() ||
         (isTelemarketer() && request.resource.data.telemarketerId == request.auth.uid);
       allow update: if isManager() ||
@@ -94,7 +139,8 @@ service cloud.firestore {
 
     match /activations/{activationId} {
       allow read: if isManager() ||
-        (isBrandAmbassador() && resource.data.ambassadorId == request.auth.uid);
+        (isBrandAmbassador() && resource.data.ambassadorId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
       allow create: if isManager() ||
         (isBrandAmbassador() &&
           request.resource.data.ambassadorId == request.auth.uid &&
@@ -110,7 +156,8 @@ service cloud.firestore {
 
     match /merchandisingAudits/{auditId} {
       allow read: if isManager() ||
-        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid);
+        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
       allow create: if isMerchandiser() &&
         request.resource.data.merchandiserId == request.auth.uid;
       allow update: if isManager() ||
@@ -123,7 +170,8 @@ service cloud.firestore {
 
     match /competitorPrices/{observationId} {
       allow read: if isManager() ||
-        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid);
+        (isMerchandiser() && resource.data.merchandiserId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
       allow create: if isMerchandiser() &&
         request.resource.data.merchandiserId == request.auth.uid;
       allow update: if isManager() ||
@@ -144,9 +192,46 @@ service cloud.firestore {
       allow delete: if isManager();
     }
 
+    match /broadcasts/{broadcastId} {
+      allow read: if isManager() ||
+        isTeamLeaderFor(resource.data.get('teamId', null)) ||
+        (isActiveTeamMember(resource.data.get('teamId', null)) && resource.data.status == 'published');
+      allow create: if isManager() ||
+        (isTeamLeaderFor(request.resource.data.teamId) &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.status == 'draft');
+      allow update: if isManager() ||
+        (isTeamLeaderFor(resource.data.get('teamId', null)) &&
+          resource.data.senderId == request.auth.uid &&
+          request.resource.data.teamId == resource.data.teamId &&
+          request.resource.data.senderId == request.auth.uid);
+      allow delete: if isManager() ||
+        (isTeamLeaderFor(resource.data.get('teamId', null)) && resource.data.senderId == request.auth.uid);
+    }
+
+    match /fieldRequests/{requestId} {
+      allow read: if isManager() ||
+        (isSignedIn() && resource.data.requesterId == request.auth.uid) ||
+        isTeamLeaderFor(resource.data.get('teamId', null));
+      allow create: if isSignedIn() &&
+        request.resource.data.requesterId == request.auth.uid &&
+        isActiveTeamMember(request.resource.data.teamId) &&
+        request.resource.data.status == 'pending';
+      allow update: if isManager() ||
+        (isTeamLeaderFor(resource.data.get('teamId', null)) &&
+          resource.data.status == 'pending' &&
+          request.resource.data.teamId == resource.data.teamId &&
+          request.resource.data.requesterId == resource.data.requesterId);
+      allow delete: if isManager() ||
+        (isSignedIn() &&
+          resource.data.requesterId == request.auth.uid &&
+          resource.data.status == 'pending');
+    }
+
     match /routes/{routeId} {
       allow read: if isManager() || (isSignedIn() && resource.data.repId == request.auth.uid);
-      allow create, update: if isSignedIn() && request.resource.data.repId == request.auth.uid;
+      allow create, update: if (isMerchandiser() || isBrandAmbassador()) &&
+        request.resource.data.repId == request.auth.uid;
       allow delete: if isManager();
     }
 

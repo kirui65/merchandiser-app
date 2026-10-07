@@ -19,7 +19,7 @@ const idempotencyKeySchema = z.string().uuid();
 router.use(requireAuth);
 
 function requireAmbassadorOrManager(req, res, next) {
-  if (!['brand_ambassador', 'manager'].includes(req.user.role)) {
+  if (!['brand_ambassador', 'manager', 'team_leader'].includes(req.user.role)) {
     return next(new ApiError(403, 'Brand ambassador or manager role required'));
   }
   return next();
