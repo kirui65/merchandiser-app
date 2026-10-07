@@ -120,11 +120,16 @@ async function createCall(req, res, next) {
   try {
     const db = getFirestore();
     const leadRef = db.collection('leads').doc(req.params.leadId);
-    const callRef = db.collection('calls').doc();
+    const callRef = req.callRequestId
+      ? db.collection('calls').doc(req.callRequestId)
+      : db.collection('calls').doc();
     const callData = req.body;
 
-    await db.runTransaction(async (transaction) => {
-      const leadSnapshot = await transaction.get(leadRef);
+    const result = await db.runTransaction(async (transaction) => {
+      const [leadSnapshot, existingCallSnapshot] = await Promise.all([
+        transaction.get(leadRef),
+        transaction.get(callRef),
+      ]);
       if (!leadSnapshot.exists) throw new ApiError(404, 'Lead not found');
 
       const lead = { id: leadSnapshot.id, ...leadSnapshot.data() };
@@ -132,6 +137,13 @@ async function createCall(req, res, next) {
         throw new ApiError(403, 'Not authorized to log a call for this lead');
       }
       if (req.user.role !== 'telemarketer') throw new ApiError(403, 'Telemarketer role required');
+      if (existingCallSnapshot.exists) {
+        const existingCall = existingCallSnapshot.data();
+        if (existingCall.leadId !== lead.id || existingCall.telemarketerId !== req.user.uid) {
+          throw new ApiError(409, 'Idempotency key has already been used');
+        }
+        return { duplicate: true };
+      }
 
       const calledAt = callData.endedAt ?? callData.startedAt;
       const call = {
@@ -155,10 +167,14 @@ async function createCall(req, res, next) {
 
       transaction.create(callRef, call);
       transaction.update(leadRef, leadUpdate);
+      return { duplicate: false };
     });
 
     const callSnapshot = await callRef.get();
-    return res.status(201).json({ call: { id: callSnapshot.id, ...callSnapshot.data() } });
+    return res.status(result.duplicate ? 200 : 201).json({
+      call: { id: callSnapshot.id, ...callSnapshot.data() },
+      duplicate: result.duplicate,
+    });
   } catch (err) {
     return next(err);
   }
