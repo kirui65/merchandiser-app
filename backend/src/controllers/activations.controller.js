@@ -3,6 +3,7 @@ const { listDocs } = require('../services/firestore.service');
 const { scopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
 const { ActivationStatusSchema } = require('../models/activation.model');
+const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
 
 function toDate(value, field) {
   const date = value && typeof value.toDate === 'function'
@@ -12,14 +13,14 @@ function toDate(value, field) {
   return admin.firestore.Timestamp.fromDate(date);
 }
 
-function toStoredActivation(input, ambassadorId) {
+function toStoredActivation(input, ambassadorId, teamId) {
   const location = new admin.firestore.GeoPoint(input.location.latitude, input.location.longitude);
   const activationFields = { ...input };
   delete activationFields.id;
   return {
     ...activationFields,
     ambassadorId,
-    teamId: input.teamId ?? null,
+    teamId,
     campaignId: input.campaignId ?? null,
     location,
     startedAt: toDate(input.startedAt, 'startedAt'),
@@ -51,7 +52,7 @@ async function createActivation(req, res, next) {
     const id = req.activationRequestId;
     const activationRef = id ? db.collection('activations').doc(id) : db.collection('activations').doc();
     assertStorageUrisBelongToUser(req.body, req.user.uid);
-    const stored = toStoredActivation(req.body, req.user.uid);
+    const stored = toStoredActivation(req.body, req.user.uid, await getActiveTeamIdForUser(req.user.uid));
 
     const result = await db.runTransaction(async (transaction) => {
       const existing = await transaction.get(activationRef);
@@ -151,9 +152,11 @@ async function updateActivation(req, res, next) {
       }
       assertStorageUrisBelongToUser(req.body, req.user.uid);
       const { status = current.status, ...fields } = req.body;
+      const teamId = await getActiveTeamIdForUser(req.user.uid);
       const normalized = toStoredActivation({
         ...current,
         ...fields,
+        teamId,
         status,
         location: fields.location || current.location,
         startedAt: fields.startedAt || current.startedAt,

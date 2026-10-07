@@ -76,6 +76,7 @@ Manager-only audit entries for roster, product, and outlet mutations:
   id: string,
   localId: string,        // client-generated UUID, idempotency key
   repId: string,
+  teamId: string | null,
   outletId: string,
   productId: string,
   qty: number,
@@ -87,6 +88,7 @@ Manager-only audit entries for roster, product, and outlet mutations:
   createdAt: Timestamp
 }
 ```
+`teamId` is resolved server-side from the rep's active team membership.
 Idempotency: `(repId, localId)` must be unique. A duplicate write with the
 same `localId` from the same rep returns the existing record, not an error.
 
@@ -113,8 +115,13 @@ same `localId` from the same rep returns the existing record, not an error.
   updatedAt: Timestamp
 }
 ```
+`teamId` is resolved by the backend from the submitter's current active
+`teamMemberships` record and active team; values supplied by clients are
+never trusted. If a user has no active team, the record stores `null`. If a
+user has multiple active teams, field writes are rejected until membership
+is corrected.
 `telemarketerId` is always taken from the authenticated user. `teamId` is
-stored as `null` until team membership scoping is introduced.
+resolved from the authenticated user's active team membership at write time.
 
 ## `calls`
 ```

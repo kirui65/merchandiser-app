@@ -3,6 +3,8 @@ const { findExistingSaleByLocalId } = require('../utils/dedupe');
 const { scopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
 const logger = require('../utils/logger');
+const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
+const { ApiError } = require('../middleware/errorHandler');
 
 /**
  * POST /api/sales
@@ -15,8 +17,12 @@ const logger = require('../utils/logger');
  */
 async function createSale(req, res, next) {
   try {
+    if (!['rep', 'manager'].includes(req.user.role)) {
+      throw new ApiError(403, 'Sales can only be recorded by field representatives');
+    }
     const repId = req.user.uid;
     const { localId, outletId, productId, qty, unitPrice, timestamp, photoUrl } = req.body;
+    const teamId = await getActiveTeamIdForUser(repId);
 
     const existing = await findExistingSaleByLocalId(repId, localId);
     if (existing) {
@@ -29,6 +35,7 @@ async function createSale(req, res, next) {
     const sale = await createDoc('sales', {
       localId,
       repId,
+      teamId,
       outletId,
       productId,
       qty,

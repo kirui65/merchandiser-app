@@ -2,6 +2,7 @@ const { getFirestore, getStorageBucket, admin } = require('../config/firebase');
 const { listDocs } = require('../services/firestore.service');
 const { scopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
+const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
 
 function asTimestamp(value, field) {
   const date = value && typeof value.toDate === 'function' ? value.toDate() : new Date(value);
@@ -41,7 +42,7 @@ async function createMerchandisingAudit(req, res, next) {
     const data = {
       ...req.body,
       merchandiserId: req.user.uid,
-      teamId: null,
+      teamId: await getActiveTeamIdForUser(req.user.uid),
       observedAt: asTimestamp(req.body.observedAt, 'observedAt'),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
@@ -98,6 +99,9 @@ async function updateMerchandisingAudit(req, res, next) {
     }
     const updates = {
       ...req.body,
+      teamId: await getActiveTeamIdForUser(
+        req.user.role === 'manager' ? existing.merchandiserId : req.user.uid,
+      ),
       ...(req.body.observedAt ? { observedAt: asTimestamp(req.body.observedAt, 'observedAt') } : {}),
     };
     await ref.update(updates);
@@ -133,7 +137,7 @@ async function createCompetitorPrice(req, res, next) {
     const data = {
       ...req.body,
       merchandiserId: req.user.uid,
-      teamId: null,
+      teamId: await getActiveTeamIdForUser(req.user.uid),
       observedAt: asTimestamp(req.body.observedAt, 'observedAt'),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
@@ -170,6 +174,9 @@ async function updateCompetitorPrice(req, res, next) {
     }
     const updates = {
       ...req.body,
+      teamId: await getActiveTeamIdForUser(
+        req.user.role === 'manager' ? existing.merchandiserId : req.user.uid,
+      ),
       ...(req.body.observedAt ? { observedAt: asTimestamp(req.body.observedAt, 'observedAt') } : {}),
     };
     await ref.update(updates);

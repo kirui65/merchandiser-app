@@ -3,6 +3,7 @@ const { createDoc, getDoc, listDocs, updateDoc } = require('../services/firestor
 const { scopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
 const { LeadStatusSchema } = require('../models/lead.model');
+const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
 
 const leadStatuses = LeadStatusSchema.options;
 
@@ -19,7 +20,7 @@ async function createLead(req, res, next) {
     const lead = await createDoc('leads', {
       ...req.body,
       telemarketerId: req.user.uid,
-      teamId: null,
+      teamId: await getActiveTeamIdForUser(req.user.uid),
       callCount: 0,
       lastCalledAt: null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -84,6 +85,7 @@ async function updateLead(req, res, next) {
 
     const lead = await updateDoc('leads', req.params.id, {
       ...req.body,
+      teamId: await getActiveTeamIdForUser(req.user.uid),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     return res.json({ lead });
@@ -150,7 +152,7 @@ async function createCall(req, res, next) {
         ...callData,
         leadId: lead.id,
         telemarketerId: lead.telemarketerId,
-        teamId: lead.teamId ?? null,
+        teamId: await getActiveTeamIdForUser(req.user.uid),
         ...(lead.campaignId ? { campaignId: lead.campaignId } : {}),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
