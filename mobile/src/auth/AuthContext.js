@@ -88,8 +88,8 @@ export function AuthProvider({ children }) {
     })().catch(() => setLoading(false));
   }, []);
 
-  async function signIn(email, password) {
-    const loggedInUser = await apiLogin(email, password);
+  async function signIn(email, password, role) {
+    const loggedInUser = await apiLogin(email, password, role);
     if (loggedInUser.mfaRequired) return loggedInUser;
     setUser(loggedInUser);
     return loggedInUser;

@@ -1,10 +1,9 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import ActivationEntryScreen from '../screens/ActivationEntryScreen';
-import ActivationListScreen from '../screens/ActivationListScreen';
+import AdminHomeScreen from '../screens/AdminHomeScreen';
 import RoleMoreScreen from '../screens/RoleMoreScreen';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/tokens';
@@ -12,7 +11,7 @@ import { typography } from '../theme/tokens';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function ActivationStack() {
+function ScreenStack({ component: Component, title }) {
   const { colors } = useTheme();
   return (
     <Stack.Navigator screenOptions={{
@@ -21,13 +20,15 @@ function ActivationStack() {
       headerTitleStyle: styles.headerTitle,
       contentStyle: { backgroundColor: colors.background },
     }}>
-      <Stack.Screen name="ActivationList" component={ActivationListScreen} options={{ title: 'Activations' }} />
-      <Stack.Screen name="ActivationEntry" component={ActivationEntryScreen} options={{ title: 'Field activation' }} />
+      <Stack.Screen name={title} component={Component} options={{ title }} />
     </Stack.Navigator>
   );
 }
 
-export default function BrandAmbassadorNavigator() {
+function OverviewStack() { return <ScreenStack component={AdminHomeScreen} title="Company overview" />; }
+function MoreStack() { return <ScreenStack component={RoleMoreScreen} title="More" />; }
+
+export default function AdminNavigator() {
   const { colors } = useTheme();
   return (
     <Tab.Navigator screenOptions={({ route }) => ({
@@ -37,21 +38,11 @@ export default function BrandAmbassadorNavigator() {
       tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
       tabBarLabelStyle: styles.tabLabel,
       tabBarIcon: ({ color, size }) => (
-        <Ionicons name={route.name === 'ActivationsTab' ? 'megaphone-outline' : 'person-circle-outline'} color={color} size={size} />
+        <Ionicons name={route.name === 'Overview' ? 'grid-outline' : 'menu-outline'} color={color} size={size} />
       ),
     })}>
-      <Tab.Screen name="ActivationsTab" component={ActivationStack} options={{ title: 'Activations' }} />
-      <Tab.Screen
-        name="Account"
-        component={RoleMoreScreen}
-        options={{
-          title: 'Account',
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.ink,
-          headerTitleStyle: styles.headerTitle,
-        }}
-      />
+      <Tab.Screen name="Overview" component={OverviewStack} options={{ title: 'Overview' }} />
+      <Tab.Screen name="More" component={MoreStack} options={{ title: 'More' }} />
     </Tab.Navigator>
   );
 }

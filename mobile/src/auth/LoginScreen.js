@@ -14,9 +14,17 @@ import {
 import { useAuth } from './AuthContext';
 import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
-import { hasStoredAuthToken, getStoredUser } from '../api/auth';
+import { hasStoredAuthToken, getStoredUser, getLastSelectedRole, rememberSelectedRole } from '../api/auth';
 import { getBiometricUnlockLabel, isBiometricUnlockEnabled } from './biometric';
 import { Ionicons } from '@expo/vector-icons';
+
+const LOGIN_ROLES = [
+  { value: 'merchandiser', label: 'Merchandiser' },
+  { value: 'brand_ambassador', label: 'Brand Ambassador' },
+  { value: 'telemarketer', label: 'Telemarketer' },
+  { value: 'team_leader', label: 'Team Leader' },
+  { value: 'admin', label: 'Admin' },
+];
 
 export default function LoginScreen() {
   const { signIn, verifyMfa, unlockWithBiometric } = useAuth();
@@ -24,6 +32,7 @@ export default function LoginScreen() {
   const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState('merchandiser');
   const [mfaChallenge, setMfaChallenge] = useState(null);
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState(null);
@@ -81,12 +90,25 @@ export default function LoginScreen() {
     return () => { mounted = false; };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    getLastSelectedRole()
+      .then((role) => {
+        if (mounted && LOGIN_ROLES.some((item) => item.value === role)) setSelectedRole(role);
+      })
+      .catch((storageError) => console.warn('Could not load the last selected sign-in role:', storageError));
+    return () => { mounted = false; };
+  }, []);
+
   async function handleSubmit() {
     setError(null);
     setSubmitting(true);
     try {
-      const result = await signIn(email, password);
+      const result = await signIn(email, password, selectedRole);
       if (result.mfaRequired) { setMfaChallenge(result.challenge); setPassword(''); return; }
+      rememberSelectedRole(selectedRole).catch((storageError) => {
+        console.warn('Could not save the last selected sign-in role:', storageError);
+      });
     } catch (err) {
       setError(
         err?.response?.data?.error?.message
@@ -143,6 +165,29 @@ export default function LoginScreen() {
               {authenticatingBiometric ? <Animated.View style={[styles.spinner, styles.biometricSpinner, { transform: [{ rotate: spinnerRotation }] }]} /> : <Ionicons name={biometricLabel.includes('face') ? 'scan-outline' : 'finger-print-outline'} size={23} color={colors.white} />}
               <Text style={styles.biometricButtonText}>SIGN IN WITH {biometricLabel.toUpperCase()}</Text>
             </Pressable>
+          ) : null}
+
+          {!mfaChallenge ? (
+            <View style={styles.roleGroup}>
+              <Text style={styles.label}>Choose your role</Text>
+              <View style={styles.roleChips}>
+                {LOGIN_ROLES.map((role) => {
+                  const selected = selectedRole === role.value;
+                  return (
+                    <Pressable
+                      key={role.value}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: selected, disabled: busy }}
+                      disabled={busy}
+                      onPress={() => { setSelectedRole(role.value); setError(null); }}
+                      style={[styles.roleChip, selected && styles.roleChipSelected]}
+                    >
+                      <Text style={[styles.roleChipText, selected && styles.roleChipTextSelected]}>{role.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
           ) : null}
 
           {mfaChallenge ? <View style={styles.fieldGroup}>
@@ -255,6 +300,12 @@ const createStyles = (colors) => StyleSheet.create({
     elevation: 4,
   },
   fieldGroup: { marginBottom: spacing.md },
+  roleGroup: { marginBottom: spacing.md },
+  roleChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  roleChip: { minHeight: 38, justifyContent: 'center', paddingHorizontal: spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, backgroundColor: colors.surface },
+  roleChipSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  roleChipText: { color: colors.muted, fontFamily: typography.fontFamilySemiBold, fontSize: 11, fontWeight: '600' },
+  roleChipTextSelected: { color: colors.primary, fontFamily: typography.fontFamilyExtraBold, fontWeight: '800' },
   label: { color: colors.ink, fontFamily: typography.fontFamilyBold, fontSize: typography.small, fontWeight: '700', marginBottom: spacing.xs },
   inputShell: { flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface },
   inputShellFocused: { borderColor: colors.primary, backgroundColor: colors.white },

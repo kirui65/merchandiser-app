@@ -1,12 +1,22 @@
 import client from './client';
 import * as SecureStore from 'expo-secure-store';
 
-export async function login(email, password) {
-  const { data } = await client.post('/auth/login', { email, password });
+const LAST_SELECTED_ROLE_KEY = 'lastSelectedLoginRole';
+
+export async function login(email, password, role) {
+  const { data } = await client.post('/auth/login', { email, password, role });
   if (data.mfaRequired) return data;
   await SecureStore.setItemAsync('authToken', data.token);
   await SecureStore.setItemAsync('authUser', JSON.stringify(data.user));
   return data.user;
+}
+
+export async function getLastSelectedRole() {
+  return SecureStore.getItemAsync(LAST_SELECTED_ROLE_KEY);
+}
+
+export async function rememberSelectedRole(role) {
+  await SecureStore.setItemAsync(LAST_SELECTED_ROLE_KEY, role);
 }
 
 export async function verifyMfaLogin(challenge, code) {

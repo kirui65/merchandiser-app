@@ -8,7 +8,7 @@ import TeamMapScreen from '../screens/TeamMapScreen';
 import TeamLeaderboardScreen from '../screens/TeamLeaderboardScreen';
 import TeamBroadcastsScreen from '../screens/TeamBroadcastsScreen';
 import FieldRequestApprovalsScreen from '../screens/FieldRequestApprovalsScreen';
-import TeamLeaderAccountScreen from '../screens/TeamLeaderAccountScreen';
+import RoleMoreScreen from '../screens/RoleMoreScreen';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/tokens';
 
@@ -34,7 +34,7 @@ function MapStack() { return <ScreenStack component={TeamMapScreen} title="Live 
 function LeaderboardStack() { return <ScreenStack component={TeamLeaderboardScreen} title="Leaderboard" />; }
 function BroadcastsStack() { return <ScreenStack component={TeamBroadcastsScreen} title="Broadcasts" />; }
 function RequestsStack() { return <ScreenStack component={FieldRequestApprovalsScreen} title="Field requests" />; }
-function AccountStack() { return <ScreenStack component={TeamLeaderAccountScreen} title="Account" />; }
+function AccountStack() { return <ScreenStack component={RoleMoreScreen} title="More" />; }
 
 const icons = {
   Overview: 'grid-outline',
@@ -42,7 +42,7 @@ const icons = {
   Leaderboard: 'trophy-outline',
   Broadcasts: 'megaphone-outline',
   Requests: 'checkmark-done-outline',
-  Account: 'person-circle-outline',
+  Account: 'menu-outline',
 };
 
 export default function TeamLeaderNavigator() {

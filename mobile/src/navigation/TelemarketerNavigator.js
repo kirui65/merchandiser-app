@@ -6,11 +6,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CallHistoryScreen from '../screens/CallHistoryScreen';
 import LeadDetailScreen from '../screens/LeadDetailScreen';
 import LeadListScreen from '../screens/LeadListScreen';
+import RoleMoreScreen from '../screens/RoleMoreScreen';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/tokens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const icons = { LeadTab: 'people-outline', CallHistory: 'call-outline', More: 'menu-outline' };
 
 function LeadStack() {
   const { colors } = useTheme();
@@ -36,9 +38,7 @@ export default function TelemarketerNavigator() {
       tabBarInactiveTintColor: colors.muted,
       tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
       tabBarLabelStyle: styles.tabLabel,
-      tabBarIcon: ({ color, size }) => (
-        <Ionicons name={route.name === 'LeadTab' ? 'people-outline' : 'call-outline'} color={color} size={size} />
-      ),
+      tabBarIcon: ({ color, size }) => <Ionicons name={icons[route.name]} color={color} size={size} />,
     })}>
       <Tab.Screen name="LeadTab" component={LeadStack} options={{ title: 'Leads' }} />
       <Tab.Screen
@@ -52,6 +52,7 @@ export default function TelemarketerNavigator() {
           headerTitleStyle: styles.headerTitle,
         })}
       />
+      <Tab.Screen name="More" component={RoleMoreScreen} options={{ title: 'More' }} />
     </Tab.Navigator>
   );
 }
