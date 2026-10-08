@@ -15,6 +15,16 @@ const roleLabel = (role) => ROLE_OPTIONS.find(([value]) => value === role)?.[1] 
 const emptyForm = { name: '', phone: '', email: '', password: '', role: 'rep' };
 const editForm = { name: '', phone: '', email: '', role: 'rep' };
 
+function findDuplicateEmails(reps) {
+  const byEmail = new Map();
+  for (const rep of reps) {
+    const email = rep.email?.trim().toLowerCase();
+    if (!email) continue;
+    byEmail.set(email, [...(byEmail.get(email) || []), rep]);
+  }
+  return [...byEmail.entries()].filter(([, matchingReps]) => matchingReps.length > 1);
+}
+
 export default function RepsPage() {
   const [reps, setReps] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -93,6 +103,8 @@ export default function RepsPage() {
     setEdit({ name: rep.name, phone: rep.phone, email: rep.email, role: rep.role });
   }
 
+  const duplicateEmails = findDuplicateEmails(reps);
+
   return (
     <>
       <div className="page-heading">
@@ -102,6 +114,16 @@ export default function RepsPage() {
       </div>
       {notice ? <div className="success-banner" style={{ marginBottom: 18 }}>{notice}</div> : null}
       {error ? <div className="error-banner">{error}</div> : null}
+      {duplicateEmails.length ? (
+        <div className="error-banner" role="alert">
+          <strong>Existing duplicate email addresses need review. No accounts were removed.</strong>
+          <ul>
+            {duplicateEmails.map(([email, matchingReps]) => (
+              <li key={email}>{email}: {matchingReps.map((rep) => rep.name).join(', ')}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="grid-2">
         <Card title="Create account">
           <form className="form-grid" onSubmit={submit}>

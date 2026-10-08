@@ -11,6 +11,7 @@ const env = require('../config/env');
 const { recordAudit } = require('../services/audit.service');
 const { createDoc } = require('../services/firestore.service');
 const { getFirestore, admin } = require('../config/firebase');
+const { assertPickedRoleMatches } = require('../services/authRole.service');
 
 const router = express.Router();
 const loginRateLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: { message: 'Too many sign-in attempts. Try again in 15 minutes.' } } });
@@ -73,6 +74,8 @@ router.post('/login', loginRateLimit, async (req, res, next) => {
       await recordLoginEvent({ event: 'login_failed', email, actorId: null });
       throw new ApiError(401, 'Invalid credentials');
     }
+
+    assertPickedRoleMatches(rep.role, req.body?.role);
 
     if (rep.mfaEnabled && !mfaCode) {
       const challenge = jwt.sign({ uid: rep.id, role: rep.role, authVersion: Number(rep.authVersion || 0), purpose: 'mfa-login' }, env.jwtSecret, { expiresIn: '5m' });

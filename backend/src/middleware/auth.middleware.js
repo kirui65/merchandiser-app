@@ -39,15 +39,20 @@ async function requireAuth(req, res, next) {
   }
 }
 
+function requireRole(...roles) {
+  if (roles.length === 0) throw new Error('requireRole needs at least one role');
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return next(new ApiError(403, `${roles.join(' or ')} role required`));
+    }
+    return next();
+  };
+}
+
 /**
  * Restricts a route to managers only. Use after requireAuth.
  */
-function requireManager(req, res, next) {
-  if (!req.user || req.user.role !== 'manager') {
-    return next(new ApiError(403, 'Manager role required'));
-  }
-  return next();
-}
+const requireManager = requireRole('manager');
 
 /**
  * Scopes a rep-owned resource: a rep may only act on their own repId; a
@@ -88,6 +93,7 @@ function requireTeamLeader(req, res, next) {
 module.exports = {
   requireAuth,
   requireManager,
+  requireRole,
   scopeCheck,
   teamScopeCheck,
   attachActiveTeamIds,

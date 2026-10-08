@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const { RepCreateSchema } = require('../src/models/rep.model');
 const { LeadCreateSchema, LeadUpdateSchema } = require('../src/models/lead.model');
 const { CallCreateSchema } = require('../src/models/call.model');
+const { assertPickedRoleMatches } = require('../src/services/authRole.service');
+const { requireRole } = require('../src/middleware/auth.middleware');
 
 test('accepts the approved additional rep roles without renaming legacy roles', () => {
   for (const role of ['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader']) {
@@ -15,6 +17,38 @@ test('accepts the approved additional rep roles without renaming legacy roles', 
     });
     assert.equal(result.success, true, `expected ${role} to be accepted`);
   }
+});
+
+test('picked login role maps merchandiser/admin labels to stored legacy roles', () => {
+  assert.equal(assertPickedRoleMatches('rep', 'merchandiser'), undefined);
+  assert.equal(assertPickedRoleMatches('manager', 'admin'), undefined);
+  assert.equal(assertPickedRoleMatches('telemarketer', 'telemarketer'), undefined);
+  assert.equal(assertPickedRoleMatches('manager', undefined), undefined);
+});
+
+test('picked login role rejects mismatches with the specified 403 message', () => {
+  assert.throws(
+    () => assertPickedRoleMatches('rep', 'admin'),
+    { statusCode: 403, message: 'This account is not registered as admin' },
+  );
+  assert.throws(
+    () => assertPickedRoleMatches('telemarketer', 'brand_ambassador'),
+    { statusCode: 403, message: 'This account is not registered as brand_ambassador' },
+  );
+  assert.throws(() => assertPickedRoleMatches('rep', 'superuser'), {
+    statusCode: 400,
+    message: 'Invalid role selection',
+  });
+});
+
+test('requireRole middleware authorizes only one of its configured roles', () => {
+  const middleware = requireRole('telemarketer', 'manager');
+  let nextError;
+  middleware({ user: { role: 'telemarketer' } }, {}, (error) => { nextError = error; });
+  assert.equal(nextError, undefined);
+  middleware({ user: { role: 'rep' } }, {}, (error) => { nextError = error; });
+  assert.equal(nextError.statusCode, 403);
+  assert.equal(nextError.message, 'telemarketer or manager role required');
 });
 
 test('validates lead creation and only allows editable lead fields on update', () => {

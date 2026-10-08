@@ -23,6 +23,11 @@ The `rep` role string is retained for existing accounts and is presented as
 merchandiser (`rep`), brand ambassador, telemarketer, team leader, and
 manager (`manager` remains the admin-equivalent).
 
+Login may include a selected `role` as a user-experience check. The server
+authenticates the email/password first, maps `merchandiser` to stored `rep`
+and `admin` to stored `manager`, then rejects a mismatch with HTTP 403. The
+selected role never determines the role in the returned user or JWT.
+
 ## `outlets`
 ```
 {
