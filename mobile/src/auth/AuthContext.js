@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 import { login as apiLogin, verifyMfaLogin, logout as apiLogout, getStoredUser, hasStoredAuthToken } from '../api/auth';
 import { initDb } from '../offline/db';
 import { getPendingPings, markPingsFailed, markPingsSynced } from '../offline/gpsQueue';
@@ -22,6 +23,7 @@ import { postSale } from '../api/sales';
 import { createSyncManager } from '../offline/syncManager';
 import { subscribeToConnectivity, isCurrentlyOnline } from '../utils/netInfo';
 import { authenticateBiometric, isBiometricUnlockEnabled } from './biometric';
+import { stopRouteTracking } from '../location/gpsTracker';
 
 const AuthContext = createContext(null);
 
@@ -111,8 +113,19 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
-    await apiLogout();
     setUser(null);
+    const [authCleanup, trackingCleanup] = await Promise.allSettled([
+      apiLogout(),
+      stopRouteTracking(),
+    ]);
+    const failedCleanup = [authCleanup, trackingCleanup].find((result) => result.status === 'rejected');
+    if (failedCleanup) {
+      console.error('Sign-out cleanup did not complete:', failedCleanup.reason);
+      Alert.alert(
+        'Sign-out needs attention',
+        'You are signed out, but this device could not clear every saved credential or stop location tracking. Please restart the app and try again.',
+      );
+    }
   }
 
   return (

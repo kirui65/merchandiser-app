@@ -17,8 +17,14 @@ export async function verifyMfaLogin(challenge, code) {
 }
 
 export async function logout() {
-  await SecureStore.deleteItemAsync('authToken');
-  await SecureStore.deleteItemAsync('authUser');
+  const results = await Promise.allSettled([
+    SecureStore.deleteItemAsync('authToken'),
+    SecureStore.deleteItemAsync('authUser'),
+    SecureStore.deleteItemAsync('biometricUnlockEnabled'),
+  ]);
+  if (results.some((result) => result.status === 'rejected')) {
+    throw new Error('Unable to clear all saved sign-in credentials from this device.');
+  }
 }
 
 export async function getStoredUser() {
