@@ -1,5 +1,6 @@
 import axios from 'axios';
 import client from './client';
+import { uploadErrorMessage } from './uploadErrors';
 
 async function requestSalePhotoUploadUrl(contentType) {
   const { data } = await client.post('/uploads/sale-photo', { contentType });
@@ -8,19 +9,38 @@ async function requestSalePhotoUploadUrl(contentType) {
 
 /** Uploads a local Expo camera URI directly to the rep-scoped signed URL. */
 export async function uploadSalePhoto(uri, onProgress) {
-  const localPhoto = await fetch(uri);
-  if (!localPhoto.ok) throw new Error('Unable to read the captured receipt photo');
+  let localPhoto;
+  try {
+    localPhoto = await fetch(uri);
+  } catch {
+    throw new Error('Could not read the captured receipt photo from this device. Retake it and retry.');
+  }
+  if (!localPhoto.ok) throw new Error('Could not read the captured receipt photo from this device. Retake it and retry.');
 
-  const body = await localPhoto.blob();
+  let body;
+  try {
+    body = await localPhoto.blob();
+  } catch {
+    throw new Error('Could not prepare the captured receipt photo for upload. Retake it and retry.');
+  }
   const contentType = body.type || 'image/jpeg';
-  const { uploadUrl, photoUrl } = await requestSalePhotoUploadUrl(contentType);
+  let upload;
+  try {
+    upload = await requestSalePhotoUploadUrl(contentType);
+  } catch (error) {
+    throw new Error(uploadErrorMessage(error, 'receipt photo', 'server'));
+  }
 
-  await axios.put(uploadUrl, body, {
-    headers: { 'Content-Type': contentType },
-    onUploadProgress: (event) => {
-      if (event.total) onProgress?.(Math.round((event.loaded / event.total) * 100));
-    },
-  });
+  try {
+    await axios.put(upload.uploadUrl, body, {
+      headers: { 'Content-Type': contentType },
+      onUploadProgress: (event) => {
+        if (event.total) onProgress?.(Math.round((event.loaded / event.total) * 100));
+      },
+    });
+  } catch (error) {
+    throw new Error(uploadErrorMessage(error, 'receipt photo', 'storage'));
+  }
 
-  return photoUrl;
+  return upload.photoUrl;
 }

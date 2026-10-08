@@ -1,5 +1,6 @@
 import axios from 'axios';
 import client from './client';
+import { uploadErrorMessage } from './uploadErrors';
 
 export async function fetchActivations(filters = {}) {
   const params = Object.fromEntries(Object.entries(filters).filter(([, value]) => value));
@@ -20,11 +21,31 @@ export async function updateActivation(id, activation) {
 }
 
 export async function uploadActivationMedia(uri, mediaId) {
-  const localMedia = await fetch(uri);
-  if (!localMedia.ok) throw new Error('Unable to read the captured activation photo');
-  const body = await localMedia.blob();
+  let localMedia;
+  try {
+    localMedia = await fetch(uri);
+  } catch {
+    throw new Error('Could not read the captured activation photo from this device. Retake it and retry.');
+  }
+  if (!localMedia.ok) throw new Error('Could not read the captured activation photo from this device. Retake it and retry.');
+  let body;
+  try {
+    body = await localMedia.blob();
+  } catch {
+    throw new Error('Could not prepare the captured activation photo for upload. Retake it and retry.');
+  }
   const contentType = body.type || 'image/jpeg';
-  const { data } = await client.post('/uploads/activation-media', { contentType, mediaId });
-  await axios.put(data.uploadUrl, body, { headers: { 'Content-Type': contentType } });
-  return data.storageUri;
+  let upload;
+  try {
+    const { data } = await client.post('/uploads/activation-media', { contentType, mediaId });
+    upload = data;
+  } catch (error) {
+    throw new Error(uploadErrorMessage(error, 'activation photo', 'server'));
+  }
+  try {
+    await axios.put(upload.uploadUrl, body, { headers: { 'Content-Type': contentType } });
+  } catch (error) {
+    throw new Error(uploadErrorMessage(error, 'activation photo', 'storage'));
+  }
+  return upload.storageUri;
 }

@@ -14,20 +14,20 @@ export default function CameraCapture({ onCapture, label = 'receipt' }) {
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState(null);
   const [capturing, setCapturing] = useState(false);
-  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [permissionError, setPermissionError] = useState(null);
   const camera = useRef(null);
 
   async function openCamera() {
-    setPermissionDenied(false);
+    setPermissionError(null);
     if (!permission?.granted) {
       try {
         const result = await requestPermission();
         if (!result.granted) {
-          setPermissionDenied(true);
+          setPermissionError(`Camera permission was denied. Allow camera access in Settings to capture the ${label} photo.`);
           return;
         }
-      } catch {
-        setPermissionDenied(true);
+      } catch (error) {
+        setPermissionError(`Could not request camera permission: ${error.message || 'check camera access in Settings.'}`);
         return;
       }
     }
@@ -46,8 +46,8 @@ export default function CameraCapture({ onCapture, label = 'receipt' }) {
       if (!photo?.uri) throw new Error('Camera did not return an image.');
       setPreview(photo.uri);
       setOpen(false);
-    } catch {
-      Alert.alert('Photo not captured', `Please try taking the ${label} photo again.`);
+    } catch (error) {
+      Alert.alert('Photo not captured', error.message || `Please try taking the ${label} photo again.`);
     } finally {
       setCapturing(false);
     }
@@ -118,13 +118,11 @@ export default function CameraCapture({ onCapture, label = 'receipt' }) {
 
   return (
     <View style={styles.container}>
-      {permissionDenied ? (
-        <Text style={styles.permissionMessage}>Camera access is needed to attach a receipt photo.</Text>
-      ) : null}
+      {permissionError ? <Text style={styles.permissionMessage}>{permissionError}</Text> : null}
       <PrimaryButton
-        title={permissionDenied ? 'Allow camera access' : 'Add receipt photo'}
-        icon={<Ionicons name="camera-outline" size={20} color={permissionDenied ? colors.primaryDark : colors.white} />}
-        variant={permissionDenied ? 'secondary' : 'primary'}
+        title={permissionError ? 'Allow camera access' : `Add ${label} photo`}
+        icon={<Ionicons name="camera-outline" size={20} color={permissionError ? colors.primaryDark : colors.white} />}
+        variant={permissionError ? 'secondary' : 'primary'}
         onPress={openCamera}
       />
     </View>
