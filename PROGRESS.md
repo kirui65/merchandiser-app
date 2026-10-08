@@ -3,7 +3,7 @@
 Resume by checking this file and `git log`; continue at the first unticked step.
 
 - [x] Step 0 — Orient and run baseline verification. Read `README.md`; reviewed `git log --oneline -25` and `git status`; backend tests passed (25/25), dashboard production build passed, and Android Expo export passed.
-- [ ] Step 1 — Diagnose and fix pending bugs. Route map zero-data crash, auth sign-out/sign-in persistence, upload error messages, and outlet ownership.
+- [ ] Step 1 — Diagnose and fix pending bugs. (a) Guarded Home route-stat preparation against malformed arrays and non-array API results; Android export passes. (b) Auth sign-out cleanup pending. (c) Upload error messages pending. (d) Outlet ownership was already fixed in `31bc058`.
 - [ ] Step 2 — Not present in the supplied checklist.
 - [ ] Step 3 — Add mobile role selection at login and server-role-based navigation.
 - [ ] Step 4 — Complete the Telemarketer workflow and retry behavior.
