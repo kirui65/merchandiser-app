@@ -24,6 +24,7 @@ export default function ActivationsPage() {
   const [ambassadors, setAmbassadors] = useState([]);
   const [filters, setFilters] = useState({ ambassadorId: '', status: '', from: '', to: '' });
   const [loading, setLoading] = useState(true);
+  const [reviewingId, setReviewingId] = useState(null);
   const [error, setError] = useState(null);
 
   async function load() {
@@ -51,12 +52,25 @@ export default function ActivationsPage() {
 
   useEffect(() => { load(); }, []);
 
+  async function reviewActivation(activation, status) {
+    setReviewingId(activation.id);
+    setError(null);
+    try {
+      const response = await client.patch(`/activations/${encodeURIComponent(activation.id)}`, { status });
+      setActivations((current) => current.map((item) => item.id === activation.id ? response.data.activation : item));
+    } catch (requestError) {
+      setError(requestError.response?.data?.error?.message || `Could not ${status} this activation.`);
+    } finally {
+      setReviewingId(null);
+    }
+  }
+
   return (
     <>
       <div className="page-heading">
         <span className="eyebrow">FIELD ACTIVITY</span>
         <h1>Activations</h1>
-        <p className="muted">Read-only overview of ambassador activities, consumer reach, samples, and float.</p>
+        <p className="muted">Review submitted ambassador activities alongside consumer reach, samples, and float.</p>
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
       <Card title="Filters">
@@ -84,7 +98,7 @@ export default function ActivationsPage() {
         {loading ? <p className="muted">Loading activation records…</p> : activations.length ? (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Started</th><th>Ambassador</th><th>Activity</th><th>Status</th><th>Footfall</th><th>Samples</th><th>Float (KES)</th><th>Expenses (KES)</th></tr></thead>
+              <thead><tr><th>Started</th><th>Ambassador</th><th>Activity</th><th>Status</th><th>Footfall</th><th>Samples</th><th>Float (KES)</th><th>Expenses (KES)</th><th>Review</th></tr></thead>
               <tbody>
                 {activations.map((activation) => {
                   const ambassador = ambassadors.find((item) => item.id === activation.ambassadorId);
@@ -100,6 +114,12 @@ export default function ActivationsPage() {
                       <td>{samples.reduce((total, sample) => total + Number(sample.quantity || 0), 0)}</td>
                       <td>{amount(activation.floatAmount)}</td>
                       <td>{amount(expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0))}</td>
+                      <td>{activation.status === 'submitted' ? (
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <Button variant="secondary" disabled={reviewingId === activation.id} onClick={() => reviewActivation(activation, 'rejected')}>{reviewingId === activation.id ? 'Saving…' : 'Reject'}</Button>
+                          <Button disabled={reviewingId === activation.id} onClick={() => reviewActivation(activation, 'approved')}>{reviewingId === activation.id ? 'Saving…' : 'Approve'}</Button>
+                        </div>
+                      ) : '—'}</td>
                     </tr>
                   );
                 })}
