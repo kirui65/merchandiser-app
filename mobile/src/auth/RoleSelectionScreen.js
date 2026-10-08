@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -11,6 +12,17 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLastSelectedRole, rememberSelectedRole } from '../api/auth';
+import { useAuth } from './AuthContext';
+import {
+  canUseBiometricUnlock,
+  forgetBiometricLogin,
+  getBiometricLoginCredentials,
+  getBiometricLoginProfile,
+  getBiometricUnlockLabel,
+  isBiometricCredentialInvalidated,
+  isBiometricUnlockEnabled,
+  setBiometricUnlockEnabled,
+} from './biometric';
 import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -47,12 +59,23 @@ export const LOGIN_ROLES = [
   },
 ];
 
-export default function RoleSelectionScreen({ onSelectRole, selectedRole }) {
+export default function RoleSelectionScreen({
+  onSelectRole,
+  onBiometricMfa,
+  onSavedLoginOutOfDate,
+  selectedRole,
+}) {
+  const { signIn } = useAuth();
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [lastRole, setLastRole] = useState(null);
+  const [biometricProfile, setBiometricProfile] = useState(null);
+  const [biometricLabel, setBiometricLabel] = useState(null);
+  const [biometricBusy, setBiometricBusy] = useState(false);
+  const [biometricMessage, setBiometricMessage] = useState(null);
   const entrances = useRef(LOGIN_ROLES.map(() => new Animated.Value(0))).current;
   const presses = useRef(LOGIN_ROLES.map(() => new Animated.Value(1))).current;
+  const autoPromptStarted = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -61,6 +84,33 @@ export default function RoleSelectionScreen({ onSelectRole, selectedRole }) {
         if (mounted && LOGIN_ROLES.some((item) => item.value === role)) setLastRole(role);
       })
       .catch((error) => console.warn('Could not load the last selected sign-in role:', error));
+    Promise.all([
+      isBiometricUnlockEnabled(),
+      getBiometricLoginProfile(),
+      canUseBiometricUnlock(),
+      getBiometricUnlockLabel(),
+    ])
+      .then(async ([enabled, profile, canAuthenticate, label]) => {
+        if (!mounted) return;
+        if (enabled && profile && canAuthenticate) {
+          setBiometricProfile(profile);
+          setBiometricLabel(label);
+          if (!autoPromptStarted.current) {
+            autoPromptStarted.current = true;
+            await performBiometricLogin(profile, true);
+          }
+        } else if (enabled && profile) {
+          await setBiometricUnlockEnabled(false);
+          setBiometricProfile(profile);
+          setBiometricMessage('Fingerprint or face sign-in is not available. Add an enrolled biometric in device settings, or sign in with your password.');
+        } else if (enabled && !profile) {
+          await setBiometricUnlockEnabled(false);
+        }
+      })
+      .catch((error) => {
+        if (mounted) setBiometricMessage('Biometric sign-in is unavailable. Choose your role to continue.');
+        console.warn('Could not check biometric sign-in availability:', error);
+      });
 
     Animated.stagger(
       70,
@@ -73,6 +123,61 @@ export default function RoleSelectionScreen({ onSelectRole, selectedRole }) {
 
     return () => { mounted = false; };
   }, [entrances]);
+
+  async function performBiometricLogin(profile = biometricProfile, automatic = false) {
+    if (!profile || biometricBusy) return;
+    setBiometricBusy(true);
+    setBiometricMessage(null);
+    try {
+      const credentials = await getBiometricLoginCredentials();
+      if (!credentials) {
+        await forgetBiometricLogin();
+        setBiometricProfile(null);
+        setBiometricLabel(null);
+        setBiometricMessage('Your saved login is no longer available. Choose a role and sign in with your password to set up biometrics again.');
+        return;
+      }
+      const result = await signIn(credentials.email, credentials.password, credentials.role, {
+        skipBiometricPrompt: true,
+      });
+      if (result.mfaRequired) onBiometricMfa(credentials.role, result.challenge);
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        try {
+          await forgetBiometricLogin();
+        } catch (cleanupError) {
+          setBiometricMessage(cleanupError.message);
+          return;
+        }
+        setBiometricProfile(null);
+        setBiometricLabel(null);
+        onSavedLoginOutOfDate(
+          profile.role,
+          'Your saved login is out of date, please sign in with your password',
+        );
+      } else if (isBiometricCredentialInvalidated(error)) {
+        try {
+          await forgetBiometricLogin();
+        } catch (cleanupError) {
+          setBiometricMessage(cleanupError.message);
+          return;
+        }
+        setBiometricProfile(null);
+        setBiometricLabel(null);
+        setBiometricMessage('Your device biometrics changed. Sign in with your password to set up fingerprint or face login again.');
+      } else if (error?.response?.status === 403) {
+        setBiometricMessage(error?.response?.data?.error?.message || 'This saved login does not match its role.');
+      } else {
+        setBiometricMessage(error?.message?.includes('Could not fully forget')
+          ? error.message
+          : automatic
+            ? 'Biometric sign-in was cancelled or unavailable. Choose your role or try again.'
+            : 'Biometric sign-in was not completed. Use your password or try again.');
+      }
+    } finally {
+      setBiometricBusy(false);
+    }
+  }
 
   function selectRole(role) {
     setLastRole(role.value);
@@ -107,6 +212,37 @@ export default function RoleSelectionScreen({ onSelectRole, selectedRole }) {
         <Text style={styles.title}>Who's signing in?</Text>
         <Text style={styles.subtitle}>Choose your role to continue</Text>
 
+        {biometricProfile && biometricLabel ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Continue as ${biometricProfile.displayName} (${LOGIN_ROLES.find((item) => item.value === biometricProfile.role)?.label || biometricProfile.role}) with ${biometricLabel}`}
+            accessibilityState={{ disabled: biometricBusy, busy: biometricBusy }}
+            disabled={biometricBusy}
+            onPress={() => performBiometricLogin()}
+            style={({ pressed }) => [styles.biometricCard, pressed && styles.cardPressed, biometricBusy && styles.cardDisabled]}
+          >
+            <View style={styles.biometricIcon}>
+              {biometricBusy
+                ? <ActivityIndicator color={colors.primary} />
+                : <Ionicons name="finger-print-outline" size={27} color={colors.primary} />}
+            </View>
+            <View style={styles.biometricCopy}>
+              <Text style={styles.biometricTitle}>Continue as {biometricProfile.displayName}</Text>
+              <Text style={styles.biometricSubtitle}>
+                {LOGIN_ROLES.find((item) => item.value === biometricProfile.role)?.label || biometricProfile.role}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={21} color={colors.muted} />
+          </Pressable>
+        ) : null}
+
+        {biometricMessage ? (
+          <View accessibilityLiveRegion="polite" style={styles.biometricMessage}>
+            <Ionicons name="information-circle-outline" size={19} color={colors.warning} />
+            <Text style={styles.biometricMessageText}>{biometricMessage}</Text>
+          </View>
+        ) : null}
+
         <View style={styles.grid}>
           {LOGIN_ROLES.map((role, index) => {
             const selected = (selectedRole || lastRole) === role.value;
@@ -116,7 +252,7 @@ export default function RoleSelectionScreen({ onSelectRole, selectedRole }) {
                 key={role.value}
                 style={[
                   styles.cardWrap,
-                  index === ROLES.length - 1 && styles.lastCardWrap,
+                  index === LOGIN_ROLES.length - 1 && styles.lastCardWrap,
                   {
                     opacity: entrances[index],
                     transform: [
@@ -134,7 +270,8 @@ export default function RoleSelectionScreen({ onSelectRole, selectedRole }) {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`${role.label}. ${role.description}`}
-                  accessibilityState={{ selected }}
+                  accessibilityState={{ selected, disabled: biometricBusy }}
+                  disabled={biometricBusy}
                   onPress={() => selectRole(role)}
                   onPressIn={() => animatePress(index, 0.98)}
                   onPressOut={() => animatePress(index, 1)}
@@ -197,6 +334,52 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: spacing.lg,
     textAlign: 'center',
   },
+  biometricCard: {
+    minHeight: 78,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
+  },
+  biometricIcon: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+  },
+  biometricCopy: { flex: 1 },
+  biometricTitle: {
+    color: colors.ink,
+    fontFamily: typography.fontFamilyExtraBold,
+    fontSize: typography.small,
+    fontWeight: '800',
+  },
+  biometricSubtitle: {
+    color: colors.muted,
+    fontFamily: typography.fontFamily,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  biometricMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.warningSoft,
+  },
+  biometricMessageText: { flex: 1, color: colors.warning, fontFamily: typography.fontFamily, fontSize: 12, lineHeight: 17 },
+  cardPressed: { opacity: 0.88, transform: [{ scale: 0.99 }] },
+  cardDisabled: { opacity: 0.7 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.sm },
   cardWrap: { width: '48.5%' },
   lastCardWrap: { width: '100%' },

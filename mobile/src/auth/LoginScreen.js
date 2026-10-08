@@ -10,27 +10,36 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from './AuthContext';
 import { LOGIN_ROLES } from './RoleSelectionScreen';
 import { rememberSelectedRole } from '../api/auth';
+import {
+  forgetBiometricLogin,
+  getBiometricLoginCredentials,
+  getBiometricLoginProfile,
+  getBiometricUnlockLabel,
+  isBiometricCredentialInvalidated,
+  isBiometricUnlockEnabled,
+} from './biometric';
 import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
-export default function LoginScreen({ role, onBack }) {
-  const { signIn, verifyMfa } = useAuth();
+export default function LoginScreen({ role, onBack, initialMfaChallenge, initialError }) {
+  const { signIn, verifyMfa, cancelPendingSignIn } = useAuth();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const styles = createStyles(colors);
   const selectedRole = LOGIN_ROLES.find((item) => item.value === role) || LOGIN_ROLES[0];
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [mfaChallenge, setMfaChallenge] = useState(null);
+  const [mfaChallenge, setMfaChallenge] = useState(initialMfaChallenge || null);
   const [mfaCode, setMfaCode] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(initialError || null);
   const [roleMismatch, setRoleMismatch] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [authenticatingBiometric, setAuthenticatingBiometric] = useState(false);
+  const [biometricLabel, setBiometricLabel] = useState(null);
   const [connectionState, setConnectionState] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
@@ -42,6 +51,7 @@ export default function LoginScreen({ role, onBack }) {
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
+  const busy = submitting || authenticatingBiometric;
 
   useEffect(() => {
     Animated.spring(errorAnimation, {
@@ -75,6 +85,29 @@ export default function LoginScreen({ role, onBack }) {
       spinnerAnimation.setValue(0);
     };
   }, [submitting, spinnerAnimation]);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([
+      isBiometricUnlockEnabled(),
+      getBiometricLoginProfile(),
+      getBiometricUnlockLabel(),
+    ])
+      .then(([enabled, profile, label]) => {
+        if (mounted && enabled && profile?.role === selectedRole.value && label) {
+          setBiometricLabel(label);
+        }
+      })
+      .catch(() => {
+        if (mounted) setBiometricLabel(null);
+      });
+    return () => { mounted = false; };
+  }, [selectedRole.value]);
+
+  useEffect(() => {
+    setMfaChallenge(initialMfaChallenge || null);
+    setError(initialError || null);
+  }, [initialError, initialMfaChallenge]);
 
   async function handleSubmit() {
     setError(null);
@@ -116,6 +149,57 @@ export default function LoginScreen({ role, onBack }) {
     }
   }
 
+  async function handleBiometricLogin() {
+    setError(null);
+    setRoleMismatch(false);
+    setAuthenticatingBiometric(true);
+    try {
+      const credentials = await getBiometricLoginCredentials();
+      if (!credentials) {
+        await forgetBiometricLogin();
+        setBiometricLabel(null);
+        setError('Your saved login is no longer available. Sign in with your password to set it up again.');
+        return;
+      }
+      const result = await signIn(credentials.email, credentials.password, credentials.role, {
+        skipBiometricPrompt: true,
+      });
+      if (result.mfaRequired) {
+        setMfaChallenge(result.challenge);
+        setPassword('');
+      }
+    } catch (requestError) {
+      if (requestError?.response?.status === 401) {
+        try {
+          await forgetBiometricLogin();
+        } catch (cleanupError) {
+          setError(cleanupError.message);
+          return;
+        }
+        setBiometricLabel(null);
+        setError('Your saved login is out of date, please sign in with your password');
+      } else if (isBiometricCredentialInvalidated(requestError)) {
+        try {
+          await forgetBiometricLogin();
+        } catch (cleanupError) {
+          setError(cleanupError.message);
+          return;
+        }
+        setBiometricLabel(null);
+        setError('Your device biometrics changed. Sign in with your password to set up fingerprint or face login again.');
+      } else if (requestError?.response?.status === 403) {
+        setRoleMismatch(true);
+        setError(requestError?.response?.data?.error?.message || 'This saved login does not match its role.');
+      } else {
+        setError(requestError?.message?.includes('Could not fully forget')
+          ? requestError.message
+          : 'Biometric sign-in was cancelled or locked. Use your email and password instead.');
+      }
+    } finally {
+      setAuthenticatingBiometric(false);
+    }
+  }
+
   function togglePasswordVisibility() {
     setShowPassword((visible) => !visible);
     if (focusedField === 'password') {
@@ -126,6 +210,11 @@ export default function LoginScreen({ role, onBack }) {
     }
   }
 
+  function returnToRoleSelection() {
+    if (mfaChallenge) cancelPendingSignIn();
+    onBack();
+  }
+
   const accent = colors.roleAccents[selectedRole.value];
 
   return (
@@ -133,12 +222,12 @@ export default function LoginScreen({ role, onBack }) {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: spacing.sm, paddingBottom: spacing.lg + insets.bottom },
+            { paddingTop: spacing.sm, paddingBottom: spacing.lg },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -147,19 +236,23 @@ export default function LoginScreen({ role, onBack }) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Back to role selection"
-              onPress={onBack}
+              accessibilityState={{ disabled: busy }}
+              disabled={busy}
+              onPress={returnToRoleSelection}
               style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
             >
               <Ionicons name="arrow-back" size={21} color={colors.ink} />
             </Pressable>
-            <View style={styles.logoPanel}>
+            <View style={styles.roleBadge}>
               <Ionicons name={selectedRole.icon} size={22} color={accent} />
               <Text style={styles.roleBadgeText}>{selectedRole.label}</Text>
             </View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Choose a different role"
-              onPress={onBack}
+              accessibilityState={{ disabled: busy }}
+              disabled={busy}
+              onPress={returnToRoleSelection}
               style={styles.changeButton}
             >
               <Text style={[styles.changeText, { color: accent }]}>Change</Text>
@@ -289,8 +382,8 @@ export default function LoginScreen({ role, onBack }) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={mfaChallenge ? 'Verify sign-in code' : 'Sign in'}
-              accessibilityState={{ disabled: submitting, busy: submitting }}
-              disabled={submitting}
+              accessibilityState={{ disabled: busy, busy }}
+              disabled={busy}
               onPress={mfaChallenge ? handleVerifyMfa : handleSubmit}
               style={({ pressed }) => [
                 styles.button,
@@ -299,7 +392,7 @@ export default function LoginScreen({ role, onBack }) {
                 submitting && styles.buttonDisabled,
               ]}
             >
-              {submitting ? (
+              {busy ? (
                 <Animated.View style={[styles.spinner, { transform: [{ rotate: spinnerRotation }] }]} />
               ) : (
                 <Text style={styles.buttonText}>{mfaChallenge ? 'VERIFY CODE' : 'SIGN IN'}</Text>
@@ -312,11 +405,31 @@ export default function LoginScreen({ role, onBack }) {
                   : 'Server is waking up, this can take up to a minute'}
               </Text>
             ) : null}
+            {!mfaChallenge && biometricLabel ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Use ${biometricLabel} instead`}
+                accessibilityState={{ disabled: busy, busy: authenticatingBiometric }}
+                disabled={busy}
+                onPress={handleBiometricLogin}
+                style={({ pressed }) => [
+                  styles.biometricButton,
+                  pressed && styles.buttonPressed,
+                  busy && styles.buttonDisabled,
+                ]}
+              >
+                {authenticatingBiometric
+                  ? <Animated.View style={[styles.spinner, styles.biometricSpinner, { transform: [{ rotate: spinnerRotation }] }]} />
+                  : <Ionicons name={biometricLabel.includes('face') ? 'scan-outline' : 'finger-print-outline'} size={22} color={colors.primary} />}
+                <Text style={styles.biometricButtonText}>Use {biometricLabel} instead</Text>
+              </Pressable>
+            ) : null}
             {mfaChallenge ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Return to email and password sign in"
                 onPress={() => {
+                  cancelPendingSignIn();
                   setMfaChallenge(null);
                   setMfaCode('');
                   setError(null);
@@ -357,7 +470,7 @@ const createStyles = (colors) => StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.surface,
   },
-  logoPanel: {
+  roleBadge: {
     minHeight: 40,
     flexDirection: 'row',
     alignItems: 'center',
@@ -486,6 +599,25 @@ const createStyles = (colors) => StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1,
   },
+  biometricButton: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  biometricButtonText: {
+    color: colors.primary,
+    fontFamily: typography.fontFamilyBold,
+    fontSize: typography.small,
+    fontWeight: '700',
+  },
+  biometricSpinner: { borderRightColor: colors.primary },
   spinner: {
     width: 22,
     height: 22,

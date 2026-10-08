@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import React from 'react';
+import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../components/Card';
+import BiometricLoginSettings from '../components/BiometricLoginSettings';
 import { useAuth } from '../auth/AuthContext';
-import { isBiometricUnlockEnabled, setBiometricUnlockEnabled } from '../auth/biometric';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
 import { radius, spacing, typography } from '../theme/tokens';
@@ -12,31 +12,12 @@ export default function RoleMoreScreen({ navigation }) {
   const { signOut, user } = useAuth();
   const { language, setLanguage } = useLanguage();
   const { colors, mode, setMode } = useTheme();
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
   const styles = createStyles(colors);
   const canUseTeamTools = ['rep', 'brand_ambassador', 'telemarketer', 'team_leader'].includes(user?.role);
   const teamLinks = [
     { label: 'Team announcements', icon: 'megaphone-outline', screen: 'BroadcastFeed' },
     { label: 'Request time or field support', icon: 'calendar-outline', screen: 'FieldRequest' },
   ];
-
-  useEffect(() => {
-    isBiometricUnlockEnabled()
-      .then(setBiometricEnabled)
-      .catch((error) => {
-        console.error('Could not read biometric preference:', error);
-        Alert.alert('Settings unavailable', 'Could not read the biometric sign-in preference.');
-      });
-  }, []);
-
-  async function toggleBiometric(enabled) {
-    try {
-      await setBiometricUnlockEnabled(enabled);
-      setBiometricEnabled(enabled);
-    } catch (error) {
-      Alert.alert('Biometric setting not changed', error.message);
-    }
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,7 +38,13 @@ export default function RoleMoreScreen({ navigation }) {
             <Text style={styles.section}>Team</Text>
             <Card style={styles.menu}>
               {teamLinks.map((item) => (
-                <Pressable key={item.screen} style={styles.row} onPress={() => navigation.navigate(item.screen)}>
+                <Pressable
+                  key={item.screen}
+                  accessibilityRole="button"
+                  accessibilityLabel={item.label}
+                  style={styles.row}
+                  onPress={() => navigation.navigate(item.screen)}
+                >
                   <Ionicons name={item.icon} color={colors.primary} size={22} />
                   <Text style={styles.rowText}>{item.label}</Text>
                   <Ionicons name="chevron-forward" color={colors.muted} size={20} />
@@ -72,30 +59,27 @@ export default function RoleMoreScreen({ navigation }) {
             <Ionicons name="moon-outline" color={colors.primary} size={22} />
             <Text style={styles.rowText}>Dark mode</Text>
             <Switch
+              accessibilityLabel="Dark mode"
               value={mode === 'dark'}
               onValueChange={(enabled) => setMode(enabled ? 'dark' : 'light')}
               trackColor={{ false: colors.border, true: colors.primarySoft }}
               thumbColor={mode === 'dark' ? colors.primary : colors.surface}
             />
           </View>
-          <View style={styles.row}>
-            <Ionicons name="finger-print-outline" color={colors.primary} size={22} />
-            <Text style={styles.rowText}>Biometric unlock</Text>
-            <Switch
-              value={biometricEnabled}
-              onValueChange={toggleBiometric}
-              trackColor={{ false: colors.border, true: colors.primarySoft }}
-              thumbColor={biometricEnabled ? colors.primary : colors.surface}
-            />
-          </View>
-          <Pressable style={styles.row} onPress={() => setLanguage(language === 'en' ? 'sw' : 'en')}>
+          <BiometricLoginSettings />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Change language to ${language === 'en' ? 'Kiswahili' : 'English'}`}
+            style={styles.row}
+            onPress={() => setLanguage(language === 'en' ? 'sw' : 'en')}
+          >
             <Ionicons name="language-outline" color={colors.primary} size={22} />
             <Text style={styles.rowText}>Language</Text>
             <Text style={styles.value}>{language === 'en' ? 'English' : 'Kiswahili'}</Text>
             <Ionicons name="chevron-forward" color={colors.muted} size={20} />
           </Pressable>
         </Card>
-        <Pressable accessibilityRole="button" style={styles.signOut} onPress={signOut}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Sign out" style={styles.signOut} onPress={signOut}>
           <Ionicons name="log-out-outline" color={colors.error} size={22} />
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>

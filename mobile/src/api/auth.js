@@ -30,10 +30,9 @@ export async function logout() {
   const results = await Promise.allSettled([
     SecureStore.deleteItemAsync('authToken'),
     SecureStore.deleteItemAsync('authUser'),
-    SecureStore.deleteItemAsync('biometricUnlockEnabled'),
   ]);
   if (results.some((result) => result.status === 'rejected')) {
-    throw new Error('Unable to clear all saved sign-in credentials from this device.');
+    throw new Error('Unable to clear the current app session from this device.');
   }
 }
 

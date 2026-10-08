@@ -23,12 +23,19 @@ import { postSale } from '../api/sales';
 import { createSyncManager } from '../offline/syncManager';
 import { subscribeToConnectivity, isCurrentlyOnline } from '../utils/netInfo';
 import { stopRouteTracking } from '../location/gpsTracker';
+import {
+  canUseBiometricUnlock,
+  getBiometricPromptAsked,
+  markBiometricPromptAsked,
+  saveBiometricLogin,
+} from './biometric';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pendingBiometricCredentials, setPendingBiometricCredentials] = useState(null);
 
   useEffect(() => {
     initDb();
@@ -80,21 +87,74 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  async function signIn(email, password, role) {
+  async function offerBiometricSetup(credentials, loggedInUser) {
+    try {
+      if (!(await canUseBiometricUnlock()) || await getBiometricPromptAsked()) return;
+      await markBiometricPromptAsked();
+    } catch {
+      Alert.alert('Biometric sign-in unavailable', 'You can enable fingerprint or face sign-in later in More.');
+      return;
+    }
+
+    await new Promise((resolve) => {
+      Alert.alert(
+        'Sign in faster next time?',
+        'Use fingerprint or face recognition for your next sign-in on this device.',
+        [
+          { text: 'Not now', style: 'cancel', onPress: resolve },
+          {
+            text: 'Enable',
+            onPress: async () => {
+              try {
+                await saveBiometricLogin({
+                  ...credentials,
+                  displayName: loggedInUser.name || credentials.email.split('@')[0],
+                });
+              } catch (error) {
+                Alert.alert('Biometric sign-in not enabled', error.message);
+              } finally {
+                resolve();
+              }
+            },
+          },
+        ],
+        { cancelable: false },
+      );
+    });
+  }
+
+  async function signIn(email, password, role, { skipBiometricPrompt = false } = {}) {
     const loggedInUser = await apiLogin(email, password, role);
-    if (loggedInUser.mfaRequired) return loggedInUser;
+    if (loggedInUser.mfaRequired) {
+      setPendingBiometricCredentials({ email, password, role, skipBiometricPrompt });
+      return loggedInUser;
+    }
+    setPendingBiometricCredentials(null);
+    if (!skipBiometricPrompt) {
+      await offerBiometricSetup({ email, password, role }, loggedInUser);
+    }
     setUser(loggedInUser);
     return loggedInUser;
   }
 
   async function verifyMfa(challenge, code) {
     const loggedInUser = await verifyMfaLogin(challenge, code);
+    const pendingCredentials = pendingBiometricCredentials;
+    setPendingBiometricCredentials(null);
+    if (pendingCredentials && !pendingCredentials.skipBiometricPrompt) {
+      await offerBiometricSetup(pendingCredentials, loggedInUser);
+    }
     setUser(loggedInUser);
     return loggedInUser;
   }
 
+  function cancelPendingSignIn() {
+    setPendingBiometricCredentials(null);
+  }
+
   async function signOut() {
     setUser(null);
+    setPendingBiometricCredentials(null);
     const [authCleanup, trackingCleanup] = await Promise.allSettled([
       apiLogout(),
       stopRouteTracking(),
@@ -104,13 +164,13 @@ export function AuthProvider({ children }) {
       console.error('Sign-out cleanup did not complete:', failedCleanup.reason);
       Alert.alert(
         'Sign-out needs attention',
-        'You are signed out, but this device could not clear every saved credential or stop location tracking. Please restart the app and try again.',
+        'You are signed out, but this device could not clear the current session or stop location tracking. Please restart the app and try again.',
       );
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, verifyMfa, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, verifyMfa, cancelPendingSignIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

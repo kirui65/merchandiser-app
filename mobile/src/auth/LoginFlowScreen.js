@@ -1,12 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, BackHandler, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import { useAuth } from './AuthContext';
 import RoleSelectionScreen from './RoleSelectionScreen';
 import LoginScreen from './LoginScreen';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function LoginFlowScreen() {
+  const { cancelPendingSignIn } = useAuth();
   const [selectedRole, setSelectedRole] = useState(null);
+  const [initialMfaChallenge, setInitialMfaChallenge] = useState(null);
+  const [initialError, setInitialError] = useState(null);
   const [step, setStep] = useState('roles');
   const progress = useRef(new Animated.Value(0)).current;
 
@@ -23,15 +27,34 @@ export default function LoginFlowScreen() {
 
   function chooseRole(role) {
     setSelectedRole(role);
+    setInitialMfaChallenge(null);
+    setInitialError(null);
+    setStep('login');
+    animateTo(1);
+  }
+
+  function continueToMfa(role, challenge) {
+    setSelectedRole(role);
+    setInitialMfaChallenge(challenge);
+    setInitialError(null);
+    setStep('login');
+    animateTo(1);
+  }
+
+  function continueWithPassword(role, message) {
+    setSelectedRole(role);
+    setInitialMfaChallenge(null);
+    setInitialError(message);
     setStep('login');
     animateTo(1);
   }
 
   const returnToRoles = useCallback(() => {
     if (step !== 'login') return false;
+    cancelPendingSignIn();
     animateTo(0, () => setStep('roles'));
     return true;
-  }, [animateTo, step]);
+  }, [animateTo, cancelPendingSignIn, step]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', returnToRoles);
@@ -39,7 +62,7 @@ export default function LoginFlowScreen() {
   }, [returnToRoles]);
 
   const rolesStyle = {
-    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0.68] }),
+    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0.78] }),
     transform: [{
       translateX: progress.interpolate({ inputRange: [0, 1], outputRange: [0, -SCREEN_WIDTH * 0.06] }),
     }],
@@ -59,7 +82,12 @@ export default function LoginFlowScreen() {
         importantForAccessibility={step === 'roles' ? 'auto' : 'no-hide-descendants'}
         style={[styles.screen, rolesStyle]}
       >
-        <RoleSelectionScreen onSelectRole={chooseRole} selectedRole={selectedRole} />
+        <RoleSelectionScreen
+          onSelectRole={chooseRole}
+          onBiometricMfa={continueToMfa}
+          onSavedLoginOutOfDate={continueWithPassword}
+          selectedRole={selectedRole}
+        />
       </Animated.View>
       <Animated.View
         pointerEvents={step === 'login' ? 'auto' : 'none'}
@@ -68,7 +96,13 @@ export default function LoginFlowScreen() {
         style={[styles.screen, loginStyle]}
       >
         {selectedRole ? (
-          <LoginScreen role={selectedRole} onBack={returnToRoles} />
+          <LoginScreen
+            key={`${selectedRole}-${initialMfaChallenge ? 'mfa' : 'password'}`}
+            role={selectedRole}
+            onBack={returnToRoles}
+            initialMfaChallenge={initialMfaChallenge}
+            initialError={initialError}
+          />
         ) : null}
       </Animated.View>
     </View>

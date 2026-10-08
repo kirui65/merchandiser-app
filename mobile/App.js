@@ -6,6 +6,7 @@ import { LanguageProvider } from './src/i18n/LanguageContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { typography } from './src/theme/tokens';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 Text.defaultProps = Text.defaultProps || {};
 Text.defaultProps.style = [Text.defaultProps.style, { fontFamily: typography.fontFamily }];
@@ -15,7 +16,7 @@ TextInput.defaultProps.style = [TextInput.defaultProps.style, { fontFamily: typo
 export default function App() {
   const [fontsLoaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold });
   if (!fontsLoaded) return null;
-  return <ThemeProvider><AppContent /></ThemeProvider>;
+  return <SafeAreaProvider><ThemeProvider><AppContent /></ThemeProvider></SafeAreaProvider>;
 }
 
 function AppContent() { return <AppShell />; }
