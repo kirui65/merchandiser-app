@@ -4,6 +4,7 @@ const { requireAuth, requireManager } = require('../middleware/auth.middleware')
 const { getDoc, listDocs, setDoc } = require('../services/firestore.service');
 const { ApiError } = require('../middleware/errorHandler');
 const { recordAudit } = require('../services/audit.service');
+const { isActiveSale } = require('../models/sale.model');
 
 const TargetSchema = z.object({
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Month must be YYYY-MM'),
@@ -25,7 +26,7 @@ async function salesTotal(repId, month) {
     where: [['repId', '==', repId], ['timestamp', '>=', from], ['timestamp', '<', to]],
     orderBy: { field: 'timestamp', direction: 'desc' },
   });
-  return Number(sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0).toFixed(2));
+  return Number(sales.filter(isActiveSale).reduce((sum, sale) => sum + Number(sale.total || 0), 0).toFixed(2));
 }
 
 router.use(requireAuth);

@@ -1,8 +1,8 @@
 const express = require('express');
 const { requireAuth } = require('../middleware/auth.middleware');
 const { validateBody } = require('../middleware/validate.middleware');
-const { SaleCreateSchema } = require('../models/sale.model');
-const { createSale, listSales, getSale } = require('../controllers/sales.controller');
+const { SaleCreateSchema, SaleUpdateSchema, SaleVoidSchema } = require('../models/sale.model');
+const { createSale, listSales, getSale, updateSale, voidSale } = require('../controllers/sales.controller');
 const { ApiError } = require('../middleware/errorHandler');
 
 const router = express.Router();
@@ -19,6 +19,8 @@ function requireSalesReader(req, res, next) {
 router.use(requireSalesReader);
 router.post('/', validateBody(SaleCreateSchema), createSale);
 router.get('/', listSales);
+router.patch('/:id', validateBody(SaleUpdateSchema), updateSale);
+router.post('/:id/void', validateBody(SaleVoidSchema), voidSale);
 router.get('/:id', getSale);
 
 module.exports = router;

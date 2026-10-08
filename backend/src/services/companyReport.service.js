@@ -1,3 +1,5 @@
+const { isActiveSale } = require('../models/sale.model');
+
 function timestampMillis(value) {
   if (value && typeof value.toMillis === 'function') return value.toMillis();
   if (value && typeof value._seconds === 'number') return value._seconds * 1000;
@@ -16,7 +18,7 @@ function buildCompanyReport({ sales, activations, leads, audits, teams, from, to
       && (!campaignId || record.campaignId === campaignId)
       && (!regionId || teamById.get(record.teamId)?.regionId === regionId);
   };
-  const filteredSales = sales.filter((record) => matches(record, record.timestamp));
+  const filteredSales = sales.filter((record) => isActiveSale(record) && matches(record, record.timestamp));
   const filteredActivations = activations.filter((record) => matches(record, record.startedAt));
   const filteredLeads = leads.filter((record) => matches(record, record.createdAt));
   const filteredAudits = audits.filter((record) => matches(record, record.observedAt));

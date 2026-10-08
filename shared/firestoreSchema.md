@@ -140,6 +140,11 @@ Manager-only audit entries for roster, product, and outlet mutations:
   timestamp: Timestamp,
   photoUrl: string | null,
   syncStatus: 'pending' | 'synced' | 'failed',
+  saleStatus: 'active' | 'voided',
+  voidReason?: string,
+  voidedAt?: Timestamp,
+  voidedBy?: string,
+  updatedAt?: Timestamp,
   createdAt: Timestamp
 }
 ```
@@ -148,6 +153,9 @@ When supplied, `campaignId` must reference a campaign assigned to that
 active team. Existing sales without a campaign ID remain unattributed.
 Idempotency: `(repId, localId)` must be unique. A duplicate write with the
 same `localId` from the same rep returns the existing record, not an error.
+Reps may edit a sale during the first 15 minutes after server creation. A
+voided sale is retained with its reason and actor/time metadata, shown in
+history, and excluded from sales totals and future reconciliation runs.
 
 ## `leads`
 ```

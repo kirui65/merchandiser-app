@@ -37,6 +37,15 @@ export function markFailed(localId, errorMessage) {
   );
 }
 
+export function updateQueuedSale(localId, payload) {
+  const db = getDb();
+  const result = db.runSync(
+    `UPDATE pending_sales SET payload = ? WHERE localId = ? AND syncStatus IN ('pending', 'failed');`,
+    [JSON.stringify(payload), localId]
+  );
+  return result.changes === 1;
+}
+
 export function getAttempts(localId) {
   const db = getDb();
   const row = db.getFirstSync(`SELECT attempts FROM pending_sales WHERE localId = ?;`, [localId]);

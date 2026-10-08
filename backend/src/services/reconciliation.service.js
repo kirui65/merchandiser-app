@@ -1,5 +1,6 @@
 const env = require('../config/env');
 const { listDocs, updateDoc } = require('./firestore.service');
+const { isActiveSale } = require('../models/sale.model');
 
 function toMillis(value) {
 	if (value?.toMillis) return value.toMillis();
@@ -33,7 +34,9 @@ async function reconcile({ repId, from, to }) {
 	const transactionWhere = repId ? [['repId', '==', repId]] : [];
 	const sales = await listDocs('sales', { where: salesWhere });
 	const transactions = (await listDocs('mpesaTransactions', { where: transactionWhere })).filter((transaction) => transaction.status === 'completed');
-	const filteredSales = sales.filter((sale) => (!from || toMillis(sale.timestamp) >= new Date(from).getTime()) && (!to || toMillis(sale.timestamp) <= new Date(to).getTime()));
+	const filteredSales = sales.filter((sale) => isActiveSale(sale)
+		&& (!from || toMillis(sale.timestamp) >= new Date(from).getTime())
+		&& (!to || toMillis(sale.timestamp) <= new Date(to).getTime()));
 	const filteredTransactions = transactions.filter((txn) => (!from || toMillis(txn.timestamp) >= new Date(from).getTime()) && (!to || toMillis(txn.timestamp) <= new Date(to).getTime()));
 	const result = reconcileRecords(filteredSales, filteredTransactions);
 	await Promise.all(result.matches.flatMap(({ transaction, sale }) => [

@@ -14,12 +14,29 @@ const SaleCreateSchema = z.object({
   campaignId: z.string().nullable().optional(),
 });
 
+const SaleUpdateSchema = z.object({
+  qty: z.number().positive().optional(),
+  unitPrice: z.number().nonnegative().optional(),
+}).strict().refine((sale) => Object.keys(sale).length > 0, 'At least one sale field must be provided');
+
+const SaleVoidSchema = z.object({
+  reason: z.string().trim().min(3).max(500),
+}).strict();
+
 const SaleSchema = SaleCreateSchema.extend({
   id: z.string().optional(),
   repId: z.string(),
   total: z.number().nonnegative(),
   syncStatus: z.enum(['pending', 'synced', 'failed']).default('synced'),
+  saleStatus: z.enum(['active', 'voided']).default('active'),
+  voidReason: z.string().optional(),
+  voidedAt: z.any().optional(),
+  voidedBy: z.string().optional(),
   createdAt: z.any().optional(),
 });
 
-module.exports = { SaleCreateSchema, SaleSchema };
+function isActiveSale(sale) {
+  return sale.saleStatus !== 'voided';
+}
+
+module.exports = { SaleCreateSchema, SaleUpdateSchema, SaleVoidSchema, SaleSchema, isActiveSale };

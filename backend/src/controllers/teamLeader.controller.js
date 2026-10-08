@@ -4,6 +4,7 @@ const { listTeamDocs } = require('../services/teamScope.service');
 const { getActiveTeamIdForUser } = require('../services/teamMembership.service');
 const { teamScopeCheck } = require('../middleware/auth.middleware');
 const { ApiError } = require('../middleware/errorHandler');
+const { isActiveSale } = require('../models/sale.model');
 
 const ACTIVE_LOCATION_WINDOW_MS = 8 * 60 * 1000;
 
@@ -28,12 +29,13 @@ async function getOverview(req, res, next) {
       listTeamDocs('merchandisingAudits', teamIds),
       listTeamDocs('calls', teamIds),
     ]);
+    const activeSales = sales.filter(isActiveSale);
     const memberships = membershipPages.flat();
     const repIds = [...new Set(memberships.map((item) => item.repId))];
     const reps = await Promise.all(repIds.map((id) => getDoc('reps', id)));
     const repById = new Map(reps.filter(Boolean).map((rep) => [rep.id, rep]));
     const activityByRep = new Map(repIds.map((id) => [id, 0]));
-    for (const record of [...sales, ...activations, ...calls, ...audits]) {
+    for (const record of [...activeSales, ...activations, ...calls, ...audits]) {
       const ownerId = record.repId || record.ambassadorId || record.telemarketerId || record.merchandiserId;
       if (activityByRep.has(ownerId)) activityByRep.set(ownerId, activityByRep.get(ownerId) + 1);
     }
@@ -50,8 +52,8 @@ async function getOverview(req, res, next) {
       teams: teams.filter(Boolean),
       memberCount: repIds.length,
       sales: {
-        count: sales.length,
-        total: Number(sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0).toFixed(2)),
+        count: activeSales.length,
+        total: Number(activeSales.reduce((sum, sale) => sum + Number(sale.total || 0), 0).toFixed(2)),
       },
       activations: {
         count: activations.length,

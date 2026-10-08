@@ -3,6 +3,7 @@ const env = require('../config/env');
 const { ApiError } = require('../middleware/errorHandler');
 const { reconcileRecords } = require('../services/reconciliation.service');
 const { findRouteAnomalies } = require('../services/geo.service');
+const { isActiveSale } = require('../models/sale.model');
 
 function millis(value) {
   if (value?.toMillis) return value.toMillis();
@@ -40,7 +41,8 @@ async function getInsights(req, res, next) {
     const territoryById = Object.fromEntries(territories.map((territory) => [territory.id, territory]));
     const targetByRep = Object.fromEntries(targets.map((target) => [target.repId, Number(target.amount || 0)]));
       const territoryOutletIds = req.query.territoryId ? new Set(outlets.filter((outlet) => req.query.territoryId === 'unassigned' ? !outlet.territoryId : outlet.territoryId === req.query.territoryId).map((outlet) => outlet.id)) : null;
-    const selected = (sale) => (!territoryOutletIds || territoryOutletIds.has(sale.outletId))
+    const selected = (sale) => isActiveSale(sale)
+      && (!territoryOutletIds || territoryOutletIds.has(sale.outletId))
       && (!req.query.repId || sale.repId === req.query.repId)
       && (!req.query.outletId || sale.outletId === req.query.outletId)
       && (!req.query.productId || sale.productId === req.query.productId);
@@ -112,6 +114,7 @@ async function getTotals(req, res, next) {
     }
 
     let sales = await listDocs('sales', { where });
+    sales = sales.filter(isActiveSale);
     if (req.user.role === 'manager') sales = sales.filter((sale) => (!req.query.repId || sale.repId === req.query.repId) && (!req.query.outletId || sale.outletId === req.query.outletId) && (!req.query.productId || sale.productId === req.query.productId));
       if (req.user.role === 'manager' && req.query.territoryId) {
         const outlets = req.query.territoryId === 'unassigned' ? await listDocs('outlets') : await listDocs('outlets', { where: [['territoryId', '==', req.query.territoryId]] });
