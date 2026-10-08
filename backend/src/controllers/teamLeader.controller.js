@@ -34,6 +34,21 @@ async function getOverview(req, res, next) {
     const repIds = [...new Set(memberships.map((item) => item.repId))];
     const reps = await Promise.all(repIds.map((id) => getDoc('reps', id)));
     const repById = new Map(reps.filter(Boolean).map((rep) => [rep.id, rep]));
+    const teamIdsByRep = new Map(repIds.map((repId) => [repId, []]));
+    memberships.forEach((membership) => {
+      if (teamIdsByRep.has(membership.repId)) teamIdsByRep.get(membership.repId).push(membership.teamId);
+    });
+    const month = new Date().toISOString().slice(0, 7);
+    const targetDocs = await Promise.all(repIds.map((repId) => getDoc('salesTargets', `${repId}_${month}`)));
+    const targetByRep = new Map(repIds.map((repId, index) => [repId, Number(targetDocs[index]?.amount || 0)]));
+    const monthStart = Date.parse(`${month}-01T00:00:00.000Z`);
+    const monthEndDate = new Date(`${month}-01T00:00:00.000Z`);
+    monthEndDate.setUTCMonth(monthEndDate.getUTCMonth() + 1);
+    const monthEnd = monthEndDate.getTime();
+    const monthlySales = activeSales.filter((sale) => {
+      const timestamp = timeMillis(sale.timestamp);
+      return timestamp >= monthStart && timestamp < monthEnd;
+    });
     const activityByRep = new Map(repIds.map((id) => [id, 0]));
     for (const record of [...activeSales, ...activations, ...calls, ...audits]) {
       const ownerId = record.repId || record.ambassadorId || record.telemarketerId || record.merchandiserId;
@@ -46,14 +61,27 @@ async function getOverview(req, res, next) {
       activityCount: activityByRep.get(repId) || 0,
     })).sort((a, b) => b.activityCount - a.activityCount || a.name.localeCompare(b.name))
       .map((entry, index) => ({ ...entry, rank: index + 1 }));
+    const members = repIds.map((repId) => ({
+    repId,
+    name: repById.get(repId)?.name || repId,
+    role: repById.get(repId)?.role || 'unknown',
+    teamIds: teamIdsByRep.get(repId) || [],
+    })).sort((a, b) => a.name.localeCompare(b.name));
 
     const now = Date.now();
     return res.json({
       teams: teams.filter(Boolean),
       memberCount: repIds.length,
+      members,
       sales: {
         count: activeSales.length,
         total: Number(activeSales.reduce((sum, sale) => sum + Number(sale.total || 0), 0).toFixed(2)),
+      },
+      salesTarget: {
+        month,
+        target: Number([...targetByRep.values()].reduce((sum, value) => sum + value, 0).toFixed(2)),
+        actual: Number(monthlySales.reduce((sum, sale) => sum + Number(sale.total || 0), 0).toFixed(2)),
+        targetedMemberCount: [...targetByRep.values()].filter((value) => value > 0).length,
       },
       activations: {
         count: activations.length,
@@ -223,6 +251,7 @@ async function listFieldRequests(req, res, next) {
     if (req.user.role === 'manager') requests = await listDocs('fieldRequests');
     else if (req.user.role === 'team_leader') requests = await listTeamDocs('fieldRequests', req.user.teamIds || []);
     else requests = await listDocs('fieldRequests', { where: [['requesterId', '==', req.user.uid]] });
+    if (req.query.mine === 'true') requests = requests.filter((item) => item.requesterId === req.user.uid);
     if (req.query.status) requests = requests.filter((item) => item.status === req.query.status);
     const requesterIds = [...new Set(requests.map((item) => item.requesterId))];
     const requesters = await Promise.all(requesterIds.map((id) => getDoc('reps', id)));

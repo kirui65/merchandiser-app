@@ -9,6 +9,8 @@ import LeadDetailScreen from '../screens/LeadDetailScreen';
 import LeadListScreen from '../screens/LeadListScreen';
 import TelemarketerHomeScreen from '../screens/TelemarketerHomeScreen';
 import RoleMoreScreen from '../screens/RoleMoreScreen';
+import BroadcastFeedScreen from '../screens/BroadcastFeedScreen';
+import FieldRequestScreen from '../screens/FieldRequestScreen';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/tokens';
 
@@ -55,7 +57,11 @@ function CallsStack() {
 }
 
 function MoreStack() {
-  return <ScreenStack screens={[{ name: 'More', component: RoleMoreScreen, title: 'More' }]} />;
+  return <ScreenStack screens={[
+    { name: 'More', component: RoleMoreScreen, title: 'More' },
+    { name: 'BroadcastFeed', component: BroadcastFeedScreen, title: 'Team announcements' },
+    { name: 'FieldRequest', component: FieldRequestScreen, title: 'Field requests' },
+  ]} />;
 }
 
 export default function TelemarketerNavigator() {

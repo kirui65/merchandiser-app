@@ -56,6 +56,11 @@ export default function TeamOverviewScreen() {
               <Card style={styles.metric}><Text style={styles.value}>{overview.merchandisingAudits.count}</Text><Text style={styles.label}>Outlet checks</Text><Text style={styles.detail}>{overview.merchandisingAudits.lowStockCount} low-stock flags</Text></Card>
             </View>
             <Card>
+              <Text style={styles.cardTitle}>Monthly sales target</Text>
+              <Text style={styles.targetValue}>KES {Number(overview.salesTarget?.actual || 0).toLocaleString('en-KE', { maximumFractionDigits: 2 })} / {Number(overview.salesTarget?.target || 0).toLocaleString('en-KE', { maximumFractionDigits: 2 })}</Text>
+              <Text style={styles.note}>{overview.salesTarget?.targetedMemberCount || 0} team members have a sales target for {overview.salesTarget?.month || 'this month'}.</Text>
+            </Card>
+            <Card>
               <Text style={styles.cardTitle}>Cross-role activity</Text>
               {overview.leaderboard.length ? overview.leaderboard.slice(0, 5).map((member) => (
                 <View key={member.repId} style={styles.rankRow}>
@@ -65,6 +70,15 @@ export default function TeamOverviewScreen() {
                 </View>
               )) : <Text style={styles.detail}>No activity recorded yet.</Text>}
               <Text style={styles.note}>Activity counts combine each role’s logged field actions.</Text>
+            </Card>
+            <Card>
+              <Text style={styles.cardTitle}>Active team members</Text>
+              {overview.members?.length ? overview.members.map((member) => (
+                <View key={member.repId} style={styles.rankRow}>
+                  <View style={styles.memberCopy}><Text style={styles.memberName}>{member.name}</Text><Text style={styles.role}>{member.role.replace(/_/g, ' ')}</Text></View>
+                  <Text style={styles.role}>{member.teamIds.map((id) => overview.teams.find((team) => team.id === id)?.name || id).join(', ')}</Text>
+                </View>
+              )) : <Text style={styles.detail}>No active team members.</Text>}
             </Card>
           </>
         )}
@@ -84,6 +98,7 @@ const createStyles = (colors) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   metric: { width: '48%', flexGrow: 1, gap: 4 },
   value: { color: colors.primary, fontFamily: typography.fontFamilyExtraBold, fontSize: 25 },
+  targetValue: { color: colors.primary, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.h3 },
   label: { color: colors.ink, fontFamily: typography.fontFamilyBold, fontSize: typography.small },
   detail: { color: colors.muted, fontFamily: typography.fontFamily, fontSize: 11 },
   cardTitle: { color: colors.ink, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.h3, marginBottom: spacing.sm },

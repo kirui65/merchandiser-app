@@ -30,7 +30,21 @@ export async function fetchFieldRequests(status) {
   return data.requests;
 }
 
+export async function fetchMyFieldRequests() {
+  const { data } = await client.get('/field-requests', { params: { mine: true } });
+  return data.requests;
+}
+
 export async function reviewFieldRequest(id, status) {
   const { data } = await client.patch(`/field-requests/${id}/review`, { status });
   return data.request;
+}
+
+export async function createFieldRequest(payload) {
+  const { data } = await client.post('/field-requests', payload);
+  return data.request;
+}
+
+export async function deleteFieldRequest(id) {
+  await client.delete(`/field-requests/${encodeURIComponent(id)}`);
 }

@@ -8,12 +8,17 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../theme/ThemeContext';
 import { radius, spacing, typography } from '../theme/tokens';
 
-export default function RoleMoreScreen() {
+export default function RoleMoreScreen({ navigation }) {
   const { signOut, user } = useAuth();
   const { language, setLanguage } = useLanguage();
   const { colors, mode, setMode } = useTheme();
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const styles = createStyles(colors);
+  const canUseTeamTools = ['rep', 'brand_ambassador', 'telemarketer', 'team_leader'].includes(user?.role);
+  const teamLinks = [
+    { label: 'Team announcements', icon: 'megaphone-outline', screen: 'BroadcastFeed' },
+    { label: 'Request time or field support', icon: 'calendar-outline', screen: 'FieldRequest' },
+  ];
 
   useEffect(() => {
     isBiometricUnlockEnabled()
@@ -47,6 +52,20 @@ export default function RoleMoreScreen() {
           </View>
         </View>
 
+        {canUseTeamTools ? (
+          <>
+            <Text style={styles.section}>Team</Text>
+            <Card style={styles.menu}>
+              {teamLinks.map((item) => (
+                <Pressable key={item.screen} style={styles.row} onPress={() => navigation.navigate(item.screen)}>
+                  <Ionicons name={item.icon} color={colors.primary} size={22} />
+                  <Text style={styles.rowText}>{item.label}</Text>
+                  <Ionicons name="chevron-forward" color={colors.muted} size={20} />
+                </Pressable>
+              ))}
+            </Card>
+          </>
+        ) : null}
         <Text style={styles.section}>Settings</Text>
         <Card style={styles.menu}>
           <View style={styles.row}>

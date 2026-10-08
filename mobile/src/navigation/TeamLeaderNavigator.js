@@ -9,6 +9,8 @@ import TeamLeaderboardScreen from '../screens/TeamLeaderboardScreen';
 import TeamBroadcastsScreen from '../screens/TeamBroadcastsScreen';
 import FieldRequestApprovalsScreen from '../screens/FieldRequestApprovalsScreen';
 import RoleMoreScreen from '../screens/RoleMoreScreen';
+import BroadcastFeedScreen from '../screens/BroadcastFeedScreen';
+import FieldRequestScreen from '../screens/FieldRequestScreen';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/tokens';
 
@@ -34,7 +36,21 @@ function MapStack() { return <ScreenStack component={TeamMapScreen} title="Live 
 function LeaderboardStack() { return <ScreenStack component={TeamLeaderboardScreen} title="Leaderboard" />; }
 function BroadcastsStack() { return <ScreenStack component={TeamBroadcastsScreen} title="Broadcasts" />; }
 function RequestsStack() { return <ScreenStack component={FieldRequestApprovalsScreen} title="Field requests" />; }
-function AccountStack() { return <ScreenStack component={RoleMoreScreen} title="More" />; }
+function AccountStack() {
+  const { colors } = useTheme();
+  return (
+    <Stack.Navigator screenOptions={{
+      headerStyle: { backgroundColor: colors.surface },
+      headerTintColor: colors.ink,
+      headerTitleStyle: styles.headerTitle,
+      contentStyle: { backgroundColor: colors.background },
+    }}>
+      <Stack.Screen name="More" component={RoleMoreScreen} options={{ title: 'More' }} />
+      <Stack.Screen name="BroadcastFeed" component={BroadcastFeedScreen} options={{ title: 'Team announcements' }} />
+      <Stack.Screen name="FieldRequest" component={FieldRequestScreen} options={{ title: 'Field requests' }} />
+    </Stack.Navigator>
+  );
+}
 
 const icons = {
   Overview: 'grid-outline',

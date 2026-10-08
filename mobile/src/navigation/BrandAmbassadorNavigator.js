@@ -6,11 +6,29 @@ import { Ionicons } from '@expo/vector-icons';
 import ActivationEntryScreen from '../screens/ActivationEntryScreen';
 import ActivationListScreen from '../screens/ActivationListScreen';
 import RoleMoreScreen from '../screens/RoleMoreScreen';
+import BroadcastFeedScreen from '../screens/BroadcastFeedScreen';
+import FieldRequestScreen from '../screens/FieldRequestScreen';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/tokens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+function AccountStack() {
+  const { colors } = useTheme();
+  return (
+    <Stack.Navigator screenOptions={{
+      headerStyle: { backgroundColor: colors.surface },
+      headerTintColor: colors.ink,
+      headerTitleStyle: styles.headerTitle,
+      contentStyle: { backgroundColor: colors.background },
+    }}>
+      <Stack.Screen name="AccountHome" component={RoleMoreScreen} options={{ title: 'Account' }} />
+      <Stack.Screen name="BroadcastFeed" component={BroadcastFeedScreen} options={{ title: 'Team announcements' }} />
+      <Stack.Screen name="FieldRequest" component={FieldRequestScreen} options={{ title: 'Field requests' }} />
+    </Stack.Navigator>
+  );
+}
 
 function ActivationStack() {
   const { colors } = useTheme();
@@ -43,13 +61,10 @@ export default function BrandAmbassadorNavigator() {
       <Tab.Screen name="ActivationsTab" component={ActivationStack} options={{ title: 'Activations' }} />
       <Tab.Screen
         name="Account"
-        component={RoleMoreScreen}
+        component={AccountStack}
         options={{
           title: 'Account',
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.ink,
-          headerTitleStyle: styles.headerTitle,
+          headerShown: false,
         }}
       />
     </Tab.Navigator>
