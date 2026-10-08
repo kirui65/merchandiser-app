@@ -9,11 +9,12 @@ test('rolls up all field activity and filters by campaign, region, and record da
     campaignId: 'campaign-a',
     regionId: 'region-a',
     teams: [
-      { id: 'team-a', regionId: 'region-a' },
+      { id: 'team-a', name: 'Alpha', regionId: 'region-a' },
       { id: 'team-b', regionId: 'region-b' },
     ],
     sales: [
       { id: 's1', teamId: 'team-a', campaignId: 'campaign-a', timestamp: '2026-10-12T10:00:00.000Z', total: 100.25 },
+      { id: 's-void', teamId: 'team-a', saleStatus: 'voided', campaignId: 'campaign-a', timestamp: '2026-10-12T10:00:00.000Z', total: 50 },
       { id: 's2', teamId: 'team-b', campaignId: 'campaign-a', timestamp: '2026-10-12T10:00:00.000Z', total: 90 },
       { id: 's3', teamId: 'team-a', campaignId: null, timestamp: '2026-10-12T10:00:00.000Z', total: 40 },
       { id: 's4', teamId: 'team-a', campaignId: 'campaign-a', timestamp: '2026-09-30T23:59:59.999Z', total: 30 },
@@ -36,5 +37,13 @@ test('rolls up all field activity and filters by campaign, region, and record da
     activations: { count: 1, footfallCount: 25 },
     leads: { count: 2, byStatus: { new: 1, contacted: 0, qualified: 1, converted: 0, not_interested: 0, closed: 0 } },
     merchandisingAudits: { count: 1, lowStockChecks: 1, compliantPlanograms: 1 },
+    teamPerformance: [{
+      teamId: 'team-a',
+      teamName: 'Alpha',
+      sales: { count: 1, total: 100.25 },
+      activations: 1,
+      leads: 2,
+      merchandisingAudits: 1,
+    }],
   });
 });

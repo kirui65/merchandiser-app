@@ -22,6 +22,33 @@ function buildCompanyReport({ sales, activations, leads, audits, teams, from, to
   const filteredActivations = activations.filter((record) => matches(record, record.startedAt));
   const filteredLeads = leads.filter((record) => matches(record, record.createdAt));
   const filteredAudits = audits.filter((record) => matches(record, record.observedAt));
+  const teamPerformanceById = new Map();
+  const teamStats = (teamId) => {
+    if (!teamPerformanceById.has(teamId)) {
+      const team = teamById.get(teamId);
+      teamPerformanceById.set(teamId, {
+        teamId,
+        teamName: team?.name || teamId,
+        sales: { count: 0, total: 0 },
+        activations: 0,
+        leads: 0,
+        merchandisingAudits: 0,
+      });
+    }
+    return teamPerformanceById.get(teamId);
+  };
+  filteredSales.forEach((record) => {
+    if (!record.teamId) return;
+    const stats = teamStats(record.teamId);
+    stats.sales.count += 1;
+    stats.sales.total += Number(record.total || 0);
+  });
+  filteredActivations.forEach((record) => { if (record.teamId) teamStats(record.teamId).activations += 1; });
+  filteredLeads.forEach((record) => { if (record.teamId) teamStats(record.teamId).leads += 1; });
+  filteredAudits.forEach((record) => { if (record.teamId) teamStats(record.teamId).merchandisingAudits += 1; });
+  const teamPerformance = [...teamPerformanceById.values()]
+    .map((team) => ({ ...team, sales: { ...team.sales, total: Number(team.sales.total.toFixed(2)) } }))
+    .sort((a, b) => b.sales.total - a.sales.total || b.activations - a.activations || a.teamName.localeCompare(b.teamName));
 
   return {
     sales: {
@@ -43,6 +70,7 @@ function buildCompanyReport({ sales, activations, leads, audits, teams, from, to
         + (record.stockChecks || []).filter((check) => check.lowStock).length, 0),
       compliantPlanograms: filteredAudits.filter((record) => record.planogram?.compliant === true).length,
     },
+    teamPerformance,
   };
 }
 
