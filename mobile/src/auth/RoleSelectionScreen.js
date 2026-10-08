@@ -3,18 +3,18 @@ import {
   Animated,
   Image,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLastSelectedRole, rememberSelectedRole } from '../api/auth';
 import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
-const ROLES = [
+export const LOGIN_ROLES = [
   {
     value: 'merchandiser',
     label: 'Merchandiser',
@@ -47,18 +47,18 @@ const ROLES = [
   },
 ];
 
-export default function RoleSelectionScreen({ navigation }) {
+export default function RoleSelectionScreen({ onSelectRole, selectedRole }) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [lastRole, setLastRole] = useState(null);
-  const entrances = useRef(ROLES.map(() => new Animated.Value(0))).current;
-  const presses = useRef(ROLES.map(() => new Animated.Value(1))).current;
+  const entrances = useRef(LOGIN_ROLES.map(() => new Animated.Value(0))).current;
+  const presses = useRef(LOGIN_ROLES.map(() => new Animated.Value(1))).current;
 
   useEffect(() => {
     let mounted = true;
     getLastSelectedRole()
       .then((role) => {
-        if (mounted && ROLES.some((item) => item.value === role)) setLastRole(role);
+        if (mounted && LOGIN_ROLES.some((item) => item.value === role)) setLastRole(role);
       })
       .catch((error) => console.warn('Could not load the last selected sign-in role:', error));
 
@@ -78,7 +78,7 @@ export default function RoleSelectionScreen({ navigation }) {
     setLastRole(role.value);
     rememberSelectedRole(role.value)
       .catch((error) => console.warn('Could not save the last selected sign-in role:', error));
-    navigation.navigate('Login', { role: role.value });
+    onSelectRole(role.value);
   }
 
   function animatePress(index, value) {
@@ -108,8 +108,8 @@ export default function RoleSelectionScreen({ navigation }) {
         <Text style={styles.subtitle}>Choose your role to continue</Text>
 
         <View style={styles.grid}>
-          {ROLES.map((role, index) => {
-            const selected = lastRole === role.value;
+          {LOGIN_ROLES.map((role, index) => {
+            const selected = (selectedRole || lastRole) === role.value;
             const accent = colors.roleAccents[role.value];
             return (
               <Animated.View
