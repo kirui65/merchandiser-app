@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { login as apiLogin, verifyMfaLogin, logout as apiLogout, getStoredUser, hasStoredAuthToken } from '../api/auth';
+import { login as apiLogin, verifyMfaLogin, logout as apiLogout } from '../api/auth';
 import { initDb } from '../offline/db';
 import { getPendingPings, markPingsFailed, markPingsSynced } from '../offline/gpsQueue';
 import { createGpsSyncManager } from '../offline/gpsSyncManager';
@@ -22,7 +22,6 @@ import { getPendingSales, markFailed, markSynced } from '../offline/salesQueue';
 import { postSale } from '../api/sales';
 import { createSyncManager } from '../offline/syncManager';
 import { subscribeToConnectivity, isCurrentlyOnline } from '../utils/netInfo';
-import { authenticateBiometric, isBiometricUnlockEnabled } from './biometric';
 import { stopRouteTracking } from '../location/gpsTracker';
 
 const AuthContext = createContext(null);
@@ -78,14 +77,7 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   useEffect(() => {
-    (async () => {
-      const storedUser = await getStoredUser();
-      if (storedUser && await isBiometricUnlockEnabled()) {
-        const result = await authenticateBiometric();
-        setUser(result.success ? storedUser : null);
-      } else setUser(storedUser);
-      setLoading(false);
-    })().catch(() => setLoading(false));
+    setLoading(false);
   }, []);
 
   async function signIn(email, password, role) {
@@ -99,17 +91,6 @@ export function AuthProvider({ children }) {
     const loggedInUser = await verifyMfaLogin(challenge, code);
     setUser(loggedInUser);
     return loggedInUser;
-  }
-
-  async function unlockWithBiometric() {
-    if (!(await isBiometricUnlockEnabled())) return false;
-    const result = await authenticateBiometric();
-    if (!result.success) return false;
-
-    const [storedUser, hasToken] = await Promise.all([getStoredUser(), hasStoredAuthToken()]);
-    if (!storedUser || !hasToken) return false;
-    setUser(storedUser);
-    return true;
   }
 
   async function signOut() {
@@ -129,7 +110,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, verifyMfa, unlockWithBiometric, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, verifyMfa, signOut }}>
       {children}
     </AuthContext.Provider>
   );

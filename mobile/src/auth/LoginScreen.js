@@ -14,38 +14,26 @@ import {
 import { useAuth } from './AuthContext';
 import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
-import { hasStoredAuthToken, getStoredUser, getLastSelectedRole, rememberSelectedRole } from '../api/auth';
-import { getBiometricUnlockLabel, isBiometricUnlockEnabled } from './biometric';
-import { Ionicons } from '@expo/vector-icons';
+import { rememberSelectedRole } from '../api/auth';
 
-const LOGIN_ROLES = [
-  { value: 'merchandiser', label: 'Merchandiser' },
-  { value: 'brand_ambassador', label: 'Brand Ambassador' },
-  { value: 'telemarketer', label: 'Telemarketer' },
-  { value: 'team_leader', label: 'Team Leader' },
-  { value: 'admin', label: 'Admin' },
-];
-
-export default function LoginScreen() {
-  const { signIn, verifyMfa, unlockWithBiometric } = useAuth();
+export default function LoginScreen({ route }) {
+  const { signIn, verifyMfa } = useAuth();
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState('merchandiser');
+  const selectedRole = route.params?.role || 'merchandiser';
   const [mfaChallenge, setMfaChallenge] = useState(null);
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [authenticatingBiometric, setAuthenticatingBiometric] = useState(false);
   const [slowRequest, setSlowRequest] = useState(false);
-  const [biometricLabel, setBiometricLabel] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
   const errorAnimation = useRef(new Animated.Value(0)).current;
   const spinnerAnimation = useRef(new Animated.Value(0)).current;
   const spinnerRotation = spinnerAnimation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const busy = submitting || authenticatingBiometric;
+  const busy = submitting;
 
   useEffect(() => {
     Animated.spring(errorAnimation, {
@@ -78,28 +66,6 @@ export default function LoginScreen() {
     };
   }, [submitting, busy, spinnerAnimation]);
 
-  useEffect(() => {
-    let mounted = true;
-    Promise.all([isBiometricUnlockEnabled(), getStoredUser(), hasStoredAuthToken(), getBiometricUnlockLabel()])
-      .then(([enabled, storedUser, hasToken, label]) => {
-        if (mounted && enabled && storedUser && hasToken) setBiometricLabel(label);
-      })
-      .catch(() => {
-        if (mounted) setBiometricLabel(null);
-      });
-    return () => { mounted = false; };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-    getLastSelectedRole()
-      .then((role) => {
-        if (mounted && LOGIN_ROLES.some((item) => item.value === role)) setSelectedRole(role);
-      })
-      .catch((storageError) => console.warn('Could not load the last selected sign-in role:', storageError));
-    return () => { mounted = false; };
-  }, []);
-
   async function handleSubmit() {
     setError(null);
     setSubmitting(true);
@@ -127,18 +93,6 @@ export default function LoginScreen() {
     finally { setSubmitting(false); }
   }
 
-  async function handleBiometricLogin() {
-    setError(null);
-    setAuthenticatingBiometric(true);
-    try {
-      await unlockWithBiometric();
-    } catch {
-      setError('Biometric sign-in is unavailable. Use your email and password instead.');
-    } finally {
-      setAuthenticatingBiometric(false);
-    }
-  }
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -154,42 +108,6 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>{mfaChallenge ? 'Enter your current authenticator code' : 'Sign in to start your shift'}</Text>
 
         <View style={styles.card}>
-          {!mfaChallenge && biometricLabel ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: busy, busy }}
-              disabled={busy}
-              onPress={handleBiometricLogin}
-              style={({ pressed }) => [styles.biometricButton, pressed && styles.biometricButtonPressed, busy && styles.buttonDisabled]}
-            >
-              {authenticatingBiometric ? <Animated.View style={[styles.spinner, styles.biometricSpinner, { transform: [{ rotate: spinnerRotation }] }]} /> : <Ionicons name={biometricLabel.includes('face') ? 'scan-outline' : 'finger-print-outline'} size={23} color={colors.white} />}
-              <Text style={styles.biometricButtonText}>SIGN IN WITH {biometricLabel.toUpperCase()}</Text>
-            </Pressable>
-          ) : null}
-
-          {!mfaChallenge ? (
-            <View style={styles.roleGroup}>
-              <Text style={styles.label}>Choose your role</Text>
-              <View style={styles.roleChips}>
-                {LOGIN_ROLES.map((role) => {
-                  const selected = selectedRole === role.value;
-                  return (
-                    <Pressable
-                      key={role.value}
-                      accessibilityRole="radio"
-                      accessibilityState={{ checked: selected, disabled: busy }}
-                      disabled={busy}
-                      onPress={() => { setSelectedRole(role.value); setError(null); }}
-                      style={[styles.roleChip, selected && styles.roleChipSelected]}
-                    >
-                      <Text style={[styles.roleChipText, selected && styles.roleChipTextSelected]}>{role.label}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
-
           {mfaChallenge ? <View style={styles.fieldGroup}>
             <Text style={styles.label}>Authenticator code</Text>
             <View style={[styles.inputShell, focusedField === 'mfa' && styles.inputShellFocused]}>
@@ -300,12 +218,6 @@ const createStyles = (colors) => StyleSheet.create({
     elevation: 4,
   },
   fieldGroup: { marginBottom: spacing.md },
-  roleGroup: { marginBottom: spacing.md },
-  roleChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  roleChip: { minHeight: 38, justifyContent: 'center', paddingHorizontal: spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: radius.pill, backgroundColor: colors.surface },
-  roleChipSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  roleChipText: { color: colors.muted, fontFamily: typography.fontFamilySemiBold, fontSize: 11, fontWeight: '600' },
-  roleChipTextSelected: { color: colors.primary, fontFamily: typography.fontFamilyExtraBold, fontWeight: '800' },
   label: { color: colors.ink, fontFamily: typography.fontFamilyBold, fontSize: typography.small, fontWeight: '700', marginBottom: spacing.xs },
   inputShell: { flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, backgroundColor: colors.surface },
   inputShellFocused: { borderColor: colors.primary, backgroundColor: colors.white },
@@ -321,10 +233,6 @@ const createStyles = (colors) => StyleSheet.create({
   buttonDisabled: { opacity: 0.78 },
   buttonText: { color: colors.white, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.button, fontWeight: '800', letterSpacing: 1 },
   spinner: { width: 22, height: 22, borderWidth: 2.5, borderColor: 'rgba(255,255,255,0.35)', borderTopColor: colors.white, borderRightColor: colors.success, borderRadius: 11 },
-  biometricButton: { minHeight: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginBottom: spacing.lg, borderRadius: radius.md, backgroundColor: colors.success, shadowColor: colors.primaryDark, shadowOpacity: 0.16, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
-  biometricButtonPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
-  biometricButtonText: { color: colors.white, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.small, fontWeight: '800', letterSpacing: 0.5 },
-  biometricSpinner: { borderRightColor: colors.primary },
   connecting: { color: colors.muted, fontFamily: typography.fontFamilyMedium, fontSize: typography.small, marginTop: spacing.sm, textAlign: 'center' },
   footer: { color: colors.muted, fontFamily: typography.fontFamily, fontSize: 12, marginTop: spacing.lg, textAlign: 'center' },
   loginBack: { color: colors.primary, fontFamily: typography.fontFamilyBold, fontSize: typography.small, marginTop: spacing.md, textAlign: 'center' },

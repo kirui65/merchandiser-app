@@ -18,6 +18,14 @@ export const colors = {
   error: '#BA2525',
   errorSoft: '#FDECEC',
   white: '#FFFFFF',
+  logoPanel: '#F7EEDB',
+  roleAccents: {
+    merchandiser: '#1E3A5F',
+    brand_ambassador: '#B96A12',
+    telemarketer: '#24784B',
+    team_leader: '#6552A3',
+    admin: '#9A4663',
+  },
 };
 
 export const darkColors = {
@@ -40,6 +48,14 @@ export const darkColors = {
   error: '#FFB4B4',
   errorSoft: '#542526',
   white: '#FFFFFF',
+  logoPanel: '#F7EEDB',
+  roleAccents: {
+    merchandiser: '#A8C7EB',
+    brand_ambassador: '#F5BA61',
+    telemarketer: '#71D695',
+    team_leader: '#C3B4FF',
+    admin: '#F2AFC5',
+  },
 };
 
 export const spacing = { xs: 6, sm: 10, md: 16, lg: 24, xl: 32 };
