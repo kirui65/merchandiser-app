@@ -4,17 +4,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CallHistoryScreen from '../screens/CallHistoryScreen';
+import FollowUpsScreen from '../screens/FollowUpsScreen';
 import LeadDetailScreen from '../screens/LeadDetailScreen';
 import LeadListScreen from '../screens/LeadListScreen';
+import TelemarketerHomeScreen from '../screens/TelemarketerHomeScreen';
 import RoleMoreScreen from '../screens/RoleMoreScreen';
 import { useTheme } from '../theme/ThemeContext';
 import { typography } from '../theme/tokens';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const icons = { LeadTab: 'people-outline', CallHistory: 'call-outline', More: 'menu-outline' };
+const icons = { Home: 'home-outline', Leads: 'people-outline', FollowUps: 'calendar-outline', Calls: 'call-outline', More: 'menu-outline' };
 
-function LeadStack() {
+function ScreenStack({ screens }) {
   const { colors } = useTheme();
   return (
     <Stack.Navigator screenOptions={{
@@ -23,10 +25,37 @@ function LeadStack() {
       headerTitleStyle: styles.headerTitle,
       contentStyle: { backgroundColor: colors.background },
     }}>
-      <Stack.Screen name="LeadList" component={LeadListScreen} options={{ title: 'Leads' }} />
-      <Stack.Screen name="LeadDetail" component={LeadDetailScreen} options={{ title: 'Lead details' }} />
+      {screens.map(({ name, component: Component, title }) => (
+        <Stack.Screen key={name} name={name} component={Component} options={{ title }} />
+      ))}
     </Stack.Navigator>
   );
+}
+
+function HomeStack() {
+  return <ScreenStack screens={[{ name: 'TelemarketerHome', component: TelemarketerHomeScreen, title: 'Home' }]} />;
+}
+
+function LeadsStack() {
+  return <ScreenStack screens={[
+    { name: 'LeadList', component: LeadListScreen, title: 'Leads' },
+    { name: 'LeadDetail', component: LeadDetailScreen, title: 'Lead details' },
+  ]} />;
+}
+
+function FollowUpsStack() {
+  return <ScreenStack screens={[
+    { name: 'FollowUpsList', component: FollowUpsScreen, title: 'Follow-ups' },
+    { name: 'LeadDetail', component: LeadDetailScreen, title: 'Lead details' },
+  ]} />;
+}
+
+function CallsStack() {
+  return <ScreenStack screens={[{ name: 'CallHistory', component: CallHistoryScreen, title: 'Calls' }]} />;
+}
+
+function MoreStack() {
+  return <ScreenStack screens={[{ name: 'More', component: RoleMoreScreen, title: 'More' }]} />;
 }
 
 export default function TelemarketerNavigator() {
@@ -40,19 +69,11 @@ export default function TelemarketerNavigator() {
       tabBarLabelStyle: styles.tabLabel,
       tabBarIcon: ({ color, size }) => <Ionicons name={icons[route.name]} color={color} size={size} />,
     })}>
-      <Tab.Screen name="LeadTab" component={LeadStack} options={{ title: 'Leads' }} />
-      <Tab.Screen
-        name="CallHistory"
-        component={CallHistoryScreen}
-        options={({ route }) => ({
-          title: 'Calls',
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.ink,
-          headerTitleStyle: styles.headerTitle,
-        })}
-      />
-      <Tab.Screen name="More" component={RoleMoreScreen} options={{ title: 'More' }} />
+      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen name="Leads" component={LeadsStack} />
+      <Tab.Screen name="FollowUps" component={FollowUpsStack} options={{ title: 'Follow-ups' }} />
+      <Tab.Screen name="Calls" component={CallsStack} />
+      <Tab.Screen name="More" component={MoreStack} />
     </Tab.Navigator>
   );
 }

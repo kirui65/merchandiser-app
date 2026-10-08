@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Linking, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { fetchCalls, fetchLead, logCall, updateLead } from '../api/leads';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
@@ -95,6 +95,19 @@ export default function LeadDetailScreen({ route }) {
       };
     }
 
+    async function callLead() {
+      const phone = String(lead.phone || '').replace(/[^\d+*#]/g, '');
+      if (!phone) {
+        setError('This lead has no callable phone number.');
+        return;
+      }
+      try {
+        await Linking.openURL(`tel:${phone}`);
+      } catch {
+        setError('The phone dialer could not be opened. Check that this device supports phone calls.');
+      }
+    }
+
     setLogging(true);
     setError(null);
     setRetryPending(true);
@@ -127,6 +140,9 @@ export default function LeadDetailScreen({ route }) {
             <Text style={styles.name}>{lead.name}</Text>
             <Text style={styles.meta}>{lead.organization || 'No organization recorded'} · {lead.phone}</Text>
             {lead.email ? <Text style={styles.meta}>{lead.email}</Text> : null}
+            <Pressable accessibilityRole="button" onPress={callLead} style={styles.callButton}>
+              <Text style={styles.callButtonText}>Call lead</Text>
+            </Pressable>
             <Text style={styles.stats}>
               {lead.callCount || 0} calls{lead.lastCalledAt ? ` · Last called ${safeDateTime(lead.lastCalledAt)}` : ''}
             </Text>
@@ -217,4 +233,6 @@ const createStyles = (colors) => StyleSheet.create({
   callOutcome: { color: colors.primary, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.small, textTransform: 'capitalize' },
   date: { color: colors.muted, fontFamily: typography.fontFamily, fontSize: 11 },
   followUp: { color: colors.warning, fontFamily: typography.fontFamilySemiBold, fontSize: 12 },
+  callButton: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radius.md, backgroundColor: colors.primarySoft },
+  callButtonText: { color: colors.primary, fontFamily: typography.fontFamilyExtraBold, fontSize: typography.small },
 });
