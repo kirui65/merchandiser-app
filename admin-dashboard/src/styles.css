@@ -252,6 +252,41 @@ table { border-color: #D8E0EA; }th { color: #5D6B7E; background: #E9EEF4; border
 
 /* Keep the dashboard document scrollable. The viewport-locked layout clipped
    cards and their contents on short screens and at increased browser zoom. */
+html,
+body,
+#root {
+	min-height: 100%;
+	background: #F7F8FA;
+}
+body {
+	min-height: 100vh;
+	min-height: 100dvh;
+}
+.modern-shell {
+	min-height: 100vh;
+	min-height: 100dvh;
+	background: #F7F8FA;
+}
+.workspace {
+	background: #F7F8FA;
+}
+.sidebar {
+	height: 100vh;
+	height: 100dvh;
+	min-height: 0;
+	overflow: hidden;
+}
+.sidebar-nav {
+	min-height: 0;
+	flex: 1;
+	align-content: start;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.mobile-nav {
+	position: relative;
+	top: auto;
+}
 .modern-shell:has(.dashboard-page) {
 	height: auto;
 	min-height: 100vh;
