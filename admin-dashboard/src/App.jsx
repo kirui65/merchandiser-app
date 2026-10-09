@@ -21,6 +21,7 @@ import BroadcastsPage from './pages/BroadcastsPage.jsx';
 import FieldRequestsPage from './pages/FieldRequestsPage.jsx';
 import PasswordChangeDialog from './components/PasswordChangeDialog.jsx';
 import ReferralRegistrationsPage from './pages/ReferralRegistrationsPage.jsx';
+import RecruitersPage from './pages/RecruitersPage.jsx';
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ function Shell({ children }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const closeMenu = () => setMenuOpen(false);
-  const navItems = [['/','Overview'],['/company-report','Company report'],['/campaigns','Campaigns'],['/referrals','Applicant referrals'],['/routes','Routes'],['/outlets','Outlets'],['/territories','Territories'],['/reps','Team'],['/regions','Regions'],['/teams','Teams'],['/activations','Activations'],['/leads','Leads'],['/merchandising','Merchandising'],['/broadcasts','Broadcasts'],['/field-requests','Field requests'],['/products','Products'],['/reconciliation','Reconciliation'],['/audit-log','Audit log']];
+  const navItems = [['/','Overview'],['/company-report','Company report'],['/campaigns','Campaigns'],['/recruiters','Recruiter accounts'],['/referrals','Applicant referrals'],['/routes','Routes'],['/outlets','Outlets'],['/territories','Territories'],['/reps','Team'],['/regions','Regions'],['/teams','Teams'],['/activations','Activations'],['/leads','Leads'],['/merchandising','Merchandising'],['/broadcasts','Broadcasts'],['/field-requests','Field requests'],['/products','Products'],['/reconciliation','Reconciliation'],['/audit-log','Audit log']];
   useEffect(() => { const onKeyDown = (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setCommandOpen(true); } if (event.key === 'Escape') setCommandOpen(false); }; window.addEventListener('keydown', onKeyDown); return () => window.removeEventListener('keydown', onKeyDown); }, []);
   const navigation = navItems.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'} onClick={closeMenu}>{label}</NavLink>);
   const commands = navItems.filter(([, label]) => label.toLowerCase().includes(commandQuery.toLowerCase()));
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="/regions" element={<RequireAuth><Shell><RegionsPage /></Shell></RequireAuth>} />
           <Route path="/campaigns" element={<RequireAuth><Shell><CampaignsPage /></Shell></RequireAuth>} />
           <Route path="/referrals" element={<RequireAuth><Shell><ReferralRegistrationsPage /></Shell></RequireAuth>} />
+          <Route path="/recruiters" element={<RequireAuth><Shell><RecruitersPage /></Shell></RequireAuth>} />
           <Route path="/company-report" element={<RequireAuth><Shell><CompanyReportPage /></Shell></RequireAuth>} />
           <Route path="/broadcasts" element={<RequireAuth><Shell><BroadcastsPage /></Shell></RequireAuth>} />
           <Route path="/field-requests" element={<RequireAuth><Shell><FieldRequestsPage /></Shell></RequireAuth>} />
