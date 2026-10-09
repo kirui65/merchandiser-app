@@ -76,7 +76,6 @@ export default function RoleSelectionScreen({
   const [biometricRoleMismatch, setBiometricRoleMismatch] = useState(false);
   const entrances = useRef(LOGIN_ROLES.map(() => new Animated.Value(0))).current;
   const presses = useRef(LOGIN_ROLES.map(() => new Animated.Value(1))).current;
-  const autoPromptStarted = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -96,10 +95,6 @@ export default function RoleSelectionScreen({
         if (enabled && profile && canAuthenticate) {
           setBiometricProfile(profile);
           setBiometricLabel(label);
-          if (!autoPromptStarted.current) {
-            autoPromptStarted.current = true;
-            await performBiometricLogin(profile, true);
-          }
         } else if (enabled && profile) {
           await setBiometricUnlockEnabled(false);
           setBiometricProfile(profile);
@@ -139,10 +134,10 @@ export default function RoleSelectionScreen({
         setBiometricMessage('Your saved login is no longer available. Choose a role and sign in with your password to set up biometrics again.');
         return;
       }
-      const result = await signIn(credentials.email, credentials.password, credentials.role, {
+      const result = await signIn(credentials.email, credentials.password, profile.role, {
         skipBiometricPrompt: true,
       });
-      if (result.mfaRequired) onBiometricMfa(credentials.role, result.challenge);
+      if (result.mfaRequired) onBiometricMfa(profile.role, result.challenge);
     } catch (error) {
       if (error?.response?.status === 401) {
         try {
