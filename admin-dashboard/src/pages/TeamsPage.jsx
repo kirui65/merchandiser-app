@@ -119,6 +119,7 @@ export default function TeamsPage() {
             <div className="field"><label>Team leader</label><select required value={form.teamLeaderId} onChange={(event) => setForm({ ...form, teamLeaderId: event.target.value })}><option value="">Select a team leader</option>{leaders.map((rep) => <option key={rep.id} value={rep.id}>{rep.name}</option>)}</select></div>
             <div className="field"><label>Region</label><select required value={form.regionId} onChange={(event) => setForm({ ...form, regionId: event.target.value })}><option value="">Select a region</option>{regions.filter((region) => region.active).map((region) => <option key={region.id} value={region.id}>{region.name} ({region.countryCode})</option>)}</select></div>
             <Button type="submit" disabled={!leaders.length || !regions.some((region) => region.active)}>Create team</Button>
+            {!leaders.length || !regions.some((region) => region.active) ? <p className="muted form-help">Create an active team leader account and an active region before creating a team.</p> : null}
           </form>
         </Card>
         <Card title="Add a team member">
@@ -126,6 +127,7 @@ export default function TeamsPage() {
             <div className="field"><label>Team</label><select required value={selectedTeamId} onChange={(event) => setSelectedTeamId(event.target.value)}><option value="">Select a team</option>{teams.filter((team) => team.active).map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></div>
             <div className="field"><label>Field user or campaign recruiter</label><select required value={selectedRepId} onChange={(event) => setSelectedRepId(event.target.value)}><option value="">Select a team member</option>{members.map((rep) => <option key={rep.id} value={rep.id}>{rep.name} · {rep.role.replace(/_/g, ' ')}</option>)}</select></div>
             <Button type="submit" disabled={!selectedTeamId || !selectedRepId}>Assign member</Button>
+            {!teams.some((team) => team.active) || !members.length ? <p className="muted form-help">Add an active team and an available field user or recruiter to enable assignment.</p> : null}
           </form>
           <p className="muted" style={{ marginBottom: 0 }}>Each field user can have one active team membership at a time. End the current membership before reassigning.</p>
         </Card>
