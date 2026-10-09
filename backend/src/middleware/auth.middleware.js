@@ -4,6 +4,10 @@ const { ApiError } = require('./errorHandler');
 const { getDoc } = require('../services/firestore.service');
 const { getFirestore } = require('../config/firebase');
 
+function authenticatedUserFromAccount(uid, account) {
+  return { uid, role: account.role };
+}
+
 /**
  * Verifies the JWT and attaches { uid, role } to req.user.
  * This is the REAL authorization boundary for the app (see shared/firestoreSchema.md
@@ -29,7 +33,7 @@ async function requireAuth(req, res, next) {
     if (!rep || rep.active === false || Number(rep.authVersion || 0) !== Number(payload.authVersion || 0)) {
       return next(new ApiError(401, 'Session is no longer valid'));
     }
-    req.user = { uid: payload.uid, role: rep.role };
+    req.user = authenticatedUserFromAccount(payload.uid, rep);
     if (rep.role === 'team_leader') {
       req.user.teamIds = await attachActiveTeamIds(payload.uid);
     }
@@ -92,6 +96,7 @@ function requireTeamLeader(req, res, next) {
 
 module.exports = {
   requireAuth,
+  authenticatedUserFromAccount,
   requireManager,
   requireRole,
   scopeCheck,

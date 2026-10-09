@@ -4,7 +4,7 @@ const { RepCreateSchema } = require('../src/models/rep.model');
 const { LeadCreateSchema, LeadUpdateSchema } = require('../src/models/lead.model');
 const { CallCreateSchema } = require('../src/models/call.model');
 const { assertPickedRoleMatches } = require('../src/services/authRole.service');
-const { requireRole } = require('../src/middleware/auth.middleware');
+const { requireRole, authenticatedUserFromAccount } = require('../src/middleware/auth.middleware');
 
 test('accepts the approved additional rep roles without renaming legacy roles', () => {
   for (const role of ['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader']) {
@@ -49,6 +49,15 @@ test('requireRole middleware authorizes only one of its configured roles', () =>
   middleware({ user: { role: 'rep' } }, {}, (error) => { nextError = error; });
   assert.equal(nextError.statusCode, 403);
   assert.equal(nextError.message, 'telemarketer or manager role required');
+});
+
+test('a role claim cannot grant access beyond the account role stored by the server', () => {
+  const tokenClaims = { uid: 'rep-1', role: 'manager' };
+  const authenticatedUser = authenticatedUserFromAccount(tokenClaims.uid, { role: 'rep' });
+  let nextError;
+  requireRole('manager')({ user: authenticatedUser }, {}, (error) => { nextError = error; });
+  assert.equal(authenticatedUser.role, 'rep');
+  assert.equal(nextError.statusCode, 403);
 });
 
 test('validates lead creation and only allows editable lead fields on update', () => {

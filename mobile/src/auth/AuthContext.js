@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
-import { login as apiLogin, verifyMfaLogin, logout as apiLogout } from '../api/auth';
+import { login as apiLogin, verifyMfaLogin, logout as apiLogout, getStoredUser, hasStoredAuthToken } from '../api/auth';
 import { initDb } from '../offline/db';
 import { getPendingPings, markPingsFailed, markPingsSynced } from '../offline/gpsQueue';
 import { createGpsSyncManager } from '../offline/gpsSyncManager';
@@ -39,6 +39,22 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     initDb();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const [hasToken, storedUser] = await Promise.all([hasStoredAuthToken(), getStoredUser()]);
+        const validServerRoles = ['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader'];
+        if (mounted && hasToken && storedUser && validServerRoles.includes(storedUser.role)) setUser(storedUser);
+      } catch (error) {
+        console.warn('Could not restore the saved session:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -82,10 +98,6 @@ export function AuthProvider({ children }) {
       stopMerchandisingSync?.();
     };
   }, [user]);
-
-  useEffect(() => {
-    setLoading(false);
-  }, []);
 
   async function offerBiometricSetup(credentials, loggedInUser) {
     try {
@@ -138,8 +150,8 @@ export function AuthProvider({ children }) {
   }
 
   async function verifyMfa(challenge, code) {
-    const loggedInUser = await verifyMfaLogin(challenge, code);
     const pendingCredentials = pendingBiometricCredentials;
+    const loggedInUser = await verifyMfaLogin(challenge, code, pendingCredentials?.role);
     setPendingBiometricCredentials(null);
     if (pendingCredentials && !pendingCredentials.skipBiometricPrompt) {
       await offerBiometricSetup(pendingCredentials, loggedInUser);

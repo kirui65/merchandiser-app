@@ -161,7 +161,7 @@ export default function LoginScreen({ role, onBack, initialMfaChallenge, initial
         setError('Your saved login is no longer available. Sign in with your password to set it up again.');
         return;
       }
-      const result = await signIn(credentials.email, credentials.password, credentials.role, {
+      const result = await signIn(credentials.email, credentials.password, selectedRole.value, {
         skipBiometricPrompt: true,
       });
       if (result.mfaRequired) {

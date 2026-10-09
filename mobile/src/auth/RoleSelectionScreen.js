@@ -73,6 +73,7 @@ export default function RoleSelectionScreen({
   const [biometricLabel, setBiometricLabel] = useState(null);
   const [biometricBusy, setBiometricBusy] = useState(false);
   const [biometricMessage, setBiometricMessage] = useState(null);
+  const [biometricRoleMismatch, setBiometricRoleMismatch] = useState(false);
   const entrances = useRef(LOGIN_ROLES.map(() => new Animated.Value(0))).current;
   const presses = useRef(LOGIN_ROLES.map(() => new Animated.Value(1))).current;
   const autoPromptStarted = useRef(false);
@@ -128,6 +129,7 @@ export default function RoleSelectionScreen({
     if (!profile || biometricBusy) return;
     setBiometricBusy(true);
     setBiometricMessage(null);
+    setBiometricRoleMismatch(false);
     try {
       const credentials = await getBiometricLoginCredentials();
       if (!credentials) {
@@ -166,6 +168,7 @@ export default function RoleSelectionScreen({
         setBiometricLabel(null);
         setBiometricMessage('Your device biometrics changed. Sign in with your password to set up fingerprint or face login again.');
       } else if (error?.response?.status === 403) {
+        setBiometricRoleMismatch(true);
         setBiometricMessage(error?.response?.data?.error?.message || 'This saved login does not match its role.');
       } else {
         setBiometricMessage(error?.message?.includes('Could not fully forget')
@@ -239,7 +242,19 @@ export default function RoleSelectionScreen({
         {biometricMessage ? (
           <View accessibilityLiveRegion="polite" style={styles.biometricMessage}>
             <Ionicons name="information-circle-outline" size={19} color={colors.warning} />
-            <Text style={styles.biometricMessageText}>{biometricMessage}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.biometricMessageText}>{biometricMessage}</Text>
+              {biometricRoleMismatch ? (
+                <Pressable accessibilityRole="button" onPress={() => {
+                  setBiometricProfile(null);
+                  setBiometricLabel(null);
+                  setBiometricMessage(null);
+                  setBiometricRoleMismatch(false);
+                }}>
+                  <Text style={[styles.biometricMessageText, { textDecorationLine: 'underline', marginTop: 6 }]}>Choose a different role</Text>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
         ) : null}
 
