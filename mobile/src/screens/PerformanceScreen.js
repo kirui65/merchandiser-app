@@ -9,7 +9,8 @@ import { formatKes } from '../utils/formatters';
 import { colors, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
-const dayKey = (date) => new Date(date).toISOString().slice(0, 10);
+import { businessDateKey } from '../utils/businessDate';
+const dayKey = (date) => businessDateKey(date);
 export default function PerformanceScreen() {
   const { colors: activeColors } = useTheme(); const styles = createStyles(activeColors);
   const [sales, setSales] = useState(null); const [outlets, setOutlets] = useState([]); const [refreshing, setRefreshing] = useState(false);

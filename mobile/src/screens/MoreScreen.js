@@ -19,14 +19,14 @@ export default function MoreScreen({ navigation }) {
     { title: t('shiftHistory'), icon: 'time-outline', screen: 'ShiftHistory' },
     { title: t('pendingSales'), icon: 'cloud-upload-outline', screen: 'PendingSales' },
     { title: t('salesHistory'), icon: 'receipt-outline', screen: 'History' },
-    { title: 'Team announcements', icon: 'megaphone-outline', screen: 'BroadcastFeed' },
-    { title: 'Request time or field support', icon: 'calendar-outline', screen: 'FieldRequest' },
+    { title: t('teamAnnouncements'), icon: 'megaphone-outline', screen: 'BroadcastFeed' },
+    { title: t('fieldRequests'), icon: 'calendar-outline', screen: 'FieldRequest' },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.eyebrow}>ACCOUNT</Text>
+        <Text style={styles.eyebrow}>{t('account').toUpperCase()}</Text>
         <View style={styles.profile}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{(user?.name || user?.email || 'U').slice(0, 1).toUpperCase()}</Text>
@@ -36,7 +36,7 @@ export default function MoreScreen({ navigation }) {
             <Text style={styles.email}>{user?.email || 'Account settings'}</Text>
           </View>
         </View>
-        <Text style={styles.section}>Workspace</Text>
+        <Text style={styles.section}>{t('workspace')}</Text>
         <Card style={styles.menu}>
           {destinations.map((item) => (
             <Pressable
@@ -52,13 +52,13 @@ export default function MoreScreen({ navigation }) {
             </Pressable>
           ))}
         </Card>
-        <Text style={styles.section}>Settings</Text>
+        <Text style={styles.section}>{t('settings')}</Text>
         <Card style={styles.menu}>
           <View style={styles.row}>
             <Ionicons name="moon-outline" color={colors.primary} size={22} />
-            <Text style={styles.rowText}>Dark mode</Text>
+            <Text style={styles.rowText}>{t('darkMode')}</Text>
             <Switch
-              accessibilityLabel="Dark mode"
+              accessibilityLabel={t('darkMode')}
               value={mode === 'dark'}
               onValueChange={(enabled) => setMode(enabled ? 'dark' : 'light')}
               trackColor={{ false: colors.border, true: colors.primarySoft }}
@@ -73,7 +73,7 @@ export default function MoreScreen({ navigation }) {
             onPress={() => setLanguage(language === 'en' ? 'sw' : 'en')}
           >
             <Ionicons name="language-outline" color={colors.primary} size={22} />
-            <Text style={styles.rowText}>Language</Text>
+            <Text style={styles.rowText}>{t('language')}</Text>
             <Text style={styles.value}>{language === 'en' ? 'English' : 'Kiswahili'}</Text>
             <Ionicons name="chevron-forward" color={colors.muted} size={20} />
           </Pressable>

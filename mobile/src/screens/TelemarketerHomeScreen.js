@@ -8,6 +8,7 @@ import { formatNumber } from '../utils/formatters';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
 import { radius, spacing, typography } from '../theme/tokens';
+import { businessDateKey } from '../utils/businessDate';
 
 function asDate(value) {
   if (value && typeof value.toDate === 'function') return value.toDate();
@@ -42,11 +43,11 @@ export default function TelemarketerHomeScreen({ navigation }) {
     try {
       const [leads, calls] = await Promise.all([fetchLeads(), fetchCalls()]);
       const now = new Date();
-      const today = now.toISOString().slice(0, 10);
+      const today = businessDateKey(now);
       setStats({
-        callsToday: calls.filter((call) => asDate(call.startedAt)?.toISOString().slice(0, 10) === today).length,
+        callsToday: calls.filter((call) => businessDateKey(asDate(call.startedAt)) === today).length,
         conversions: leads.filter((lead) => lead.status === 'converted'
-          && asDate(lead.updatedAt)?.toISOString().slice(0, 10) === today).length,
+          && businessDateKey(asDate(lead.updatedAt)) === today).length,
         followUpsDue: leads.filter((lead) => !['closed', 'not_interested'].includes(lead.status) && isDue(lead.nextFollowUpAt, now)).length,
         totalLeads: leads.length,
       });

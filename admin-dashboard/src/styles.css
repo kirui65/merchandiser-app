@@ -419,3 +419,12 @@ body {
 	.dashboard-panel-grid.dashboard-single-grid > .dashboard-panel-card { width: 100%; }
 	.dashboard-payment-grid,.dashboard-security-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+
+/* Navigation groups and small-screen workspace controls. */
+.sidebar-nav { align-content: start; gap: 13px; overflow: auto; }
+.nav-group { display: grid; gap: 4px; }
+.nav-group-label { padding: 0 10px 4px; color: #91A9C4; font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.mobile-nav-search { grid-column: 1 / -1; width: 100%; min-height: 40px; padding: 0 12px; color: #fff; background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.2); border-radius: 8px; }
+.mobile-nav-search::placeholder { color: #C6D5E7; }
+.page-loading { min-height: 220px; display: grid; place-items: center; color: #63738A; font-size: 14px; font-weight: 700; }
+@media (max-width:900px) { .command-trigger { display: inline-flex; align-items: center; margin-right: 8px; }.workspace-top > div { display: flex; align-items: center; }.command-trigger kbd { display: none; }.mobile-nav { max-height: min(70vh,620px); overflow-y: auto; } }

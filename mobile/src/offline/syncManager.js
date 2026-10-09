@@ -44,7 +44,14 @@ export function createSyncManager({ queue, api, isOnline, subscribeToConnectivit
     const results = { synced: 0, duplicates: 0, failed: 0, errors: [] };
 
     try {
-      const pending = queue.getPendingSales();
+      const now = Date.now();
+      const pending = queue.getPendingSales().filter((item) => {
+        const attempts = Number(item.attempts || 0);
+        if (attempts >= MAX_ATTEMPTS_BEFORE_BACKOFF_CAP) return false;
+        if (!attempts || !item.lastAttemptAt) return true;
+        const retryDelay = Math.min(5 * 60 * 1000, 30 * 1000 * (2 ** (attempts - 1)));
+        return now - new Date(item.lastAttemptAt).getTime() >= retryDelay;
+      });
 
       for (const item of pending) {
         try {

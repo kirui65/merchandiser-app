@@ -10,6 +10,7 @@ import { formatDateTime } from '../utils/formatters';
 import { createLocalId } from '../utils/ids';
 import { useTheme } from '../theme/ThemeContext';
 import { radius, spacing, typography } from '../theme/tokens';
+import { businessDateKey } from '../utils/businessDate';
 
 const statuses = ['new', 'contacted', 'qualified', 'converted', 'not_interested', 'closed'];
 const scores = ['hot', 'warm', 'cold', 'unscored'];
@@ -46,7 +47,7 @@ export default function LeadDetailScreen({ route }) {
       setScore(nextLead.score);
       setNotes(nextLead.notes || '');
       const followUp = nextLead.nextFollowUpAt ? asDate(nextLead.nextFollowUpAt) : null;
-      setFollowUpDate(followUp && !Number.isNaN(followUp.getTime()) ? followUp.toISOString().slice(0, 10) : '');
+      setFollowUpDate(followUp && !Number.isNaN(followUp.getTime()) ? businessDateKey(followUp) : '');
     } catch {
       setError('Lead details could not be loaded. Check your connection and retry.');
     } finally {
@@ -74,8 +75,8 @@ export default function LeadDetailScreen({ route }) {
     if (!callAttempt.current) {
       let followUpAt;
       if (followUpDate) {
-        const parsed = /^\d{4}-\d{2}-\d{2}$/.test(followUpDate) ? new Date(`${followUpDate}T09:00:00.000Z`) : new Date(NaN);
-        if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== followUpDate) {
+        const parsed = /^\d{4}-\d{2}-\d{2}$/.test(followUpDate) ? new Date(`${followUpDate}T09:00:00.000+03:00`) : new Date(NaN);
+        if (Number.isNaN(parsed.getTime()) || businessDateKey(parsed) !== followUpDate) {
           setError('Enter a valid follow-up date as YYYY-MM-DD.');
           return;
         }

@@ -19,8 +19,8 @@ TextInput.defaultProps = TextInput.defaultProps || {};
 TextInput.defaultProps.style = [TextInput.defaultProps.style, { fontFamily: typography.fontFamily }];
 
 export default function App() {
-  const [fontsLoaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold });
-  if (!fontsLoaded) return null;
+  const [fontsLoaded, fontError] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold });
+  if (!fontsLoaded && !fontError) return null;
   return <SafeAreaProvider><ThemeProvider><AppContent /></ThemeProvider></SafeAreaProvider>;
 }
 

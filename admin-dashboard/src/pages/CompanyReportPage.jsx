@@ -5,8 +5,9 @@ import Card from '../components/Card';
 import ChartCard from '../components/ChartCard';
 import { downloadCsv } from '../utils/export';
 import { formatKes, formatNumber } from '../utils/formatters';
+import { businessDateKey, businessDateStartIso, businessDateEndIso } from '../utils/businessDate';
 
-const today = new Date().toISOString().slice(0, 10);
+const today = businessDateKey();
 const monthStart = `${today.slice(0, 7)}-01`;
 const emptyReport = { sales: { count: 0, total: 0 }, activations: { count: 0, footfallCount: 0 }, leads: { count: 0, byStatus: {} }, merchandisingAudits: { count: 0, lowStockChecks: 0, compliantPlanograms: 0 } };
 
@@ -32,8 +33,8 @@ export default function CompanyReportPage() {
     try {
       const { data } = await client.get('/reports/company', {
         params: {
-          from: new Date(`${filters.from}T00:00:00.000Z`).toISOString(),
-          to: new Date(`${filters.to}T23:59:59.999Z`).toISOString(),
+          from: businessDateStartIso(filters.from),
+          to: businessDateEndIso(filters.to),
           ...(filters.campaignId ? { campaignId: filters.campaignId } : {}),
           ...(filters.regionId ? { regionId: filters.regionId } : {}),
         },

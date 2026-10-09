@@ -30,6 +30,7 @@ export function initDb() {
       syncStatus TEXT NOT NULL DEFAULT 'pending',
       attempts INTEGER NOT NULL DEFAULT 0,
       lastError TEXT,
+      lastAttemptAt TEXT,
       createdAt TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS pending_activations (
@@ -82,5 +83,7 @@ export function initDb() {
       value TEXT NOT NULL
     );
   `);
+  const saleColumns = db.getAllSync('PRAGMA table_info(pending_sales);').map((column) => column.name);
+  if (!saleColumns.includes('lastAttemptAt')) db.execSync('ALTER TABLE pending_sales ADD COLUMN lastAttemptAt TEXT;');
   return db;
 }

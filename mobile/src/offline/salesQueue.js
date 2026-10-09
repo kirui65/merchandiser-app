@@ -32,8 +32,8 @@ export function markSynced(localId) {
 export function markFailed(localId, errorMessage) {
   const db = getDb();
   db.runSync(
-    `UPDATE pending_sales SET syncStatus = 'failed', attempts = attempts + 1, lastError = ? WHERE localId = ?;`,
-    [String(errorMessage).slice(0, 500), localId]
+    `UPDATE pending_sales SET syncStatus = 'failed', attempts = attempts + 1, lastError = ?, lastAttemptAt = ? WHERE localId = ?;`,
+    [String(errorMessage).slice(0, 500), new Date().toISOString(), localId]
   );
 }
 

@@ -13,7 +13,7 @@ const selectOptions = {
   passportStatus: [['has_passport', 'Has passport'], ['will_get_self_funded', 'Will get one'], ['not_ready', 'Not ready']],
   nitaFeeStatus: [['not_paid', 'Not paid'], ['paid', 'Paid']],
 };
-const initialForm = { campaignId: '', applicantName: '', applicantIdNumber: '', phone: '', email: '', county: '', education: 'KCPE', passportStatus: 'has_passport', nitaFeeStatus: 'not_paid' };
+const initialForm = { campaignId: '', applicantName: '', applicantIdNumber: '', phone: '', email: '', county: '', education: '', passportStatus: '', nitaFeeStatus: '' };
 
 export default function NewApplicantScreen({ navigation }) {
   const { colors } = useTheme();
@@ -72,8 +72,8 @@ export default function NewApplicantScreen({ navigation }) {
   async function save() {
     setError('');
     if (!campaigns.length || !form.campaignId) { setError('No active recruitment campaign is assigned to your team. Ask your manager to assign your team to the campaign.'); return; }
-    if (form.applicantName.trim().length < 2 || !/^\d{7,10}$/.test(form.applicantIdNumber) || !form.phone.trim() || !form.county.trim() || !form.email.trim() || !consent) {
-      setError('Enter the applicant’s full name, 7–10 digit ID number, phone, email, county, and education, then confirm consent.');
+    if (form.applicantName.trim().length < 2 || !/^\d{7,10}$/.test(form.applicantIdNumber) || !form.phone.trim() || !form.county.trim() || !form.email.trim() || !form.education || !form.passportStatus || !form.nitaFeeStatus || !consent) {
+      setError('Complete the applicant details, select education, passport readiness and NITA fee status, then confirm consent.');
       return;
     }
     setSaving(true);

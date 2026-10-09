@@ -3,6 +3,7 @@ import client from '../api/client';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
+import { businessDateKey } from '../utils/businessDate';
 
 const emptyForm = {
   clientName: '',
@@ -14,7 +15,7 @@ const emptyForm = {
   programType: 'field_sales',
   referralCommissionKsh: '',
   referralCommissionAt: 'placed',
-  startsAt: new Date().toISOString().slice(0, 10),
+  startsAt: businessDateKey(),
   endsAt: '',
 };
 
@@ -22,7 +23,7 @@ function dateInput(value) {
   if (!value) return '';
   const timestamp = typeof value === 'object' ? (value.seconds ?? value._seconds) * 1000 : value;
   const date = new Date(timestamp);
-  return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+  return Number.isNaN(date.getTime()) ? '' : businessDateKey(date);
 }
 
 function toPayload(form) {
@@ -30,8 +31,8 @@ function toPayload(form) {
     ...form,
     referralCommissionKsh: form.programType === 'candidate_recruitment' && form.referralCommissionKsh !== '' ? Number(form.referralCommissionKsh) : null,
     referralCommissionAt: form.programType === 'candidate_recruitment' ? form.referralCommissionAt : null,
-    startsAt: new Date(`${form.startsAt}T00:00:00.000Z`).toISOString(),
-    endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:59.999Z`).toISOString() : null,
+    startsAt: new Date(`${form.startsAt}T00:00:00.000+03:00`).toISOString(),
+    endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:59.999+03:00`).toISOString() : null,
   };
 }
 

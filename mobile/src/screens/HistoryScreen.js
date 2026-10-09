@@ -13,6 +13,7 @@ import { spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 import { ErrorState, LoadingState } from '../components/ScreenState';
 import { useAuth } from '../auth/AuthContext';
+import { businessDateKey } from '../utils/businessDate';
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
 
@@ -87,7 +88,7 @@ export default function HistoryScreen() {
       ...sales.map((sale) => [sale.timestamp, sale.id || sale.localId, sale.outletId, sale.productId, sale.qty, sale.unitPrice, sale.total, sale.syncStatus || 'synced', sale.saleStatus || (sale.pendingVoidReason ? 'void pending' : 'active'), sale.voidReason || sale.pendingVoidReason || '']),
     ];
     try {
-      const filename = `brandsphere-sales-${new Date().toISOString().slice(0, 10)}.csv`;
+      const filename = `brandsphere-sales-${businessDateKey()}.csv`;
       const uri = `${FileSystem.cacheDirectory}${filename}`;
       await FileSystem.writeAsStringAsync(uri, rows.map((row) => row.map(escape).join(',')).join('\n'), { encoding: FileSystem.EncodingType.UTF8 });
       await Share.share({ title: 'Sales history CSV', url: uri, message: 'My Brandsphere sales history export.' });

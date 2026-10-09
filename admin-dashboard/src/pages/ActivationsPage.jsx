@@ -4,6 +4,7 @@ import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import { formatDateTime } from '../utils/formatters';
+import { businessDateStartIso, businessDateEndIso } from '../utils/businessDate';
 
 function toDate(value) {
   if (!value) return null;
@@ -33,8 +34,8 @@ export default function ActivationsPage() {
     const params = {
       ...(filters.ambassadorId ? { ambassadorId: filters.ambassadorId } : {}),
       ...(filters.status ? { status: filters.status } : {}),
-      ...(filters.from ? { from: new Date(`${filters.from}T00:00:00.000Z`).toISOString() } : {}),
-      ...(filters.to ? { to: new Date(`${filters.to}T23:59:59.999Z`).toISOString() } : {}),
+      ...(filters.from ? { from: businessDateStartIso(filters.from) } : {}),
+      ...(filters.to ? { to: businessDateEndIso(filters.to) } : {}),
     };
     try {
       const [activationResponse, repsResponse] = await Promise.all([

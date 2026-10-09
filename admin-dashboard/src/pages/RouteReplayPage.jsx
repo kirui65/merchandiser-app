@@ -4,8 +4,9 @@ import MapView from '../components/MapView';
 import Card from '../components/Card';
 import { downloadCsv, printReport } from '../utils/export';
 import { formatDateTime } from '../utils/formatters';
+import { businessDateKey } from '../utils/businessDate';
 
-const today = new Date().toISOString().slice(0, 10);
+const today = businessDateKey();
 
 export default function RouteReplayPage() {
   const [date, setDate] = useState(today); const [repId, setRepId] = useState(''); const [reps, setReps] = useState([]); const [route, setRoute] = useState(null); const [outlets, setOutlets] = useState([]); const [position, setPosition] = useState(0); const [error, setError] = useState(null);

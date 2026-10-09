@@ -247,8 +247,9 @@ async function getRecruiterSummary(req, res, next) {
       const info = commissionInfo(referral, campaignById.get(referral.campaignId));
       return total + (info.commissionEligible ? info.commissionAmountKsh : 0);
     }, 0);
+    const paidKsh = referrals.reduce((total, referral) => total + (referral.paidAt ? Number(referral.paymentAmountKsh || 0) : 0), 0);
     const notConfigured = referrals.some((referral) => !commissionInfo(referral, campaignById.get(referral.campaignId)).commissionConfigured);
-    return res.json({ summary: { total: referrals.length, counts, dueKsh, commissionRuleMissing: notConfigured } });
+    return res.json({ summary: { total: referrals.length, counts, dueKsh, paidKsh, commissionRuleMissing: notConfigured } });
   } catch (err) { return next(err); }
 }
 
