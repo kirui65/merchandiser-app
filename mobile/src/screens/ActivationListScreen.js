@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, RefreshControl, SafeAreaView, Text, View, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, RefreshControl, Text, View, StyleSheet } from 'react-native';
 import { fetchActivations } from '../api/activations';
 import { getActiveActivation, getLocalActivations } from '../offline/activationsQueue';
 import { initDb } from '../offline/db';

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 import { fetchOutlets } from '../api/catalog';
 import OutletCard from '../components/OutletCard';
 import EmptyState from '../components/EmptyState';

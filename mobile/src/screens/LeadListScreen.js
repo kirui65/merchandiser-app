@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { createLead, fetchLeads } from '../api/leads';
 import CampaignPicker from '../components/CampaignPicker';
 import Card from '../components/Card';

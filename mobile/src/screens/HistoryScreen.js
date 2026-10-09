@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, RefreshControl, SafeAreaView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, FlatList, Modal, Pressable, RefreshControl, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { fetchMySales, updateSale, voidSale } from '../api/sales';
 import { formatDateTime, formatKes } from '../utils/formatters';
 import { getPendingSales, updateQueuedSale } from '../offline/salesQueue';

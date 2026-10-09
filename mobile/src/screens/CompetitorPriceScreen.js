@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { fetchProducts } from '../api/catalog';
 import { enqueueMerchandisingRecord } from '../offline/merchandisingQueue';
 import { getCachedProducts, cacheProducts } from '../offline/productCatalog';

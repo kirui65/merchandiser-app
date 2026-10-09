@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
 import * as Location from 'expo-location';
 import { enqueueMerchandisingRecord } from '../offline/merchandisingQueue';
 import { persistCapturedPhoto } from '../offline/mediaStorage';

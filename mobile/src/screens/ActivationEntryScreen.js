@@ -1,18 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import * as FileSystem from 'expo-file-system';
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as FileSystem from 'expo-file-system/legacy';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import * as Location from 'expo-location';
 import { fetchProducts } from '../api/catalog';
 import { enqueueActivation, getActiveActivation } from '../offline/activationsQueue';

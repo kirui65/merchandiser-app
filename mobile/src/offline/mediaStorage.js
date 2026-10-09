@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export async function persistCapturedPhoto(uri, fileId) {
   const directory = `${FileSystem.documentDirectory}merchandising/`;

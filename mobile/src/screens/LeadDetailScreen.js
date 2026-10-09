@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Linking, Pressable, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { fetchCalls, fetchLead, logCall, updateLead } from '../api/leads';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';

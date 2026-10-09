@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { createBroadcast, fetchBroadcasts, fetchTeamOverview, updateBroadcast } from '../api/teamLeader';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';

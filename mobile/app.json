@@ -58,7 +58,8 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "newArchEnabled": false
           }
         }
       ],
@@ -68,7 +69,8 @@
         {
           "faceIDPermission": "Allow Brandsphere to use Face ID to unlock your account."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "owner": "kirui65",
     "extra": {

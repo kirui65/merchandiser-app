@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { fetchCalls } from '../api/leads';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
