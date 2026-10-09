@@ -537,3 +537,69 @@ tbody tr:hover { background: #F7FAF9; box-shadow: inset 3px 0 var(--brand-accent
 @media (prefers-reduced-motion: no-preference) {
   .ui-card,.ui-button,.sidebar-nav a { transition: background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease; }
 }
+
+/* Polished dimensional dashboard: stacked surfaces with restrained perspective. */
+.dashboard-page { perspective: 1400px; perspective-origin: 50% 0; }
+.dashboard-compact-heading {
+  position: relative; padding: 16px 18px 20px; border: 1px solid rgba(255,255,255,.9); border-radius: 16px;
+  background: linear-gradient(135deg,rgba(255,255,255,.98),rgba(242,247,247,.92));
+  box-shadow: 0 1px 0 rgba(255,255,255,.95) inset,0 8px 22px rgba(24,43,52,.055),0 1px 2px rgba(24,43,52,.04);
+}
+.dashboard-compact-heading h1 { text-shadow: 0 1px 0 rgba(255,255,255,.9); }
+.dashboard-compact-stats .ui-card {
+  position: relative; isolation: isolate; min-height: 112px; overflow: hidden; transform: translateY(0) rotateX(0deg); transform-style: preserve-3d;
+  background: linear-gradient(145deg,#FFF 8%,#F5F9F9 100%); border: 1px solid #DCE7E7; border-radius: 16px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.98) inset,0 -1px 0 rgba(21,54,68,.025) inset,0 4px 8px rgba(24,43,52,.035),0 12px 20px rgba(24,43,52,.055);
+  transition: transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+}
+.dashboard-compact-stats .ui-card::before {
+  position: absolute; z-index: -1; top: -24px; right: -17px; width: 112px; height: 112px;
+  background: radial-gradient(circle at 35% 35%,rgba(255,255,255,.9),rgba(214,230,229,.5) 42%,rgba(214,230,229,0) 72%); border-radius: 50%; content: ''; transform: translateZ(-1px);
+}
+.dashboard-compact-stats .ui-card::after {
+  position: absolute; top: auto; right: 17px; bottom: 16px; width: 34px; height: 3px;
+  background: linear-gradient(90deg,#86A948,#D7E8AE); border-radius: 99px; box-shadow: 0 2px 4px rgba(90,122,45,.16); content: '';
+}
+.dashboard-compact-stats .ui-card > * { position: relative; z-index: 1; transform: translateZ(12px); }
+.dashboard-compact-stats .ui-card > .stat-value { margin-top: 8px; font-size: 25px; letter-spacing: -.04em; text-shadow: 0 1px 0 rgba(255,255,255,.8); }
+.dashboard-compact-stats .ui-card:first-child {
+  background: linear-gradient(142deg,#214D67 0%,#173A55 62%,#102C43 100%) !important; border-color: #214D67 !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.18) inset,0 -2px 0 rgba(3,25,38,.15) inset,0 5px 10px rgba(16,44,67,.15),0 16px 26px rgba(16,44,67,.18) !important;
+}
+.dashboard-compact-stats .ui-card:first-child::before { top: -34px; right: -19px; width: 142px; height: 142px; background: radial-gradient(circle at 34% 34%,rgba(199,225,225,.34),rgba(159,197,201,.12) 45%,transparent 72%); }
+.dashboard-compact-stats .ui-card:first-child::after { width: 42px; height: 4px; background: linear-gradient(90deg,#D7EB8D,#A7CC58); box-shadow: 0 2px 7px rgba(215,235,141,.25); }
+.dashboard-compact-stats .ui-card:first-child .muted,.dashboard-compact-stats .ui-card:first-child .stat-note { color: rgba(239,247,248,.78) !important; }
+.dashboard-compact-stats .ui-card:first-child .stat-value { color: #FFF !important; text-shadow: 0 2px 10px rgba(3,25,38,.22); }
+.dashboard-compact-stats .ui-card:hover { z-index: 2; transform: translateY(-4px) rotateX(2deg); border-color: #C9DADA; box-shadow: 0 1px 0 rgba(255,255,255,.98) inset,0 8px 13px rgba(24,43,52,.045),0 20px 30px rgba(24,43,52,.11); }
+.dashboard-compact-stats .ui-card:first-child:hover { border-color: #315E77 !important; }
+.dashboard-panel-grid.dashboard-overview-grid { align-items: stretch; gap: 18px; }
+.dashboard-panel-grid.dashboard-overview-grid > .dashboard-chart,.dashboard-panel-grid.dashboard-overview-grid > .dashboard-panel-card { transform: translateZ(0); border-radius: 16px; }
+.dashboard-panel-grid.dashboard-overview-grid .ui-card,.dashboard-panel-grid.dashboard-overview-grid .dashboard-chart > .ui-card {
+  position: relative; overflow: hidden; background: linear-gradient(155deg,#FFF 15%,#F9FBFB 100%); border: 1px solid #DDE7E7; border-radius: 16px;
+  box-shadow: 0 1px 0 #FFF inset,0 4px 8px rgba(24,43,52,.035),0 12px 23px rgba(24,43,52,.055);
+}
+.dashboard-panel-grid.dashboard-overview-grid .ui-card-heading { transform: translateZ(8px); }
+.dashboard-chart .recharts-responsive-container { filter: drop-shadow(0 4px 5px rgba(23,58,85,.08)); }
+.dashboard-tabs {
+  width: fit-content; max-width: 100%; padding: 5px; background: linear-gradient(180deg,#E9F0F0,#F2F6F5);
+  border: 1px solid #DCE6E6; border-radius: 12px; box-shadow: 0 1px 0 rgba(255,255,255,.9) inset,0 3px 7px rgba(24,43,52,.045);
+}
+.dashboard-tabs button { min-height: 35px; margin: 0 2px; padding: 0 12px; border: 1px solid transparent; border-radius: 8px; transition: transform .16s ease,box-shadow .16s ease,background .16s ease; }
+.dashboard-tabs button:hover { transform: translateY(-1px); }
+.dashboard-tabs button.is-active { background: linear-gradient(180deg,#FFF,#F7FAFA); border-color: #DDE7E7; box-shadow: 0 1px 0 #FFF inset,0 2px 5px rgba(24,43,52,.09); }
+.dashboard-recruitment-card { background: linear-gradient(135deg,#FFF 8%,#F5F9F8 100%) !important; border-color: #D9E5E3 !important; box-shadow: 0 1px 0 #FFF inset,0 5px 9px rgba(24,43,52,.04),0 14px 24px rgba(24,43,52,.06) !important; }
+.dashboard-recruitment-icon { box-shadow: 0 1px 0 #FFF inset,0 3px 6px rgba(23,58,85,.08); }
+.dashboard-recruitment-metrics > div { background: linear-gradient(145deg,#FFF,#F0F5F4); border-color: #DFE8E7; box-shadow: 0 1px 0 #FFF inset,0 2px 5px rgba(24,43,52,.035); }
+@media (hover:none) { .dashboard-compact-stats .ui-card:hover { transform: none; } }
+@media (max-width:760px) {
+  .dashboard-page { perspective: none; }
+  .dashboard-compact-heading { width: 100%; padding: 14px; }
+  .dashboard-compact-stats .ui-card { min-height: 96px; }
+  .dashboard-compact-stats .ui-card > .stat-value { font-size: 21px; }
+  .dashboard-tabs { width: 100%; overflow-x: auto; }
+  .dashboard-tabs button { flex: 0 0 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-compact-stats .ui-card,.dashboard-tabs button { transition: none; }
+  .dashboard-compact-stats .ui-card:hover,.dashboard-tabs button:hover { transform: none; }
+}
