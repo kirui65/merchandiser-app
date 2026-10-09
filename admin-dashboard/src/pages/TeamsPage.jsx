@@ -40,7 +40,7 @@ export default function TeamsPage() {
   const activeMemberIds = new Set(memberships
     .filter((membership) => membership.status === 'active' && membership.teamId !== selectedTeamId)
     .map((membership) => membership.repId));
-  const members = reps.filter((rep) => ['rep', 'brand_ambassador', 'telemarketer'].includes(rep.role)
+  const members = reps.filter((rep) => ['rep', 'brand_ambassador', 'telemarketer', 'recruiter'].includes(rep.role)
     && rep.active !== false && !activeMemberIds.has(rep.id));
 
   async function create(event) {
@@ -124,7 +124,7 @@ export default function TeamsPage() {
         <Card title="Add a team member">
           <form className="form-grid" onSubmit={addMember}>
             <div className="field"><label>Team</label><select required value={selectedTeamId} onChange={(event) => setSelectedTeamId(event.target.value)}><option value="">Select a team</option>{teams.filter((team) => team.active).map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</select></div>
-            <div className="field"><label>Field user</label><select required value={selectedRepId} onChange={(event) => setSelectedRepId(event.target.value)}><option value="">Select a field user</option>{members.map((rep) => <option key={rep.id} value={rep.id}>{rep.name} · {rep.role.replace(/_/g, ' ')}</option>)}</select></div>
+            <div className="field"><label>Field user or campaign recruiter</label><select required value={selectedRepId} onChange={(event) => setSelectedRepId(event.target.value)}><option value="">Select a team member</option>{members.map((rep) => <option key={rep.id} value={rep.id}>{rep.name} · {rep.role.replace(/_/g, ' ')}</option>)}</select></div>
             <Button type="submit" disabled={!selectedTeamId || !selectedRepId}>Assign member</Button>
           </form>
           <p className="muted" style={{ marginBottom: 0 }}>Each field user can have one active team membership at a time. End the current membership before reassigning.</p>
