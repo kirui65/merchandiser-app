@@ -7,7 +7,7 @@ const { assertPickedRoleMatches } = require('../src/services/authRole.service');
 const { requireRole, authenticatedUserFromAccount } = require('../src/middleware/auth.middleware');
 
 test('accepts the approved additional rep roles without renaming legacy roles', () => {
-  for (const role of ['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader']) {
+  for (const role of ['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader', 'recruiter']) {
     const result = RepCreateSchema.safeParse({
       name: 'Test User',
       phone: '+254700000000',
@@ -23,6 +23,7 @@ test('picked login role maps merchandiser/admin labels to stored legacy roles', 
   assert.equal(assertPickedRoleMatches('rep', 'merchandiser'), undefined);
   assert.equal(assertPickedRoleMatches('manager', 'admin'), undefined);
   assert.equal(assertPickedRoleMatches('telemarketer', 'telemarketer'), undefined);
+  assert.equal(assertPickedRoleMatches('recruiter', 'recruiter'), undefined);
   assert.equal(assertPickedRoleMatches('manager', undefined), undefined);
 });
 

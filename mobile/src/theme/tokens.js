@@ -24,6 +24,7 @@ export const colors = {
     brand_ambassador: '#B96A12',
     telemarketer: '#24784B',
     team_leader: '#6552A3',
+    recruiter: '#536DFF',
     admin: '#9A4663',
   },
 };
@@ -54,6 +55,7 @@ export const darkColors = {
     brand_ambassador: '#F5BA61',
     telemarketer: '#71D695',
     team_leader: '#C3B4FF',
+    recruiter: '#AAB5FF',
     admin: '#F2AFC5',
   },
 };

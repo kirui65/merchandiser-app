@@ -11,6 +11,9 @@ const emptyForm = {
   regionIds: [],
   teamIds: [],
   status: 'draft',
+  programType: 'field_sales',
+  referralCommissionKsh: '',
+  referralCommissionAt: 'placed',
   startsAt: new Date().toISOString().slice(0, 10),
   endsAt: '',
 };
@@ -25,6 +28,8 @@ function dateInput(value) {
 function toPayload(form) {
   return {
     ...form,
+    referralCommissionKsh: form.programType === 'candidate_recruitment' && form.referralCommissionKsh !== '' ? Number(form.referralCommissionKsh) : null,
+    referralCommissionAt: form.programType === 'candidate_recruitment' ? form.referralCommissionAt : null,
     startsAt: new Date(`${form.startsAt}T00:00:00.000Z`).toISOString(),
     endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:59.999Z`).toISOString() : null,
   };
@@ -91,6 +96,9 @@ export default function CampaignsPage() {
       regionIds: campaign.regionIds || [],
       teamIds: campaign.teamIds || [],
       status: campaign.status,
+      programType: campaign.programType || 'field_sales',
+      referralCommissionKsh: campaign.referralCommissionKsh ?? '',
+      referralCommissionAt: campaign.referralCommissionAt || 'placed',
       startsAt: dateInput(campaign.startsAt),
       endsAt: dateInput(campaign.endsAt),
     });
@@ -119,6 +127,8 @@ export default function CampaignsPage() {
         <form className="form-grid" onSubmit={submit}>
           <div className="field"><label>Client</label><input required maxLength={160} value={form.clientName} onChange={(event) => setForm({ ...form, clientName: event.target.value })} /></div>
           <div className="field"><label>Campaign name</label><input required maxLength={160} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
+          <div className="field"><label>Program type</label><select value={form.programType} onChange={(event) => setForm({ ...form, programType: event.target.value })}><option value="field_sales">Field sales</option><option value="candidate_recruitment">Candidate recruitment</option></select></div>
+          {form.programType === 'candidate_recruitment' ? <div className="grid-2"><div className="field"><label>Recruiter commission (KSh)</label><input type="number" min="1" step="1" required value={form.referralCommissionKsh} onChange={(event) => setForm({ ...form, referralCommissionKsh: event.target.value })} /><small className="muted">This is separate from the advertised candidate salary.</small></div><div className="field"><label>Commission becomes due at</label><select value={form.referralCommissionAt} onChange={(event) => setForm({ ...form, referralCommissionAt: event.target.value })}>{[['requirements_checked','Requirements checked'],['training_scheduled','Training scheduled'],['placed','Placement confirmed']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></div></div> : null}
           <div className="field"><label>Description</label><textarea rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div>
           <div className="grid-2">
             <MultiSelect label="Regions" options={regions} selected={form.regionIds} onChange={(regionIds) => setForm({ ...form, regionIds, teamIds: form.teamIds.filter((teamId) => teams.find((team) => team.id === teamId && regionIds.includes(team.regionId))) })} />

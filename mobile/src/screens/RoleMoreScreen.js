@@ -14,7 +14,7 @@ export default function RoleMoreScreen({ navigation }) {
   const { language, setLanguage } = useLanguage();
   const { colors, mode, setMode } = useTheme();
   const styles = createStyles(colors);
-  const canUseTeamTools = ['rep', 'brand_ambassador', 'telemarketer', 'team_leader'].includes(user?.role);
+  const canUseTeamTools = ['rep', 'brand_ambassador', 'telemarketer', 'team_leader', 'recruiter'].includes(user?.role);
   const teamLinks = [
     { label: 'Team announcements', icon: 'megaphone-outline', screen: 'BroadcastFeed' },
     { label: 'Request time or field support', icon: 'calendar-outline', screen: 'FieldRequest' },

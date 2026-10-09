@@ -9,6 +9,7 @@ const ROLE_OPTIONS = [
   ['brand_ambassador', 'Brand Ambassador'],
   ['telemarketer', 'Telemarketer'],
   ['team_leader', 'Team Leader'],
+  ['recruiter', 'Campaign Recruiter'],
   ['manager', 'Manager'],
 ];
 const roleLabel = (role) => ROLE_OPTIONS.find(([value]) => value === role)?.[1] || role;

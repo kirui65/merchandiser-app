@@ -1,6 +1,6 @@
 const { z } = require('zod');
 
-const RepRoleSchema = z.enum(['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader']);
+const RepRoleSchema = z.enum(['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader', 'recruiter']);
 
 const RepSchema = z.object({
   id: z.string().optional(),

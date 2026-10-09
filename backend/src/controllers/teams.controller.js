@@ -2,7 +2,7 @@ const { getFirestore, admin } = require('../config/firebase');
 const { createDoc, getDoc, listDocs, updateDoc } = require('../services/firestore.service');
 const { ApiError } = require('../middleware/errorHandler');
 
-const ASSIGNABLE_ROLES = ['rep', 'telemarketer', 'brand_ambassador'];
+const ASSIGNABLE_ROLES = ['rep', 'telemarketer', 'brand_ambassador', 'recruiter'];
 
 async function validateTeamReferences({ teamLeaderId, regionId }) {
   if (teamLeaderId) {

@@ -11,6 +11,9 @@ const CampaignFieldsSchema = z.object({
   status: z.enum(['draft', 'active', 'paused', 'completed', 'archived']).default('draft'),
   startsAt: DateValueSchema,
   endsAt: DateValueSchema.nullable().optional(),
+  programType: z.enum(['field_sales', 'candidate_recruitment']).default('field_sales'),
+  referralCommissionKsh: z.number().finite().nonnegative().nullable().optional(),
+  referralCommissionAt: z.enum(['requirements_checked', 'training_scheduled', 'placed']).nullable().optional(),
 }).strict();
 
 const hasValidSchedule = (value) => !value.endsAt

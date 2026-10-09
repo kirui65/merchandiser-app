@@ -11,6 +11,7 @@ const PICKED_ROLES = new Set([
   'brand_ambassador',
   'telemarketer',
   'team_leader',
+  'recruiter',
   ...Object.keys(PICKED_ROLE_ALIASES),
 ]);
 

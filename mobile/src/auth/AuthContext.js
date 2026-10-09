@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
     (async () => {
       try {
         const [hasToken, storedUser] = await Promise.all([hasStoredAuthToken(), getStoredUser()]);
-        const validServerRoles = ['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader'];
+        const validServerRoles = ['rep', 'manager', 'brand_ambassador', 'telemarketer', 'team_leader', 'recruiter'];
         if (mounted && hasToken && storedUser && validServerRoles.includes(storedUser.role)) setUser(storedUser);
       } catch (error) {
         console.warn('Could not restore the saved session:', error);

@@ -12,15 +12,15 @@ sync whenever a model changes.
   phone: string,
   email: string,
   passwordHash: string,
-  role: 'rep' | 'manager' | 'brand_ambassador' | 'telemarketer' | 'team_leader',
+  role: 'rep' | 'manager' | 'brand_ambassador' | 'telemarketer' | 'team_leader' | 'recruiter',
   assignedOutletIds: string[],
   active: boolean,
   createdAt: Timestamp
 }
 ```
 The `rep` role string is retained for existing accounts and is presented as
-“Merchandiser” in role-management UI. The five provisionable user types are
-merchandiser (`rep`), brand ambassador, telemarketer, team leader, and
+“Merchandiser” in role-management UI. Provisionable types are merchandiser
+(`rep`), brand ambassador, telemarketer, team leader, campaign recruiter, and
 manager (`manager` remains the admin-equivalent).
 
 Login may include a selected `role` as a user-experience check. The server
@@ -94,6 +94,35 @@ Field users may have one active team membership at a time because field
 records have a singular `teamId`. Membership changes are manager-managed.
 Ending a membership preserves its history; reassignments create/reactivate
 the deterministic membership for the selected team.
+
+## `referralRegistrations`
+Recruiters submit candidate referrals for active recruitment campaigns
+assigned to their active team. The server stamps ownership and consent time,
+normalizes Kenyan mobile numbers, and uses a deterministic campaign/phone ID
+to prevent duplicate submissions.
+```
+{
+  id: string,
+  campaignId: string,
+  recruiterId: string,
+  teamId: string,
+  applicantName: string,
+  phone: string,
+  county: string,
+  education: 'KCPE' | 'KCSE' | 'both',
+  passportStatus: 'has_passport' | 'will_get_self_funded' | 'not_ready',
+  nitaFeeStatus: 'not_paid' | 'paid',
+  applicantConsent: true,
+  applicantConsentAt: Timestamp,
+  status: 'submitted' | 'contacted' | 'requirements_checked' | 'training_scheduled' | 'placed' | 'rejected',
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+Recruitment campaigns include `programType`, `referralCommissionKsh`, and
+`referralCommissionAt`. Candidate salary from advertisements is separate
+from recruiter commission. Status changes and payment references are stored
+in `referralRegistrationEvents`.
 
 ## `auditLog`
 
@@ -349,6 +378,9 @@ may review across teams.
   regionIds: string[],
   teamIds: string[],
   status: 'draft' | 'active' | 'paused' | 'completed' | 'archived',
+  programType: 'field_sales' | 'candidate_recruitment',
+  referralCommissionKsh?: number | null,
+  referralCommissionAt?: 'requirements_checked' | 'training_scheduled' | 'placed' | null,
   startsAt: Timestamp,
   endsAt?: Timestamp | null,
   createdBy: string,

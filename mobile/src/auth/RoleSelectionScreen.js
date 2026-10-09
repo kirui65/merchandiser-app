@@ -27,6 +27,7 @@ import { radius, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
 export const LOGIN_ROLES = [
+  { value: 'recruiter', label: 'Campaign Recruiter', description: 'Register and follow up campaign applicants', icon: 'person-add-outline' },
   {
     value: 'merchandiser',
     label: 'Merchandiser',
