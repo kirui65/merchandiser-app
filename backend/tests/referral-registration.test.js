@@ -6,8 +6,12 @@ const { RepCreateSchema } = require('../src/models/rep.model');
 
 test('campaign recruiter accounts and candidate registrations validate', () => {
   assert.equal(RepCreateSchema.safeParse({ name: 'Campaign Recruiter', phone: '+254700000000', email: 'recruiter@example.test', password: 'Strong-password-1', role: 'recruiter' }).success, true);
-  const candidate = { campaignId:'campaign-1', applicantName:'Amina Candidate', phone:'0712345678', county:'Nairobi', education:'KCSE', passportStatus:'will_get_self_funded', nitaFeeStatus:'not_paid', eligibleForWomenOnlyIntake:true, applicantConsent:true };
-  assert.equal(ReferralCreateSchema.safeParse(candidate).success, true);
+  const candidate = { campaignId:'campaign-1', applicantName:'Amina Candidate', applicantIdNumber:'12345678', phone:'0712345678', email:'AMINA@example.test', county:'Nairobi', education:'diploma', passportStatus:'will_get_self_funded', nitaFeeStatus:'not_paid', eligibleForWomenOnlyIntake:true, applicantConsent:true };
+  const parsed = ReferralCreateSchema.safeParse(candidate);
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data.email, 'amina@example.test');
+  assert.equal(ReferralCreateSchema.safeParse({ ...candidate, applicantIdNumber:'id-123' }).success, false);
+  assert.equal(ReferralCreateSchema.safeParse({ ...candidate, education:'both' }).success, false);
   assert.equal(ReferralCreateSchema.safeParse({ ...candidate, applicantConsent:false }).success, false);
   assert.equal(ReferralStatusUpdateSchema.safeParse({ status:'requirements_checked' }).success, true);
   assert.equal(ReferralPaidSchema.safeParse({ paymentReference:'M-PESA-12345' }).success, true);

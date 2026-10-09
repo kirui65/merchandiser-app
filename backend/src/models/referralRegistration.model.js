@@ -12,9 +12,11 @@ const ReferralStatusSchema = z.enum([
 const ReferralCreateSchema = z.object({
   campaignId: z.string().min(1),
   applicantName: z.string().trim().min(2).max(160),
+  applicantIdNumber: z.string().trim().regex(/^\d{7,10}$/, 'Enter a valid national ID number'),
   phone: z.string().trim().min(7).max(24),
+  email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
   county: z.string().trim().min(2).max(100),
-  education: z.enum(['KCPE', 'KCSE', 'both']),
+  education: z.enum(['KCPE', 'KCSE', 'certificate', 'diploma', 'degree', 'postgraduate', 'other']),
   passportStatus: z.enum(['has_passport', 'will_get_self_funded', 'not_ready']),
   nitaFeeStatus: z.enum(['not_paid', 'paid']),
   eligibleForWomenOnlyIntake: z.literal(true),
