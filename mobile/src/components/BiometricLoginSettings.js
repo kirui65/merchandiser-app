@@ -10,6 +10,12 @@ import {
 import { spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeContext';
 
+function showAlert(title, message, buttons) {
+  try { Alert.alert(title, message, buttons); } catch (error) {
+    console.warn('Could not show the biometric settings prompt:', error);
+  }
+}
+
 export default function BiometricLoginSettings() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -32,7 +38,7 @@ export default function BiometricLoginSettings() {
       })
       .catch(() => {
         if (mounted) {
-          Alert.alert('Settings unavailable', 'Could not read the biometric sign-in settings.');
+          showAlert('Settings unavailable', 'Could not read the biometric sign-in settings.');
         }
       })
       .finally(() => {
@@ -47,12 +53,12 @@ export default function BiometricLoginSettings() {
       setEnabled(enabledNext);
       if (enabledNext) setHasSavedLogin(true);
     } catch (error) {
-      Alert.alert('Biometric setting not changed', error.message);
+      showAlert('Biometric setting not changed', error?.message || 'Could not update biometric settings.');
     }
   }
 
   function confirmForgetLogin() {
-    Alert.alert(
+    try { Alert.alert(
       'Forget saved login?',
       'This removes the encrypted email, password and role saved on this device. You can enable fingerprint or face login again after signing in with your password.',
       [
@@ -66,12 +72,14 @@ export default function BiometricLoginSettings() {
               setEnabled(false);
               setHasSavedLogin(false);
             } catch (error) {
-              Alert.alert('Saved login not removed', error.message);
+              showAlert('Saved login not removed', error?.message || 'Could not remove the saved login.');
             }
           },
         },
       ],
-    );
+    ); } catch (error) {
+      console.warn('Could not show the saved login prompt:', error);
+    }
   }
 
   return (

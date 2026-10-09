@@ -7,6 +7,11 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { typography } from './src/theme/tokens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import CrashBoundary from './src/components/CrashBoundary';
+import UnexpectedCloseNotice from './src/components/UnexpectedCloseNotice';
+import { installGlobalErrorHandler } from './src/auth/crashReporter';
+
+installGlobalErrorHandler();
 
 Text.defaultProps = Text.defaultProps || {};
 Text.defaultProps.style = [Text.defaultProps.style, { fontFamily: typography.fontFamily }];
@@ -23,5 +28,5 @@ function AppContent() { return <AppShell />; }
 
 function AppShell() {
   const { colors, mode } = useTheme();
-  return <><StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.surface} translucent={false} /><LanguageProvider><AuthProvider><AppNavigator /></AuthProvider></LanguageProvider></>;
+  return <><StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.surface} translucent={false} /><LanguageProvider><AuthProvider><UnexpectedCloseNotice /><CrashBoundary><AppNavigator /></CrashBoundary></AuthProvider></LanguageProvider></>;
 }
