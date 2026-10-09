@@ -3,6 +3,7 @@ import client from '../api/client';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import EmptyState from '../components/EmptyState';
+import { useAuth } from '../auth/AuthContext';
 
 const ROLE_OPTIONS = [
   ['rep', 'Merchandiser'],
@@ -27,19 +28,29 @@ function findDuplicateEmails(reps) {
 }
 
 export default function RepsPage() {
+  const { user: currentUser } = useAuth();
   const [reps, setReps] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [edit, setEdit] = useState(editForm);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [deleteEmail, setDeleteEmail] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteMfaCode, setDeleteMfaCode] = useState('');
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     const { data } = await client.get('/reps');
     setReps(data.reps);
   }
 
-  useEffect(() => { load().catch(() => setError('Failed to load reps')); }, []);
+  useEffect(() => {
+    load().catch(() => setError('Failed to load reps'));
+    client.get('/auth/mfa/status').then(({ data }) => setMfaEnabled(data.enabled === true)).catch(() => {});
+  }, []);
 
   async function submit(event) {
     event.preventDefault();
@@ -97,6 +108,24 @@ export default function RepsPage() {
     } catch (requestError) {
       setError(requestError.response?.data?.error?.message || 'Failed to reset MFA');
     }
+  }
+
+  async function deleteAccount(event) {
+    event.preventDefault();
+    if (!deleteCandidate) return;
+    setDeleting(true); setError(null);
+    try {
+      const { data } = await client.post(`/admin/reps/${deleteCandidate.id}/delete`, {
+        confirmEmail: deleteEmail,
+        currentPassword: deletePassword,
+        ...(mfaEnabled ? { mfaCode: deleteMfaCode } : {}),
+      });
+      setNotice(data.message);
+      setDeleteCandidate(null); setDeleteEmail(''); setDeletePassword(''); setDeleteMfaCode('');
+      await load();
+    } catch (requestError) {
+      setError(requestError.response?.data?.error?.message || 'Failed to delete account');
+    } finally { setDeleting(false); }
   }
 
   function startEditing(rep) {
@@ -159,6 +188,7 @@ export default function RepsPage() {
                       <Button variant="secondary" onClick={() => toggle(rep)}>{rep.active ? 'Deactivate' : 'Reactivate'}</Button>{' '}
                       <Button variant="secondary" onClick={() => resetPassword(rep)}>Reset password</Button>{' '}
                       {rep.mfaEnabled ? <Button variant="secondary" onClick={() => resetMfa(rep)}>Reset MFA</Button> : null}
+                      {rep.id !== currentUser?.id ? <Button variant="danger" onClick={() => { setDeleteCandidate(rep); setDeleteEmail(''); setDeletePassword(''); setDeleteMfaCode(''); }}>Delete account</Button> : null}
                     </td>
                   </tr>
                 ))}</tbody>
@@ -189,6 +219,7 @@ export default function RepsPage() {
           </form>
         </Card>
       ) : null}
+      {deleteCandidate ? <div role="presentation" onMouseDown={() => !deleting && setDeleteCandidate(null)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(10,18,32,.58)', display: 'grid', placeItems: 'center', padding: 20 }}><section className="ui-card" role="dialog" aria-modal="true" aria-labelledby="delete-account-title" onMouseDown={(event) => event.stopPropagation()} style={{ width: 'min(520px, 100%)', padding: 24 }}><span className="eyebrow">PERMANENT ACCOUNT REMOVAL</span><h2 id="delete-account-title">Delete {deleteCandidate.name}?</h2><p className="muted">This removes their login and profile. Historical sales, referrals, and audit attribution remain under the account ID. Active team memberships will be ended. Reassign a team leader’s teams first.</p><form className="form-grid" onSubmit={deleteAccount}><div className="field"><label>Type this account’s email to confirm</label><input autoComplete="off" required value={deleteEmail} onChange={(event) => setDeleteEmail(event.target.value)} /></div><div className="field"><label>Your current manager password</label><input type="password" autoComplete="current-password" required value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} /></div>{mfaEnabled ? <div className="field"><label>Your authenticator code</label><input inputMode="numeric" autoComplete="one-time-code" maxLength={6} required value={deleteMfaCode} onChange={(event) => setDeleteMfaCode(event.target.value.replace(/\D/g, '').slice(0, 6))} /></div> : null}<div style={{ display: 'flex', gap: 8 }}><Button type="submit" variant="danger" disabled={deleting || deleteEmail.trim().toLowerCase() !== deleteCandidate.email?.trim().toLowerCase()}>{deleting ? 'Deleting…' : 'Permanently delete account'}</Button><Button type="button" variant="secondary" disabled={deleting} onClick={() => setDeleteCandidate(null)}>Cancel</Button></div></form></section></div> : null}
     </>
   );
 }

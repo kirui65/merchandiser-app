@@ -126,6 +126,16 @@ Recruitment campaigns include `programType`, `referralCommissionKsh`, and
 from recruiter commission. Status changes and payment references are stored
 in `referralRegistrationEvents`.
 
+Managers can delete an individual account after re-entering their password,
+confirming the account email, and providing an authenticator code if MFA is
+enabled. Historical field records and audit attribution are retained. The
+manager-only system reset requires password reauthentication, the exact phrase
+`RESET SYSTEM DATA`, and MFA when enabled. It removes non-manager accounts,
+team/campaign setup, and operational records; it keeps manager accounts,
+products, outlets, territories, regions, audit logs, and security logs, and
+clears outlet assignments. The reset is recorded in `auditLog` and
+`systemOperations`.
+
 ## `auditLog`
 
 Manager-only audit entries for roster, product, and outlet mutations:
