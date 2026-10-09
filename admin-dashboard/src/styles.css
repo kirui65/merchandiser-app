@@ -428,3 +428,15 @@ body {
 .mobile-nav-search::placeholder { color: #C6D5E7; }
 .page-loading { min-height: 220px; display: grid; place-items: center; color: #63738A; font-size: 14px; font-weight: 700; }
 @media (max-width:900px) { .command-trigger { display: inline-flex; align-items: center; margin-right: 8px; }.workspace-top > div { display: flex; align-items: center; }.command-trigger kbd { display: none; }.mobile-nav { max-height: min(70vh,620px); overflow-y: auto; } }
+
+.dashboard-recruitment-card { grid-column: 1 / -1; }
+.dashboard-recruitment-intro { display: flex; align-items: center; gap: 12px; }
+.dashboard-recruitment-icon { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; color: #1E3A5F; background: #EAF1F8; border-radius: 12px; font-size: 20px; font-weight: 800; }
+.dashboard-recruitment-intro > span:last-child { display: grid; gap: 3px; }
+.dashboard-recruitment-intro strong { color: #172033; font-size: 13px; }
+.dashboard-recruitment-intro small { color: #68778A; font-size: 11px; }
+.dashboard-recruitment-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 13px; }
+.dashboard-recruitment-metrics > div { display: grid; gap: 3px; padding: 10px 12px; background: #F7F8FA; border: 1px solid #E9EEF4; border-radius: 8px; }
+.dashboard-recruitment-metrics strong { color: #172033; font-size: 15px; }
+.dashboard-recruitment-metrics span { color: #68778A; font-size: 10px; }
+@media (max-width:520px) { .dashboard-recruitment-metrics { grid-template-columns: 1fr 1fr; }.dashboard-recruitment-metrics > div:last-child { grid-column: 1 / -1; } }
