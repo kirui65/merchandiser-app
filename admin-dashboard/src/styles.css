@@ -250,6 +250,63 @@ table { border-color: #D8E0EA; }th { color: #5D6B7E; background: #E9EEF4; border
 	.dashboard-table-clip { overflow-x: auto; }
 }
 
+/* Keep the dashboard document scrollable. The viewport-locked layout clipped
+   cards and their contents on short screens and at increased browser zoom. */
+.modern-shell:has(.dashboard-page) {
+	height: auto;
+	min-height: 100vh;
+	min-height: 100dvh;
+	overflow: visible;
+}
+.modern-shell:has(.dashboard-page) .workspace {
+	display: block;
+	height: auto;
+	min-height: 100vh;
+	min-height: 100dvh;
+	overflow: visible;
+}
+.modern-shell:has(.dashboard-page) .shell-content {
+	display: block;
+	height: auto;
+	min-height: 0;
+	overflow: visible;
+	padding-bottom: 32px;
+}
+.dashboard-page {
+	min-height: 0;
+	flex: none;
+	overflow: visible;
+}
+.dashboard-panel {
+	min-height: 0;
+	flex: none;
+	overflow: visible;
+}
+.dashboard-panel-grid {
+	height: auto;
+	grid-auto-rows: minmax(220px, auto);
+	align-content: start;
+}
+.dashboard-panel-grid > *,
+.dashboard-panel-grid > .ui-card {
+	height: auto;
+	min-height: 220px;
+	overflow: visible;
+}
+.dashboard-panel-card .dashboard-leaders,
+.dashboard-panel-card .dashboard-compact-list,
+.dashboard-panel-card .rank-list,
+.dashboard-sales-rankings > div {
+	overflow: visible;
+}
+.dashboard-table-clip {
+	max-height: min(55vh, 520px);
+	overflow: auto;
+}
+.dashboard-loading-panel {
+	grid-auto-rows: minmax(240px, auto);
+}
+
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .dashboard-loading { isolation: isolate; }
 .dashboard-skeleton { position: relative; display: block; overflow: hidden; background: #E8EDF1; border-radius: 5px; }
