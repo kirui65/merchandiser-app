@@ -603,3 +603,87 @@ tbody tr:hover { background: #F7FAF9; box-shadow: inset 3px 0 var(--brand-accent
   .dashboard-compact-stats .ui-card,.dashboard-tabs button { transition: none; }
   .dashboard-compact-stats .ui-card:hover,.dashboard-tabs button:hover { transform: none; }
 }
+
+/* Shared 3D atmosphere for every page inside the dashboard workspace. */
+.modern-shell {
+  background: linear-gradient(145deg,#E8EEF2 0%,#F5F7F8 44%,#E9EFF1 100%);
+}
+.sidebar {
+  background: linear-gradient(165deg,#1B3C5C 0%,#142B47 46%,#0D223B 100%);
+  box-shadow: 8px 0 30px rgba(9,27,48,.14),1px 0 rgba(255,255,255,.08) inset;
+}
+.workspace {
+  position: relative;
+  isolation: isolate;
+  background-color: #F1F4F6;
+  background-image:
+    radial-gradient(ellipse at 87% 4%,rgba(159,190,214,.33),transparent 32rem),
+    radial-gradient(ellipse at 4% 42%,rgba(201,217,226,.4),transparent 34rem),
+    radial-gradient(ellipse at 66% 94%,rgba(205,220,214,.34),transparent 38rem),
+    linear-gradient(135deg,rgba(255,255,255,.58),transparent 46%),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.12) 0 1px,transparent 1px 48px);
+  background-attachment: fixed;
+}
+.workspace-top {
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(180deg,rgba(255,255,255,.94),rgba(247,249,250,.86));
+  box-shadow: 0 5px 18px rgba(18,42,64,.045),0 1px rgba(255,255,255,.95) inset;
+  backdrop-filter: blur(18px);
+}
+.modern-shell .shell-content {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+.modern-shell .page-heading {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-bottom: 25px;
+  padding: 19px 22px 22px;
+  background: linear-gradient(135deg,rgba(255,255,255,.88),rgba(240,245,248,.72));
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 17px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.96) inset,0 4px 8px rgba(20,43,71,.035),0 14px 30px rgba(20,43,71,.075);
+  backdrop-filter: blur(12px);
+}
+.modern-shell .page-heading::before {
+  position: absolute;
+  z-index: -1;
+  top: -110px;
+  right: -38px;
+  width: 270px;
+  height: 230px;
+  background: radial-gradient(ellipse at 38% 40%,rgba(173,203,221,.44),rgba(173,203,221,.12) 47%,transparent 72%);
+  border: 1px solid rgba(255,255,255,.4);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+.modern-shell .page-heading::after { bottom: 10px; left: 22px; }
+.modern-shell .page-heading > * { position: relative; }
+.modern-shell .ui-card {
+  background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(247,249,250,.93));
+  border-color: rgba(255,255,255,.96);
+  box-shadow: 0 1px 0 rgba(255,255,255,.98) inset,0 3px 7px rgba(20,43,71,.035),0 12px 26px rgba(20,43,71,.065);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .modern-shell .ui-card {
+    transition: transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+  }
+  .modern-shell .shell-content > .ui-card:hover,
+  .modern-shell .grid-2 > .ui-card:hover,
+  .modern-shell .grid-3 > .ui-card:hover,
+  .modern-shell .grid-4 > .ui-card:hover,
+  .modern-shell .stat-grid > .ui-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(192,211,223,.98);
+    box-shadow: 0 1px 0 rgba(255,255,255,.98) inset,0 6px 12px rgba(20,43,71,.045),0 18px 34px rgba(20,43,71,.095);
+  }
+}
+@media (max-width: 760px) {
+  .modern-shell .page-heading { padding: 16px 16px 19px; }
+  .modern-shell .page-heading::after { left: 16px; }
+  .workspace { background-attachment: scroll; }
+}
