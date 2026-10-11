@@ -36,6 +36,17 @@ function commissionInfo(referral, campaign) {
   };
 }
 
+async function recruiterNamesFor(referrals) {
+  const recruiterIds = [...new Set(referrals.map((referral) => referral.recruiterId).filter(Boolean))];
+  if (!recruiterIds.length) return new Map();
+  const db = getFirestore();
+  const snapshots = await db.getAll(...recruiterIds.map((id) => db.collection('reps').doc(id)));
+  return new Map(snapshots
+    .filter((snapshot) => snapshot.exists)
+    .map((snapshot) => [snapshot.id, snapshot.get('name')])
+    .filter(([, name]) => typeof name === 'string' && name.trim()));
+}
+
 async function availableCampaigns(req, res, next) {
   try {
     const teamId = await getActiveTeamIdForUser(req.user.uid);
@@ -66,6 +77,7 @@ async function createReferral(req, res, next) {
     }
     const normalizedPhone = normalizeKenyanPhone(req.body.phone);
     if (!normalizedPhone) throw new ApiError(400, 'Enter a valid Kenyan mobile number');
+    const recruiter = await getDoc('reps', req.user.uid);
     const id = referralDocumentId(campaign.id, normalizedPhone);
     const db = getFirestore();
     const ref = db.collection('referralRegistrations').doc(id);
@@ -74,6 +86,7 @@ async function createReferral(req, res, next) {
       campaignId: campaign.id,
       teamId: teamId || null,
       recruiterId: req.user.uid,
+      recruiterName: recruiter?.name || 'Recruiter',
       createdBy: req.user.uid,
       applicantName: req.body.applicantName,
       applicantIdNumber: req.body.applicantIdNumber,
@@ -125,13 +138,17 @@ async function listReferrals(req, res, next) {
     if (req.query.recruiterId && role !== 'recruiter') referrals = referrals.filter((item) => item.recruiterId === req.query.recruiterId);
     if (req.query.status) referrals = referrals.filter((item) => item.status === req.query.status);
     const campaignIds = [...new Set(referrals.map((item) => item.campaignId))];
-    const campaigns = await Promise.all(campaignIds.map((id) => getDoc('campaigns', id)));
+    const [campaigns, recruiterNameById] = await Promise.all([
+      Promise.all(campaignIds.map((id) => getDoc('campaigns', id))),
+      recruiterNamesFor(referrals),
+    ]);
     const campaignById = new Map(campaigns.filter(Boolean).map((campaign) => [campaign.id, campaign]));
     referrals.sort((a, b) => timestampMillis(b.createdAt) - timestampMillis(a.createdAt));
     let enriched = referrals.map((item) => ({
       ...item,
       ...commissionInfo(item, campaignById.get(item.campaignId)),
       campaignName: campaignById.get(item.campaignId)?.name || 'Recruitment campaign',
+      recruiterName: item.recruiterName || recruiterNameById.get(item.recruiterId) || null,
     }));
     if (req.query.payoutStatus) enriched = enriched.filter((item) => item.payoutStatus === req.query.payoutStatus);
     return res.json({ referrals: enriched });
@@ -143,12 +160,13 @@ async function getReferral(req, res, next) {
     const referral = await getDoc('referralRegistrations', req.params.id);
     if (!referral) throw new ApiError(404, 'Applicant registration not found');
     if (!canReadReferral(req.user, referral)) throw new ApiError(403, 'You cannot view this applicant registration');
-    const [campaign, events] = await Promise.all([
+    const [campaign, events, recruiter] = await Promise.all([
       getDoc('campaigns', referral.campaignId),
       listDocs('referralRegistrationEvents', { where: [['registrationId', '==', referral.id]], limit: 100 }),
+      getDoc('reps', referral.recruiterId),
     ]);
     events.sort((a, b) => timestampMillis(a.createdAt) - timestampMillis(b.createdAt));
-    return res.json({ referral: { ...referral, ...commissionInfo(referral, campaign) }, events });
+    return res.json({ referral: { ...referral, recruiterName: referral.recruiterName || recruiter?.name || null, ...commissionInfo(referral, campaign) }, events });
   } catch (err) { return next(err); }
 }
 

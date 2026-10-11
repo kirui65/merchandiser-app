@@ -39,7 +39,7 @@ export default function ReferralRegistrationsPage() {
   const [campaignFilter, setCampaignFilter] = useState('');
   const filteredRows = rows.filter((row) => (!statusFilter || row.status === statusFilter)
     && (!campaignFilter || row.campaignName === campaignFilter)
-    && `${row.applicantName || ''} ${row.phone || ''} ${row.email || ''} ${row.campaignName || ''} ${row.recruiterId || ''}`.toLowerCase().includes(query.toLowerCase()));
+    && `${row.applicantName || ''} ${row.phone || ''} ${row.email || ''} ${row.campaignName || ''} ${row.recruiterName || ''}`.toLowerCase().includes(query.toLowerCase()));
 
   function openAction(kind, row) {
     setAction({ kind, row });
@@ -68,7 +68,7 @@ export default function ReferralRegistrationsPage() {
   }
 
   function exportApplicants() {
-    const exportedRows = filteredRows.map((row) => [row.applicantName, row.campaignName, row.recruiterName || row.recruiterId, row.county || '—', label(row.status), row.commissionConfigured ? `KSh ${Number(row.commissionAmountKsh).toLocaleString()}` : 'Not configured', label(row.payoutStatus || '—')]);
+    const exportedRows = filteredRows.map((row) => [row.applicantName, row.campaignName, row.recruiterName || 'Unknown recruiter', row.county || '—', label(row.status), row.commissionConfigured ? `KSh ${Number(row.commissionAmountKsh).toLocaleString()}` : 'Not configured', label(row.payoutStatus || '—')]);
     exportPdf('Applicant referral report', ['Applicant', 'Campaign', 'Recruiter', 'County', 'Progress', 'Commission', 'Payout status'], exportedRows, { subtitle: `${filteredRows.length} applicant records${statusFilter ? ` · ${label(statusFilter)}` : ''}${campaignFilter ? ` · ${campaignFilter}` : ''}` });
   }
 
@@ -85,7 +85,7 @@ export default function ReferralRegistrationsPage() {
         const nextStatus = statuses[statuses.indexOf(row.status) + 1];
         return <tr key={row.id}>
           <td><strong>{row.applicantName}</strong><br /><small className="muted">{row.county}</small></td>
-          <td>{row.campaignName}</td><td>{row.recruiterName || row.recruiterId}</td>
+          <td>{row.campaignName}</td><td>{row.recruiterName || 'Unknown recruiter'}</td>
           <td><details className="referral-details"><summary>View details</summary><dl><dt>Phone</dt><dd>{row.phone || '—'}</dd><dt>Email</dt><dd>{row.email || '—'}</dd><dt>National ID</dt><dd>{row.applicantIdNumber || '—'}</dd><dt>Education</dt><dd>{row.education || '—'}</dd><dt>Passport</dt><dd>{label(row.passportStatus) || '—'}</dd><dt>NITA fee</dt><dd>{row.nitaFeeStatus === 'paid' ? 'Paid' : 'Unpaid'}</dd></dl></details></td>
           <td><span className={`status-pill ${row.status === 'placed' ? 'status-good' : row.status === 'rejected' ? 'status-risk' : 'status-watch'}`}>{label(row.status)}</span></td>
           <td>{row.commissionConfigured ? `KSh ${Number(row.commissionAmountKsh).toLocaleString()} · ${label(row.payoutStatus)}` : 'Not configured'}</td>
