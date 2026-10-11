@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import client from '../api/client';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import { exportPdf } from '../utils/export';
 
 const statuses = ['submitted', 'contacted', 'requirements_checked', 'training_scheduled', 'placed', 'rejected'];
 const label = (value) => String(value || '').replace(/_/g, ' ');
@@ -66,6 +67,11 @@ export default function ReferralRegistrationsPage() {
     }
   }
 
+  function exportApplicants() {
+    const exportedRows = filteredRows.map((row) => [row.applicantName, row.campaignName, row.recruiterName || row.recruiterId, row.county || '—', label(row.status), row.commissionConfigured ? `KSh ${Number(row.commissionAmountKsh).toLocaleString()}` : 'Not configured', label(row.payoutStatus || '—')]);
+    exportPdf('Applicant referral report', ['Applicant', 'Campaign', 'Recruiter', 'County', 'Progress', 'Commission', 'Payout status'], exportedRows, { subtitle: `${filteredRows.length} applicant records${statusFilter ? ` · ${label(statusFilter)}` : ''}${campaignFilter ? ` · ${campaignFilter}` : ''}` });
+  }
+
   return <>
     <div className="page-heading"><span className="eyebrow">JOBPLUS · CANDIDATE RECRUITMENT</span><h1>Applicant referrals</h1><p className="muted">Review recruiter submissions, track progress, and record commission payments against the configured campaign rule.</p></div>
     {error && <div className="error-banner" role="alert">{error}<Button type="button" variant="secondary" onClick={load} disabled={loading}>{loading ? 'Retrying…' : 'Retry'}</Button></div>}
@@ -74,7 +80,7 @@ export default function ReferralRegistrationsPage() {
     </div>
     {summary?.commissionRuleMissing && <div className="error-banner">At least one recruitment campaign has no commission rule. Configure a rate and trigger in Campaigns before promising or paying recruiter commission.</div>}
     <Card title={loading ? 'Loading applicants…' : `${filteredRows.length} applicant records`}>
-      <div className="referral-toolbar"><label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Applicant, phone, campaign, or recruiter" /></label><label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">All statuses</option>{statuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}</select></label><label>Campaign<select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)}><option value="">All campaigns</option>{campaigns.map((campaign) => <option key={campaign} value={campaign}>{campaign}</option>)}</select></label></div>
+      <div className="referral-toolbar"><label>Search<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Applicant, phone, campaign, or recruiter" /></label><label>Status<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">All statuses</option>{statuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}</select></label><label>Campaign<select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)}><option value="">All campaigns</option>{campaigns.map((campaign) => <option key={campaign} value={campaign}>{campaign}</option>)}</select></label><Button type="button" variant="secondary" disabled={loading || !filteredRows.length} onClick={exportApplicants}>Export PDF</Button></div>
       {loading && !rows.length ? <div className="table-loading" role="status">Loading referrals…</div> : filteredRows.length ? <div className="table-wrap"><table className="referral-table"><thead><tr><th>Applicant</th><th>Campaign</th><th>Recruiter</th><th>Candidate details</th><th>Progress</th><th>Commission</th><th>Action</th></tr></thead><tbody>{filteredRows.map((row) => {
         const nextStatus = statuses[statuses.indexOf(row.status) + 1];
         return <tr key={row.id}>

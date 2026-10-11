@@ -44,6 +44,9 @@ export default function ReconciliationPage() {
   const variance = collected - reported;
   const headers = ['Type', 'ID / receipt', 'Rep ID', 'Amount (KES)', 'Timestamp'];
   const rows = [
+    ['Summary', 'Reported total', '', formatKes(reported), `${range.from} to ${range.to}`],
+    ['Summary', 'Collected total', '', formatKes(collected), `${range.from} to ${range.to}`],
+    ['Summary', 'Variance', '', formatKes(variance), `${range.from} to ${range.to}`],
     ...unmatchedSales.map((sale) => ['Sale', sale.id, sale.repId, sale.total, sale.timestamp]),
     ...unmatchedTransactions.map((transaction) => ['M-Pesa payment', transaction.mpesaReceiptNumber || transaction.id, transaction.repId, transaction.amount, transaction.timestamp]),
   ];
@@ -60,7 +63,7 @@ export default function ReconciliationPage() {
       </form>
       <div className="report-actions">
         <Button type="button" variant="secondary" disabled={!result || loading} onClick={() => downloadCsv(`brandsphere-unmatched-${range.from}-${range.to}.csv`, headers, rows)}>Export unmatched CSV</Button>
-        <Button type="button" variant="secondary" disabled={!result || loading} onClick={() => printReport('Brandsphere unmatched reconciliation', headers, rows)}>Print / save PDF</Button>
+        <Button type="button" variant="secondary" disabled={!result || loading} onClick={() => printReport('M-Pesa reconciliation report', headers, rows, { subtitle: `${range.from} to ${range.to} · ${matches.length} matched · ${unmatchedSales.length + unmatchedTransactions.length} unmatched` })}>Export PDF</Button>
       </div>
     </div>
     {error && <div className="error-banner" role="alert"><span>{error}</span><Button type="button" variant="secondary" onClick={load} disabled={loading}>{loading ? 'Retrying…' : 'Retry'}</Button></div>}

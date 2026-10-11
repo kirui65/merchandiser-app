@@ -3,7 +3,7 @@ import client from '../api/client';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import ChartCard from '../components/ChartCard';
-import { downloadCsv } from '../utils/export';
+import { downloadCsv, exportPdf } from '../utils/export';
 import { formatKes, formatNumber } from '../utils/formatters';
 import { businessDateKey, businessDateStartIso, businessDateEndIso } from '../utils/businessDate';
 
@@ -66,6 +66,20 @@ export default function CompanyReportPage() {
     downloadCsv('company-performance.csv', ['Metric', 'Count', 'Value'], summary);
   }
 
+  function exportPdfReport() {
+    const rows = [
+      ['Reporting period', `${appliedFilters.from} to ${appliedFilters.to}`, ''],
+      ['Campaign', campaigns.find((campaign) => campaign.id === appliedFilters.campaignId)?.name || 'All campaigns', ''],
+      ['Region', regions.find((region) => region.id === appliedFilters.regionId)?.name || 'All regions', ''],
+      ['Sales', report.sales.count, formatKes(report.sales.total)],
+      ['Activations', report.activations.count, `${report.activations.footfallCount} consumers reached`],
+      ['Leads', report.leads.count, ''],
+      ['Merchandising audits', report.merchandisingAudits.count, `${report.merchandisingAudits.lowStockChecks} low-stock flags`],
+      ...Object.entries(report.leads.byStatus || {}).map(([status, count]) => [`Lead status: ${status.replace(/_/g, ' ')}`, count, '']),
+    ];
+    exportPdf('Company performance report', ['Metric', 'Count / period', 'Value / notes'], rows, { subtitle: `Reporting period ${appliedFilters.from} to ${appliedFilters.to}` });
+  }
+
   const chartData = {
     'Sales transactions': report.sales.count,
     Activations: report.activations.count,
@@ -89,7 +103,7 @@ export default function CompanyReportPage() {
             <div className="field"><label>From</label><input required type="date" max={filters.to} value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></div>
             <div className="field"><label>To</label><input required type="date" min={filters.from} max={today} value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></div>
           </div>
-          <div><Button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Apply filters'}</Button>{' '}<Button type="button" variant="secondary" onClick={exportCsv} disabled={loading}>Export CSV</Button></div>
+          <div><Button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Apply filters'}</Button>{' '}<Button type="button" variant="secondary" onClick={exportCsv} disabled={loading}>Export CSV</Button>{' '}<Button type="button" variant="secondary" onClick={exportPdfReport} disabled={loading}>Export PDF</Button></div>
         </form>
       </Card>
       <div className="grid-2">

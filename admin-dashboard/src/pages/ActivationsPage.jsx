@@ -5,6 +5,7 @@ import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import { formatDateTime } from '../utils/formatters';
 import { businessDateKey, businessDateStartIso, businessDateEndIso } from '../utils/businessDate';
+import { exportPdf } from '../utils/export';
 
 function toDate(value) {
   if (!value) return null;
@@ -69,6 +70,16 @@ export default function ActivationsPage() {
     }
   }
 
+  function exportActivations() {
+    const rows = activations.map((activation) => {
+      const ambassador = ambassadors.find((item) => item.id === activation.ambassadorId);
+      const expenses = activation.expenses || [];
+      const samples = activation.samplesDistributed || [];
+      return [toDate(activation.startedAt) ? formatDateTime(toDate(activation.startedAt)) : '—', ambassador?.name || activation.ambassadorId, activation.activityType?.replace(/_/g, ' ') || '—', activation.status || '—', activation.footfallCount || 0, samples.reduce((total, sample) => total + Number(sample.quantity || 0), 0), amount(activation.floatAmount), amount(expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0))];
+    });
+    exportPdf('Brand activation report', ['Started', 'Ambassador', 'Activity', 'Status', 'Footfall', 'Samples', 'Float (KES)', 'Expenses (KES)'], rows, { subtitle: `${activations.length} activations` });
+  }
+
   return (
     <>
       <div className="page-heading">
@@ -98,6 +109,7 @@ export default function ActivationsPage() {
         </div>
         <div style={{ marginTop: 14 }}><Button onClick={load} disabled={loading}>{loading ? 'Loading…' : 'Apply filters'}</Button></div>
       </Card>
+      <div className="report-actions"><Button type="button" variant="secondary" disabled={loading || !activations.length} onClick={exportActivations}>Export PDF</Button></div>
       <Card title={`${activations.length} activations`}>
         {loading ? <p className="muted">Loading activation records…</p> : activations.length ? (
           <div className="table-wrap">

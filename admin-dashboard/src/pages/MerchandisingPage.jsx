@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import { formatDateTime } from '../utils/formatters';
+import { exportPdf } from '../utils/export';
 
 function asDate(value) {
   if (!value) return null;
@@ -86,6 +87,9 @@ export default function MerchandisingPage() {
   const lowStockRows = audits.flatMap((audit) => (audit.stockChecks || [])
     .filter((check) => check.lowStock)
     .map((check) => ({ ...check, audit })));
+  const exportLowStock = () => exportPdf('Low-stock alert report', ['Observed', 'Outlet', 'Product', 'Shelf', 'Backroom', 'Reorder', 'Merchandiser'], lowStockRows.map(({ audit, ...check }) => [displayDate(audit.observedAt), outletNames.get(audit.outletId) || audit.outletId, productNames.get(check.productId) || check.productId, check.shelfQuantity ?? '—', check.backroomQuantity ?? '—', check.reorderRequested ? 'Requested' : '—', repNames.get(audit.merchandiserId) || audit.merchandiserId]), { subtitle: `${lowStockRows.length} low-stock alerts` });
+  const exportPrices = () => exportPdf('Competitor price report', ['Observed', 'Outlet', 'Competitor', 'Product', 'Price (KES)', 'Our product', 'Merchandiser'], prices.map((price) => [displayDate(price.observedAt), outletNames.get(price.outletId) || price.outletId, price.competitorName, price.competitorProductName, kes(price.price), productNames.get(price.ourProductId) || price.ourProductId || '—', repNames.get(price.merchandiserId) || price.merchandiserId]), { subtitle: `${prices.length} recent competitor price observations` });
+  const exportApprovals = () => exportPdf('Pending outlet approval report', ['Outlet', 'Address', 'Submitted by', 'Submitted', 'GPS pin', 'Photo'], onboarding.map((entry) => [entry.name, entry.address, repNames.get(entry.submittedBy) || entry.submittedBy, displayDate(entry.createdAt), entry.location ? `${entry.location.lat.toFixed(4)}, ${entry.location.lng.toFixed(4)}` : '—', entry.photoStorageUri ? 'Photo submitted' : 'No photo']), { subtitle: `${onboarding.length} pending outlet submissions` });
   return (
     <>
       <div className="page-heading">
@@ -95,6 +99,7 @@ export default function MerchandisingPage() {
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
       <Card title="Low-stock alerts">
+        <div className="report-actions"><Button type="button" variant="secondary" disabled={loading || !lowStockRows.length} onClick={exportLowStock}>Export PDF</Button></div>
         {loading ? <p className="muted">Loading stock checks…</p> : lowStockRows.length ? (
           <div className="table-wrap">
             <table>
@@ -116,6 +121,7 @@ export default function MerchandisingPage() {
       </Card>
 
       <Card title="Competitor price observations">
+        <div className="report-actions"><Button type="button" variant="secondary" disabled={loading || !prices.length} onClick={exportPrices}>Export PDF</Button></div>
         {loading ? <p className="muted">Loading competitor prices…</p> : prices.length ? (
           <div className="table-wrap">
             <table>
@@ -138,6 +144,7 @@ export default function MerchandisingPage() {
       </Card>
 
       <Card title="Pending outlet approvals">
+        <div className="report-actions"><Button type="button" variant="secondary" disabled={loading || !onboarding.length} onClick={exportApprovals}>Export PDF</Button></div>
         {loading ? <p className="muted">Loading outlet submissions…</p> : onboarding.length ? (
           <div className="table-wrap">
             <table>
