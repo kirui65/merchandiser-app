@@ -97,7 +97,8 @@ the deterministic membership for the selected team.
 
 ## `referralRegistrations`
 Recruiters submit candidate referrals for active recruitment campaigns
-assigned to their active team. The server stamps ownership and consent time,
+assigned directly to their account or assigned to their active team. Team
+membership is optional for directly assigned recruiters. The server stamps ownership and consent time,
 normalizes Kenyan mobile numbers, and uses a deterministic campaign/phone ID
 to prevent duplicate submissions.
 ```
@@ -105,7 +106,7 @@ to prevent duplicate submissions.
   id: string,
   campaignId: string,
   recruiterId: string,
-  teamId: string,
+  teamId: string | null,
   applicantName: string,
   applicantIdNumber: string,
   phone: string,
@@ -389,6 +390,7 @@ may review across teams.
   description?: string,
   regionIds: string[],
   teamIds: string[],
+  recruiterIds: string[], // direct recruiter assignments for candidate recruitment campaigns
   status: 'draft' | 'active' | 'paused' | 'completed' | 'archived',
   programType: 'field_sales' | 'candidate_recruitment',
   referralCommissionKsh?: number | null,
@@ -402,7 +404,11 @@ may review across teams.
 ```
 Managers (`role === 'manager'`) create, update, and archive campaigns.
 Campaign team assignments are validated against active teams, and assigned
-teams must belong to one of the campaign's assigned regions. When a field
+teams must belong to one of the campaign's assigned regions. Direct recruiter
+assignments are validated against active recruiter accounts. A recruiter can
+access a candidate recruitment campaign through a direct assignment or a
+legacy team assignment; recruiters do not need a team when directly assigned.
+When a field
 record includes `campaignId`, the backend verifies the campaign is assigned
 to the writer's server-resolved team. Historical field records without a
 campaign ID remain unattributed rather than being guessed from current

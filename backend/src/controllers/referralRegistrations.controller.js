@@ -39,14 +39,13 @@ function commissionInfo(referral, campaign) {
 async function availableCampaigns(req, res, next) {
   try {
     const teamId = await getActiveTeamIdForUser(req.user.uid);
-    if (!teamId) return res.json({ campaigns: [] });
     const campaigns = await listDocs('campaigns', {
       where: [['status', '==', 'active']],
       orderBy: { field: 'startsAt', direction: 'desc' },
     });
     const now = Date.now();
     return res.json({ campaigns: campaigns.filter((campaign) => campaign.programType === 'candidate_recruitment'
-      && campaign.teamIds?.includes(teamId)
+      && (campaign.recruiterIds?.includes(req.user.uid) || (teamId && campaign.teamIds?.includes(teamId)))
       && timestampMillis(campaign.startsAt) <= now
       && (!campaign.endsAt || timestampMillis(campaign.endsAt) >= now)) });
   } catch (err) { return next(err); }
@@ -56,13 +55,14 @@ async function createReferral(req, res, next) {
   try {
     if (req.user.role !== 'recruiter') throw new ApiError(403, 'Campaign recruiter role required');
     const teamId = await getActiveTeamIdForUser(req.user.uid);
-    if (!teamId) throw new ApiError(403, 'Ask a manager to assign you to a campaign team');
     const campaign = await getDoc('campaigns', req.body.campaignId);
+    const directlyAssigned = campaign?.recruiterIds?.includes(req.user.uid);
+    const assignedThroughTeam = Boolean(teamId && campaign?.teamIds?.includes(teamId));
     if (!campaign || campaign.programType !== 'candidate_recruitment' || campaign.status !== 'active'
-      || !campaign.teamIds?.includes(teamId)
+      || (!directlyAssigned && !assignedThroughTeam)
       || timestampMillis(campaign.startsAt) > Date.now()
       || (campaign.endsAt && timestampMillis(campaign.endsAt) < Date.now())) {
-      throw new ApiError(403, 'This recruitment campaign is not active for your team');
+      throw new ApiError(403, 'This recruitment campaign is not active or assigned to your account');
     }
     const normalizedPhone = normalizeKenyanPhone(req.body.phone);
     if (!normalizedPhone) throw new ApiError(400, 'Enter a valid Kenyan mobile number');
@@ -72,7 +72,7 @@ async function createReferral(req, res, next) {
     const data = {
       id,
       campaignId: campaign.id,
-      teamId,
+      teamId: teamId || null,
       recruiterId: req.user.uid,
       createdBy: req.user.uid,
       applicantName: req.body.applicantName,

@@ -17,16 +17,23 @@ function timestampFrom(value) {
   return admin.firestore.Timestamp.fromDate(date);
 }
 
-async function validateAssignments({ regionIds, teamIds }) {
-  const [regions, teams] = await Promise.all([
+async function validateAssignments({ regionIds = [], teamIds = [], recruiterIds = [], programType }) {
+  if (recruiterIds.length && programType !== 'candidate_recruitment') {
+    throw new ApiError(400, 'Recruiter assignments are only valid for candidate recruitment campaigns');
+  }
+  const [regions, teams, recruiters] = await Promise.all([
     Promise.all(regionIds.map((id) => getDoc('regions', id))),
     Promise.all(teamIds.map((id) => getDoc('teams', id))),
+    Promise.all(recruiterIds.map((id) => getDoc('reps', id))),
   ]);
   if (regions.some((region) => !region || region.active !== true)) {
     throw new ApiError(400, 'Campaign regions must reference active regions');
   }
   if (teams.some((team) => !team || team.active !== true)) {
     throw new ApiError(400, 'Campaign teams must reference active teams');
+  }
+  if (recruiters.some((recruiter) => !recruiter || recruiter.active === false || recruiter.role !== 'recruiter')) {
+    throw new ApiError(400, 'Campaign recruiters must reference active recruiter accounts');
   }
   const regionIdSet = new Set(regionIds);
   if (regionIdSet.size && teams.some((team) => !regionIdSet.has(team.regionId))) {
@@ -77,6 +84,7 @@ async function createCampaign(req, res, next) {
       ...req.body,
       regionIds: [...new Set(req.body.regionIds)],
       teamIds: [...new Set(req.body.teamIds)],
+      recruiterIds: [...new Set(req.body.recruiterIds || [])],
     };
     await validateAssignments(payload);
     const campaign = await createDoc('campaigns', {
@@ -98,13 +106,19 @@ async function updateCampaign(req, res, next) {
       ...req.body,
       ...(req.body.regionIds ? { regionIds: [...new Set(req.body.regionIds)] } : {}),
       ...(req.body.teamIds ? { teamIds: [...new Set(req.body.teamIds)] } : {}),
+      ...(req.body.recruiterIds ? { recruiterIds: [...new Set(req.body.recruiterIds)] } : {}),
     };
     const merged = { ...existing, ...payload };
     if (merged.endsAt && timestampMillis(merged.endsAt) < timestampMillis(merged.startsAt)) {
       throw new ApiError(400, 'endsAt must be at or after startsAt');
     }
-    if (Object.hasOwn(payload, 'regionIds') || Object.hasOwn(payload, 'teamIds')) {
-      await validateAssignments({ regionIds: merged.regionIds || [], teamIds: merged.teamIds || [] });
+    if (Object.hasOwn(payload, 'regionIds') || Object.hasOwn(payload, 'teamIds') || Object.hasOwn(payload, 'recruiterIds')) {
+      await validateAssignments({
+        regionIds: merged.regionIds || [],
+        teamIds: merged.teamIds || [],
+        recruiterIds: merged.recruiterIds || [],
+        programType: merged.programType,
+      });
     }
     const campaign = await updateDoc('campaigns', req.params.id, {
       ...normalizeDates(payload),

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import client from '../api/client';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -15,6 +16,7 @@ const emptyForm = {
   programType: 'field_sales',
   referralCommissionKsh: '',
   referralCommissionAt: 'placed',
+  recruiterIds: [],
   startsAt: businessDateKey(),
   endsAt: '',
 };
@@ -31,6 +33,7 @@ function toPayload(form) {
     ...form,
     referralCommissionKsh: form.programType === 'candidate_recruitment' && form.referralCommissionKsh !== '' ? Number(form.referralCommissionKsh) : null,
     referralCommissionAt: form.programType === 'candidate_recruitment' ? form.referralCommissionAt : null,
+    recruiterIds: form.programType === 'candidate_recruitment' ? [...new Set(form.recruiterIds)] : [],
     startsAt: new Date(`${form.startsAt}T00:00:00.000+03:00`).toISOString(),
     endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:59.999+03:00`).toISOString() : null,
   };
@@ -48,24 +51,45 @@ function MultiSelect({ label, options, selected, onChange }) {
   );
 }
 
+function RecruiterPicker({ recruiters, selected, onChange }) {
+  const toggle = (recruiterId) => onChange(
+    selected.includes(recruiterId)
+      ? selected.filter((id) => id !== recruiterId)
+      : [...selected, recruiterId],
+  );
+  return <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
+    <legend style={{ fontWeight: 700, marginBottom: 8 }}>Assign recruiters</legend>
+    <small className="muted">Choose who can register applicants for this campaign. Recruiters do not need a team assignment.</small>
+    {recruiters.length ? <div className="grid-2" style={{ marginTop: 10 }}>
+      {recruiters.map((recruiter) => <label key={recruiter.id} className="ui-card" style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 12, cursor: 'pointer' }}>
+        <input type="checkbox" checked={selected.includes(recruiter.id)} onChange={() => toggle(recruiter.id)} />
+        <span><strong>{recruiter.name}</strong><br /><small className="muted">{recruiter.email}</small></span>
+      </label>)}
+    </div> : <p className="muted">No active recruiter accounts yet. <Link to="/recruiters">Create a recruiter account</Link> first.</p>}
+  </fieldset>;
+}
+
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState([]);
   const [teams, setTeams] = useState([]);
   const [regions, setRegions] = useState([]);
+  const [recruiters, setRecruiters] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const [campaignResponse, teamResponse, regionResponse] = await Promise.all([
+    const [campaignResponse, teamResponse, regionResponse, repResponse] = await Promise.all([
       client.get('/campaigns'),
       client.get('/teams'),
       client.get('/teams/regions'),
+      client.get('/reps'),
     ]);
     setCampaigns(campaignResponse.data.campaigns || []);
     setTeams((teamResponse.data.teams || []).filter((team) => team.active));
     setRegions((regionResponse.data.regions || []).filter((region) => region.active));
+    setRecruiters((repResponse.data.reps || []).filter((user) => user.role === 'recruiter' && user.active !== false));
   }, []);
 
   useEffect(() => { load().catch(() => setError('Failed to load campaign administration data')); }, [load]);
@@ -100,6 +124,7 @@ export default function CampaignsPage() {
       programType: campaign.programType || 'field_sales',
       referralCommissionKsh: campaign.referralCommissionKsh ?? '',
       referralCommissionAt: campaign.referralCommissionAt || 'placed',
+      recruiterIds: campaign.recruiterIds || [],
       startsAt: dateInput(campaign.startsAt),
       endsAt: dateInput(campaign.endsAt),
     });
@@ -121,20 +146,20 @@ export default function CampaignsPage() {
       <div className="page-heading">
         <span className="eyebrow">CLIENT DELIVERY</span>
         <h1>Campaigns</h1>
-        <p className="muted">Set campaign schedules and assign operating regions and teams.</p>
+        <p className="muted">Set campaign schedules. Assign recruitment campaigns directly to recruiter accounts; assign field campaigns to regions and teams.</p>
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
       <Card title={editing ? `Edit ${editing.name}` : 'Create campaign'}>
         <form className="form-grid" onSubmit={submit}>
           <div className="field"><label>Client</label><input required maxLength={160} value={form.clientName} onChange={(event) => setForm({ ...form, clientName: event.target.value })} /></div>
           <div className="field"><label>Campaign name</label><input required maxLength={160} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
-          <div className="field"><label>Program type</label><select value={form.programType} onChange={(event) => setForm({ ...form, programType: event.target.value })}><option value="field_sales">Field sales</option><option value="candidate_recruitment">Candidate recruitment</option></select></div>
+          <div className="field"><label>Program type</label><select value={form.programType} onChange={(event) => setForm({ ...form, programType: event.target.value, ...(event.target.value !== 'candidate_recruitment' ? { recruiterIds: [] } : {}) })}><option value="field_sales">Field sales</option><option value="candidate_recruitment">Candidate recruitment</option></select></div>
           {form.programType === 'candidate_recruitment' ? <div className="grid-2"><div className="field"><label>Recruiter commission (KSh)</label><input type="number" min="1" step="1" required value={form.referralCommissionKsh} onChange={(event) => setForm({ ...form, referralCommissionKsh: event.target.value })} /><small className="muted">This is separate from the advertised candidate salary.</small></div><div className="field"><label>Commission becomes due at</label><select value={form.referralCommissionAt} onChange={(event) => setForm({ ...form, referralCommissionAt: event.target.value })}>{[['requirements_checked','Requirements checked'],['training_scheduled','Training scheduled'],['placed','Placement confirmed']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></div></div> : null}
           <div className="field"><label>Description</label><textarea rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div>
-          <div className="grid-2">
+          {form.programType === 'candidate_recruitment' ? <RecruiterPicker recruiters={recruiters} selected={form.recruiterIds} onChange={(recruiterIds) => setForm({ ...form, recruiterIds })} /> : <div className="grid-2">
             <MultiSelect label="Regions" options={regions} selected={form.regionIds} onChange={(regionIds) => setForm({ ...form, regionIds, teamIds: form.teamIds.filter((teamId) => teams.find((team) => team.id === teamId && regionIds.includes(team.regionId))) })} />
             <MultiSelect label="Teams" options={teams.filter((team) => !form.regionIds.length || form.regionIds.includes(team.regionId))} selected={form.teamIds} onChange={(teamIds) => setForm({ ...form, teamIds })} />
-          </div>
+          </div>}
           <div className="grid-2">
             <div className="field"><label>Status</label><select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>{['draft', 'active', 'paused', 'completed', 'archived'].map((status) => <option key={status} value={status}>{status}</option>)}</select></div>
             <div className="field"><label>Starts</label><input required type="date" value={form.startsAt} onChange={(event) => setForm({ ...form, startsAt: event.target.value })} /></div>
@@ -154,13 +179,13 @@ export default function CampaignsPage() {
                 <td><strong>{campaign.name}</strong><br /><small>{campaign.description}</small></td>
                 <td>{campaign.clientName}</td>
                 <td>{dateInput(campaign.startsAt)} – {dateInput(campaign.endsAt) || 'Ongoing'}</td>
-                <td>{(campaign.regionIds || []).length} regions · {(campaign.teamIds || []).length} teams</td>
+                <td>{campaign.programType === 'candidate_recruitment' ? `${(campaign.recruiterIds || []).length} recruiters` : `${(campaign.regionIds || []).length} regions · ${(campaign.teamIds || []).length} teams`}</td>
                 <td>{campaign.status}</td>
                 <td><Button variant="secondary" onClick={() => editCampaign(campaign)}>Edit</Button>{' '}{campaign.status !== 'archived' ? <Button variant="secondary" onClick={() => archive(campaign)}>Archive</Button> : null}</td>
               </tr>
             ))}</tbody>
           </table></div>
-        ) : <EmptyState title="No campaigns yet" message="Create a campaign and assign its regions and field teams." />}
+        ) : <EmptyState title="No campaigns yet" message="Create a campaign and assign recruiters, regions, or field teams." />}
       </Card>
     </>
   );

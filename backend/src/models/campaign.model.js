@@ -8,6 +8,7 @@ const CampaignFieldsSchema = z.object({
   description: z.string().trim().max(4000).optional(),
   regionIds: z.array(z.string().min(1)).default([]),
   teamIds: z.array(z.string().min(1)).default([]),
+  recruiterIds: z.array(z.string().min(1)).default([]),
   status: z.enum(['draft', 'active', 'paused', 'completed', 'archived']).default('draft'),
   startsAt: DateValueSchema,
   endsAt: DateValueSchema.nullable().optional(),

@@ -32,7 +32,7 @@ export default function NewApplicantScreen({ navigation }) {
         if (!active) return;
         setCampaigns(result);
         setForm((current) => ({ ...current, campaignId: current.campaignId || result[0]?.id || '' }));
-        if (!result.length) setError('No active recruitment campaign is assigned to your team. Ask your manager to assign your team to the campaign.');
+        if (!result.length) setError('No active recruitment campaign is assigned to your account. Ask your manager to assign you in Campaigns.');
         else setError('');
       })
       .catch(() => active && setError('Could not load campaigns. Check your connection and try again.'))
@@ -71,7 +71,7 @@ export default function NewApplicantScreen({ navigation }) {
 
   async function save() {
     setError('');
-    if (!campaigns.length || !form.campaignId) { setError('No active recruitment campaign is assigned to your team. Ask your manager to assign your team to the campaign.'); return; }
+    if (!campaigns.length || !form.campaignId) { setError('No active recruitment campaign is assigned to your account. Ask your manager to assign you in Campaigns.'); return; }
     if (form.applicantName.trim().length < 2 || !/^\d{7,10}$/.test(form.applicantIdNumber) || !form.phone.trim() || !form.county.trim() || !form.email.trim() || !form.education || !form.passportStatus || !form.nitaFeeStatus || !consent) {
       setError('Complete the applicant details, select education, passport readiness and NITA fee status, then confirm consent.');
       return;
