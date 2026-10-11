@@ -3,7 +3,7 @@ import client from '../api/client';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
-import { downloadCsv, printReport } from '../utils/export';
+import { downloadCsv, exportPdf } from '../utils/export';
 import { formatKes } from '../utils/formatters';
 import { businessDateKey, businessDateStartIso, businessDateEndIso } from '../utils/businessDate';
 
@@ -63,7 +63,7 @@ export default function ReconciliationPage() {
       </form>
       <div className="report-actions">
         <Button type="button" variant="secondary" disabled={!result || loading} onClick={() => downloadCsv(`brandsphere-unmatched-${range.from}-${range.to}.csv`, headers, rows)}>Export unmatched CSV</Button>
-        <Button type="button" variant="secondary" disabled={!result || loading} onClick={() => printReport('M-Pesa reconciliation report', headers, rows, { subtitle: `${range.from} to ${range.to} · ${matches.length} matched · ${unmatchedSales.length + unmatchedTransactions.length} unmatched` })}>Export PDF</Button>
+        <Button type="button" variant="secondary" disabled={!result || loading} onClick={() => exportPdf('M-Pesa reconciliation report', headers, rows, { subtitle: `${range.from} to ${range.to} · ${matches.length} matched · ${unmatchedSales.length + unmatchedTransactions.length} unmatched` })}>Export PDF</Button>
       </div>
     </div>
     {error && <div className="error-banner" role="alert"><span>{error}</span><Button type="button" variant="secondary" onClick={load} disabled={loading}>{loading ? 'Retrying…' : 'Retry'}</Button></div>}
