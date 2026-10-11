@@ -40,15 +40,34 @@ function toPayload(form) {
 }
 
 function MultiSelect({ label, options, selected, onChange }) {
-  return (
-    <div className="field">
-      <label>{label}</label>
-      <select multiple value={selected} onChange={(event) => onChange([...event.target.selectedOptions].map((option) => option.value))} size={Math.min(5, Math.max(3, options.length))}>
-        {options.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
-      </select>
-      <small className="muted">Use Ctrl/Cmd-click to select multiple.</small>
-    </div>
-  );
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const pickerRef = useRef(null);
+  const labelId = `campaign-${label.toLowerCase()}-label`;
+  useEffect(() => {
+    if (!open) return undefined;
+    const close = (event) => { if (!pickerRef.current?.contains(event.target)) setOpen(false); };
+    const escape = (event) => { if (event.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', escape); };
+  }, [open]);
+  const chosen = options.filter((option) => selected.includes(option.id));
+  const visible = options.filter((option) => option.name.toLowerCase().includes(query.toLowerCase()));
+  const toggle = (id) => onChange(selected.includes(id) ? selected.filter((item) => item !== id) : [...selected, id]);
+  return <div className="field assignment-picker" ref={pickerRef}>
+    <label id={labelId}>{label}</label>
+    <button type="button" className="recruiter-picker-trigger" aria-labelledby={labelId} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+      <span className={chosen.length ? '' : 'is-placeholder'}>{chosen.length ? chosen.map((item) => item.name).join(', ') : `Select ${label.toLowerCase()}`}</span>
+      <span className="recruiter-picker-count">{chosen.length || ''}</span><span className="recruiter-picker-chevron" aria-hidden="true">⌄</span>
+    </button>
+    {open && <div className="recruiter-picker-menu" role="menu" aria-labelledby={labelId}>
+      {options.length > 6 && <input className="recruiter-picker-search" aria-label={`Search ${label.toLowerCase()}`} autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Search ${label.toLowerCase()}…`} />}
+      <div className="recruiter-picker-options">{visible.map((option) => { const isSelected = selected.includes(option.id); return <button key={option.id} type="button" role="menuitemcheckbox" aria-checked={isSelected} className={`recruiter-picker-option ${isSelected ? 'is-selected' : ''}`} onClick={() => toggle(option.id)}><span className="recruiter-picker-option-copy"><strong>{option.name}</strong>{option.countryCode && <small>{option.countryCode}</small>}</span><span className="recruiter-picker-check" aria-hidden="true">{isSelected ? '✓' : ''}</span></button>; })}{!visible.length && <p className="recruiter-picker-empty">No matches.</p>}</div>
+      <div className="recruiter-picker-footer">{chosen.length} selected · Choose one or more</div>
+    </div>}
+    {chosen.length > 0 && <div className="recruiter-picker-tags">{chosen.map((option) => <span key={option.id}>{option.name}<button type="button" aria-label={`Remove ${option.name}`} onClick={() => toggle(option.id)}>×</button></span>)}</div>}
+  </div>;
 }
 
 function RecruiterPicker({ recruiters, selected, onChange }) {

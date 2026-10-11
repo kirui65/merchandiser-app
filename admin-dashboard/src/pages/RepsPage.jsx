@@ -160,7 +160,7 @@ export default function RepsPage() {
             {Object.entries(form).filter(([key]) => key !== 'role').map(([key, value]) => (
               <div className="field" key={key}>
                 <label>{key[0].toUpperCase() + key.slice(1)}</label>
-                <input type={key === 'password' ? 'password' : 'text'} required value={value} onChange={(event) => setForm({ ...form, [key]: event.target.value })} />
+                <input type={key === 'password' ? 'password' : key === 'email' ? 'email' : key === 'phone' ? 'tel' : 'text'} autoComplete={key === 'password' ? 'new-password' : key === 'email' ? 'email' : key === 'phone' ? 'tel' : 'name'} required value={value} onChange={(event) => setForm({ ...form, [key]: event.target.value })} />
               </div>
             ))}
             <div className="field">
@@ -183,13 +183,13 @@ export default function RepsPage() {
                     <td>{rep.email}<br />{rep.phone}</td>
                     <td>{roleLabel(rep.role)}</td>
                     <td>{rep.active ? 'Active' : 'Inactive'}</td>
-                    <td>
-                      <Button variant="secondary" onClick={() => startEditing(rep)}>Edit</Button>{' '}
-                      <Button variant="secondary" onClick={() => toggle(rep)}>{rep.active ? 'Deactivate' : 'Reactivate'}</Button>{' '}
-                      <Button variant="secondary" onClick={() => resetPassword(rep)}>Reset password</Button>{' '}
-                      {rep.mfaEnabled ? <Button variant="secondary" onClick={() => resetMfa(rep)}>Reset MFA</Button> : null}
-                      {rep.id !== currentUser?.id ? <Button variant="danger" onClick={() => { setDeleteCandidate(rep); setDeleteEmail(''); setDeletePassword(''); setDeleteMfaCode(''); }}>Delete account</Button> : null}
-                    </td>
+                    <td><details className="row-actions"><summary>Actions</summary><div className="row-actions-menu">
+                      <button type="button" onClick={() => startEditing(rep)}>Edit account</button>
+                      <button type="button" onClick={() => toggle(rep)}>{rep.active ? 'Deactivate account' : 'Reactivate account'}</button>
+                      <button type="button" onClick={() => resetPassword(rep)}>Reset password</button>
+                      {rep.mfaEnabled ? <button type="button" onClick={() => resetMfa(rep)}>Reset MFA</button> : null}
+                      {rep.id !== currentUser?.id ? <button type="button" className="is-danger" onClick={() => { setDeleteCandidate(rep); setDeleteEmail(''); setDeletePassword(''); setDeleteMfaCode(''); }}>Delete account</button> : null}
+                    </div></details></td>
                   </tr>
                 ))}</tbody>
               </table>

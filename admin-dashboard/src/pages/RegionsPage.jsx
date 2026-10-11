@@ -11,10 +11,17 @@ export default function RegionsPage() {
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const { data } = await client.get('/teams/regions');
-    setRegions(data.regions || []);
+    setLoading(true);
+    try {
+      const { data } = await client.get('/teams/regions');
+      setRegions(data.regions || []);
+      setError(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load().catch(() => setError('Failed to load regions')); }, [load]);
@@ -72,8 +79,8 @@ export default function RegionsPage() {
             <Button type="submit">Create region</Button>
           </form>
         </Card>
-        <Card title={`${regions.length} regions`}>
-          {regions.length ? (
+        <Card title={loading ? 'Loading regions…' : `${regions.length} regions`}>
+          {loading ? <div className="table-loading" role="status">Loading regions…</div> : regions.length ? (
             <div className="table-wrap"><table><thead><tr><th>Name</th><th>Country</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>{regions.map((region) => <tr key={region.id}><td>{region.name}</td><td>{region.countryCode}</td><td>{region.active ? 'Active' : 'Inactive'}</td><td><Button variant="secondary" onClick={() => setEditing({ ...region })}>Edit</Button>{' '}<Button variant="secondary" onClick={() => toggle(region)}>{region.active ? 'Deactivate' : 'Reactivate'}</Button></td></tr>)}</tbody>
             </table></div>

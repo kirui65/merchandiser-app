@@ -121,7 +121,7 @@ export default function RecruitersPage() {
           return <tr key={user.id}>
             <td>{user.name}</td><td>{user.email}</td><td>{user.phone}</td>
             <td>{team?.name || (membership ? 'Assigned team unavailable' : 'Not assigned')}</td>
-            <td>{assignedCampaigns.length ? assignedCampaigns.map((campaign) => campaign.name).join(', ') : 'No campaigns assigned'}</td>
+            <td>{assignedCampaigns.length ? <div className="assigned-campaign-list">{assignedCampaigns.map((campaign) => <span className="status-pill" key={campaign.id}>{campaign.name}</span>)}</div> : <span className="muted">No campaigns assigned</span>}</td>
             <td>{assignedCampaigns.length ? 'Ready' : 'Campaign needed'}</td>
           </tr>;
         })}</tbody>

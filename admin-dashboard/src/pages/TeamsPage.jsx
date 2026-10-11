@@ -28,8 +28,9 @@ export default function TeamsPage() {
     setRegions(regionResponse.data.regions || []);
     setReps(repResponse.data.reps || []);
     setMemberships(membershipResponse.data.memberships || []);
-    setSelectedTeamId((current) => teamResponse.data.teams.some((team) => team.id === current)
-      ? current : teamResponse.data.teams[0]?.id || '');
+    const activeTeams = teamResponse.data.teams.filter((team) => team.active);
+    setSelectedTeamId((current) => activeTeams.some((team) => team.id === current)
+      ? current : activeTeams[0]?.id || '');
   }, []);
 
   useEffect(() => { load().catch(() => setError('Failed to load teams')); }, [load]);

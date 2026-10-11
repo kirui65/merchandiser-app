@@ -20,6 +20,7 @@ export default function BroadcastsPage() {
   const [teams, setTeams] = useState([]);
   const [status, setStatus] = useState('');
   const [teamId, setTeamId] = useState('');
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [archivingId, setArchivingId] = useState(null);
   const [error, setError] = useState(null);
@@ -45,7 +46,8 @@ export default function BroadcastsPage() {
 
   const teamNames = useMemo(() => new Map(teams.map((team) => [team.id, team.name])), [teams]);
   const visibleBroadcasts = broadcasts.filter((broadcast) => (!status || broadcast.status === status)
-    && (!teamId || broadcast.teamId === teamId));
+    && (!teamId || broadcast.teamId === teamId)
+    && `${broadcast.title || ''} ${broadcast.message || ''} ${teamNames.get(broadcast.teamId) || ''}`.toLowerCase().includes(query.toLowerCase()));
 
   async function archive(broadcast) {
     if (!window.confirm(`Archive “${broadcast.title}”?`)) return;
@@ -71,6 +73,7 @@ export default function BroadcastsPage() {
       {error ? <div className="error-banner">{error}</div> : null}
       <Card title="Filters">
         <div className="grid-2">
+          <div className="field"><label htmlFor="broadcast-search">Search announcements</label><input id="broadcast-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search title, message, or team" /></div>
           <div className="field">
             <label htmlFor="broadcast-status">Status</label>
             <select id="broadcast-status" value={status} onChange={(event) => setStatus(event.target.value)}>
@@ -97,7 +100,7 @@ export default function BroadcastsPage() {
                 <tr key={broadcast.id}>
                   <td>{dateValue(broadcast.publishedAt || broadcast.createdAt) ? formatDateTime(dateValue(broadcast.publishedAt || broadcast.createdAt)) : '—'}</td>
                   <td>{teamNames.get(broadcast.teamId) || broadcast.teamId}</td>
-                  <td><strong>{broadcast.title}</strong><br /><span className="muted">{broadcast.message}</span></td>
+                  <td className="message-cell"><strong>{broadcast.title}</strong><br /><span className="muted" title={broadcast.message}>{broadcast.message}</span></td>
                   <td>{broadcast.senderId}</td>
                   <td>{broadcast.status}</td>
                   <td>{dateValue(broadcast.expiresAt) ? formatDateTime(dateValue(broadcast.expiresAt)) : '—'}</td>

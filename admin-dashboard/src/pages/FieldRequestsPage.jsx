@@ -99,7 +99,7 @@ export default function FieldRequestsPage() {
                   <td>{teamNames.get(request.teamId) || request.teamId}</td>
                   <td>{request.requestType === 'leave' ? 'Leave' : 'Field'}</td>
                   <td>{dateValue(request.startsAt) ? formatDateTime(dateValue(request.startsAt)) : '—'}{request.endsAt && dateValue(request.endsAt) ? <> – {formatDateTime(dateValue(request.endsAt))}</> : null}</td>
-                  <td>{request.reason || '—'}</td>
+                  <td className="message-cell" title={request.reason || ''}>{request.reason || '—'}</td>
                   <td>{request.status}</td>
                   <td>{request.status === 'pending' ? (
                     <div style={{ display: 'flex', gap: 8 }}>

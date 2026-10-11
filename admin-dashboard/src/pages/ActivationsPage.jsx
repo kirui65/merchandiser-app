@@ -4,7 +4,7 @@ import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import Button from '../components/Button';
 import { formatDateTime } from '../utils/formatters';
-import { businessDateStartIso, businessDateEndIso } from '../utils/businessDate';
+import { businessDateKey, businessDateStartIso, businessDateEndIso } from '../utils/businessDate';
 
 function toDate(value) {
   if (!value) return null;
@@ -58,7 +58,10 @@ export default function ActivationsPage() {
     setError(null);
     try {
       const response = await client.patch(`/activations/${encodeURIComponent(activation.id)}`, { status });
-      setActivations((current) => current.map((item) => item.id === activation.id ? response.data.activation : item));
+      setActivations((current) => current.flatMap((item) => {
+        if (item.id !== activation.id) return [item];
+        return filters.status && response.data.activation.status !== filters.status ? [] : [response.data.activation];
+      }));
     } catch (requestError) {
       setError(requestError.response?.data?.error?.message || `Could not ${status} this activation.`);
     } finally {
@@ -90,8 +93,8 @@ export default function ActivationsPage() {
               {['draft', 'submitted', 'approved', 'rejected'].map((status) => <option key={status} value={status}>{status}</option>)}
             </select>
           </div>
-          <div className="field"><label>Started from</label><input type="date" value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></div>
-          <div className="field"><label>Started to</label><input type="date" value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></div>
+          <div className="field"><label>Started from</label><input type="date" max={filters.to || undefined} value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></div>
+          <div className="field"><label>Started to</label><input type="date" min={filters.from || undefined} max={businessDateKey()} value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></div>
         </div>
         <div style={{ marginTop: 14 }}><Button onClick={load} disabled={loading}>{loading ? 'Loading…' : 'Apply filters'}</Button></div>
       </Card>

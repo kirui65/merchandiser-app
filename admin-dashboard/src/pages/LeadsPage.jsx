@@ -25,6 +25,7 @@ export default function LeadsPage() {
   const [calls, setCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
     setError(null);
@@ -45,6 +46,9 @@ export default function LeadsPage() {
   useEffect(() => { load(); }, [load]);
 
   const leadNames = new Map(leads.map((lead) => [lead.id, lead.name]));
+  const search = query.trim().toLowerCase();
+  const visibleLeads = leads.filter((lead) => `${lead.name || ''} ${lead.organization || ''} ${lead.phone || ''} ${lead.status || ''} ${lead.telemarketerId || ''}`.toLowerCase().includes(search));
+  const visibleCalls = calls.filter((call) => `${leadNames.get(call.leadId) || ''} ${call.telemarketerId || ''} ${call.outcome || ''} ${call.notes || ''}`.toLowerCase().includes(search));
 
   return (
     <>
@@ -55,11 +59,12 @@ export default function LeadsPage() {
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
       <Card title="Lead records">
+        <div className="table-toolbar"><label>Search leads<input className="control" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, organization, phone, or owner" /></label><span className="muted">{visibleLeads.length} of {leads.length}</span></div>
         <div className="table-wrap">
           <table>
             <thead><tr><th>Name</th><th>Organization</th><th>Phone</th><th>Status</th><th>Score</th><th>Owner</th><th>Calls</th><th>Next follow-up</th></tr></thead>
             <tbody>
-              {leads.map((lead) => (
+              {visibleLeads.map((lead) => (
                 <tr key={lead.id}>
                   <td>{lead.name}</td>
                   <td>{lead.organization || '—'}</td>
@@ -73,19 +78,19 @@ export default function LeadsPage() {
               ))}
             </tbody>
           </table>
-          {!loading && leads.length === 0
-            ? <EmptyState title="No leads yet" message="Telemarketer prospects will appear here." />
+          {!loading && visibleLeads.length === 0
+            ? <EmptyState title={leads.length ? 'No matching leads' : 'No leads yet'} message={leads.length ? 'Try another search.' : 'Telemarketer prospects will appear here.'} />
             : null}
           {loading ? <p className="muted">Loading lead records…</p> : null}
         </div>
       </Card>
       <Card title="Call activity">
-        {loading ? <p className="muted">Loading call activity…</p> : calls.length ? (
+        {loading ? <p className="muted">Loading call activity…</p> : visibleCalls.length ? (
           <div className="table-wrap">
             <table>
               <thead><tr><th>When</th><th>Lead</th><th>Telemarketer</th><th>Outcome</th><th>Duration</th><th>Notes</th></tr></thead>
               <tbody>
-                {calls.map((call) => (
+                {visibleCalls.map((call) => (
                   <tr key={call.id}>
                     <td>{displayDate(call.startedAt)}</td>
                     <td>{leadNames.get(call.leadId) || call.leadId}</td>
@@ -99,7 +104,7 @@ export default function LeadsPage() {
             </table>
           </div>
         ) : !loading ? (
-          <EmptyState title="No calls yet" message="Logged call activity will appear here." />
+          <EmptyState title={calls.length ? 'No matching calls' : 'No calls yet'} message={calls.length ? 'Try another search.' : 'Logged call activity will appear here.'} />
         ) : null}
       </Card>
       <div style={{ marginTop: 18 }}>
