@@ -41,7 +41,6 @@ export default function Dashboard() {
   if (!totals) return <div className="error-banner">{error || 'No dashboard data is available.'}</div>;
   const exportRows = [['Summary','Range total',totals.grandTotal],['Summary','Transactions',totals.count],['Summary','Target attainment',`${Math.round(metrics.attainment)}%`],['Summary','Forecast',metrics.forecast],...Object.entries(totals.byDay || {}).map(([date,total]) => ['Daily sales',date,total]),...repRows.map((x) => ['Representative',x.name,x.sales])];
   const tabs = [['overview', 'Overview'], ['team', 'Team'], ['field', 'Field'], ['sales', 'Sales'], ['territories', 'Territories'], ['security', 'Security'], ['integrations', 'Integrations'], ['tools', 'Tools']];
-  const currentTabId = `dashboard-tab-${activeView}`;
   return <div className="dashboard-page" aria-busy={loading}>
     <header className="dashboard-compact-heading">
       <div><span className="eyebrow">SALES PERFORMANCE</span><h1>Sales overview</h1><p className="muted">{range.from} to {range.to}{updatedAt && <span className="updated-time"> · Updated {formatTime(updatedAt)}</span>}{loading && <span className="dashboard-refresh-status" role="status"><span className="dashboard-refresh-spinner" aria-hidden="true" />Updating</span>}</p></div>
@@ -54,11 +53,9 @@ export default function Dashboard() {
       <Stat label="Active reps" value={activeSellers.length} note="With sales in range" />
       <Stat label="vs previous period" value={insights?.comparison?.changePercent == null ? '—' : `${insights.comparison.changePercent >= 0 ? '+' : ''}${Math.round(insights.comparison.changePercent)}%`} note={insights ? `${cash(insights.comparison.previous)} previous` : 'Loading comparison'} />
     </div>
-    <nav className="dashboard-tabs" role="tablist" aria-label="Dashboard views">
-      {tabs.map(([id, label]) => <button key={id} id={`dashboard-tab-${id}`} type="button" role="tab" aria-selected={activeView === id} aria-controls="dashboard-panel" className={activeView === id ? 'is-active' : ''} onClick={() => setActiveView(id)}>{label}</button>)}
-    </nav>
+    <div className="dashboard-view-row"><span className="dashboard-view-label">Workspace view</span><label className="dashboard-view-picker"><span className="sr-only">Choose dashboard view</span><select value={activeView} onChange={(event) => setActiveView(event.target.value)}>{tabs.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label></div>
     {activeView === 'security' && <div className="dashboard-security-coverage"><strong>{insights?.security?.mfaEnabledManagers || 0} / {insights?.security?.managerAccounts || 0}</strong><span>active manager accounts protected by MFA</span><small>Enable authenticator verification from Account settings.</small></div>}
-    <section id="dashboard-panel" className="dashboard-panel" role="tabpanel" aria-labelledby={currentTabId}>
+    <section id="dashboard-panel" className="dashboard-panel" aria-label={`${tabs.find(([id]) => id === activeView)?.[1] || 'Dashboard'} dashboard view`}>
       {activeView === 'overview' && <div className="dashboard-panel-grid dashboard-overview-grid">
         <div className="dashboard-chart"><ChartCard title="Sales by day" data={totals.byDay} /></div>
         <Card title="Recent sales" className="dashboard-panel-card"><div className="dashboard-compact-list">{insights?.recentSales?.slice(0,5).map((sale) => <div className="dashboard-compact-row" key={sale.id}><span><strong>{sale.outletName}</strong><small>{sale.repName} · {sale.productName}</small></span><span className="dashboard-sale-total">{cash(sale.total)}</span></div>)}{!insights?.recentSales?.length && <p className="muted">No sales in this range.</p>}</div><div className="dashboard-panel-footer"><span className="muted">{insights?.comparison?.currentCount ?? totals.count} transactions</span><Link to="/reconciliation">Payments</Link></div></Card>

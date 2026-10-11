@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 const LoginPage = lazy(() => import('./auth/LoginPage'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
@@ -31,6 +31,7 @@ function RequireAuth({ children }) {
 function Shell({ children }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [changingPassword, setChangingPassword] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -40,7 +41,10 @@ function Shell({ children }) {
   const navItems = [['/','Overview'],['/company-report','Company report'],['/campaigns','Campaigns'],['/recruiters','Recruiter accounts'],['/referrals','Applicant referrals'],['/routes','Routes'],['/outlets','Outlets'],['/territories','Territories'],['/reps','Team'],['/regions','Regions'],['/teams','Teams'],['/activations','Activations'],['/leads','Leads'],['/merchandising','Merchandising'],['/broadcasts','Broadcasts'],['/field-requests','Field requests'],['/products','Products'],['/reconciliation','Reconciliation'],['/audit-log','Audit log']];
   useEffect(() => { const onKeyDown = (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setCommandOpen(true); } if (event.key === 'Escape') setCommandOpen(false); }; window.addEventListener('keydown', onKeyDown); return () => window.removeEventListener('keydown', onKeyDown); }, []);
   const navGroups = [['Overview', navItems.slice(0, 5)], ['Field operations', navItems.slice(5, 15)], ['Administration', navItems.slice(15)]];
-  const navigation = navGroups.map(([group, links]) => <section className="nav-group" key={group}><span className="nav-group-label">{group}</span>{links.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'} onClick={closeMenu}>{label}</NavLink>)}</section>);
+  const activeGroup = navGroups.find(([, links]) => links.some(([to]) => to === location.pathname))?.[0] || 'Overview';
+  const [expandedGroup, setExpandedGroup] = useState(activeGroup);
+  useEffect(() => setExpandedGroup(activeGroup), [activeGroup]);
+  const navigation = navGroups.map(([group, links]) => <details className="nav-group" key={group} open={expandedGroup === group} onToggle={(event) => { if (event.currentTarget.open && expandedGroup !== group) setExpandedGroup(group); }}><summary>{group}<span aria-hidden="true">⌄</span></summary><div className="nav-group-links">{links.map(([to, label]) => <NavLink key={to} to={to} end={to === '/'} onClick={closeMenu}>{label}</NavLink>)}</div></details>);
   const mobileItems = navItems.filter(([, label]) => label.toLowerCase().includes(mobileQuery.toLowerCase()));
   const commands = navItems.filter(([, label]) => label.toLowerCase().includes(commandQuery.toLowerCase()));
   const runCommand = (to) => { navigate(to); setCommandOpen(false); setCommandQuery(''); closeMenu(); };

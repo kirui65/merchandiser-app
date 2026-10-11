@@ -826,3 +826,77 @@ tbody tr:hover { background: #f8fafb; box-shadow: none; }
   .ui-card,.modern-shell .ui-card,.dashboard-panel-card,.dashboard-chart > .ui-card { padding: 15px; border-radius: 9px; }
   .dashboard-recruitment-metrics,.dashboard-payment-grid { gap: 7px; }
 }
+
+/* Focused SaaS navigation and dashboard controls. */
+.modern-shell { grid-template-columns: 232px minmax(0, 1fr); }
+.sidebar { padding: 20px 12px 14px; }
+.sidebar .brand { justify-content: flex-start; padding: 0 12px 24px; }
+.sidebar .brand-logo { width: 158px; height: 48px; }
+.sidebar-label { margin: 0 12px 5px; }
+.sidebar-nav { gap: 5px; overflow-y: auto; }
+.nav-group { display: block; }
+.nav-group > summary { display: flex; min-height: 36px; align-items: center; justify-content: space-between; padding: 0 12px; color: #aebdc7; border-radius: 7px; cursor: pointer; font-size: 10px; font-weight: 750; letter-spacing: .045em; list-style: none; text-transform: uppercase; user-select: none; }
+.nav-group > summary::-webkit-details-marker { display: none; }
+.nav-group > summary:hover { color: #f4f7f9; background: rgba(255,255,255,.055); }
+.nav-group > summary span { color: #8fa3af; font-size: 13px; transition: transform .15s ease; }
+.nav-group[open] > summary { color: #e3eaee; }
+.nav-group[open] > summary span { transform: rotate(180deg); }
+.nav-group-links { display: grid; gap: 2px; padding: 3px 0 7px; }
+.sidebar-nav .nav-group-links a { min-height: 34px; padding: 7px 12px 7px 15px; color: #d0dbe1; border-radius: 6px; font-size: 12px; }
+.sidebar-nav .nav-group-links a.active { color: #fff; background: #31546b; box-shadow: inset 2px 0 #82b49a; }
+.workspace-top { min-height: 54px; }
+.modern-shell .shell-content { width: min(1280px, calc(100% - 72px)); padding-top: 30px; }
+.dashboard-page { display: grid; gap: 0; }
+.dashboard-compact-heading { align-items: center; gap: 24px; margin-bottom: 18px; padding: 0 0 17px; }
+.dashboard-compact-heading .eyebrow { color: #668071; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.dashboard-compact-heading h1 { margin: 5px 0 4px; font-size: clamp(25px, 2vw, 30px); letter-spacing: -.04em; }
+.dashboard-compact-heading p { font-size: 11px; }
+.dashboard-heading-controls { align-items: center; gap: 14px; }
+.dashboard-territory-filter { color: #657681; font-size: 11px; font-weight: 650; }
+.dashboard-territory-filter select { min-height: 36px; padding: 0 28px 0 10px; border-color: #dce4e8; border-radius: 7px; font-size: 11px; }
+.dashboard-compact-heading .quick-filters { gap: 3px; padding: 3px; background: #eef2f3; border: 1px solid #e2e8eb; border-radius: 8px; }
+.dashboard-compact-heading .filter-chip { min-height: 28px; padding: 0 9px; color: #62737b; border-radius: 5px; font-size: 10px; }
+.dashboard-compact-heading .filter-chip:hover { color: #254255; background: #fff; }
+.dashboard-compact-stats { gap: 12px; margin-bottom: 17px; }
+.dashboard-compact-stats .ui-card { display: flex; min-height: 104px; flex-direction: column; align-items: flex-start; justify-content: center; padding: 15px 17px; }
+.dashboard-compact-stats .ui-card .muted { font-size: 11px; font-weight: 600; }
+.dashboard-compact-stats .stat-value { margin-top: 5px; color: #1f394a; font-size: clamp(21px, 2vw, 26px); font-weight: 750; letter-spacing: -.045em; }
+.dashboard-compact-stats .stat-note { margin-top: 2px; font-size: 10px; }
+.dashboard-view-row { display: flex; min-height: 49px; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 0 13px; background: #fff; border: 1px solid #e0e6eb; border-radius: 9px; }
+.dashboard-view-label { color: #50636e; font-size: 11px; font-weight: 700; }
+.dashboard-view-picker select { min-width: 156px; min-height: 33px; padding: 0 30px 0 10px; color: #28485a; background: #f8fafb; border: 1px solid #e0e6eb; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.dashboard-panel-grid.dashboard-overview-grid { grid-template-columns: minmax(0, 1.55fr) minmax(280px, .95fr); gap: 14px; }
+.dashboard-panel-grid.dashboard-overview-grid > .dashboard-chart { grid-row: span 2; }
+.dashboard-panel-grid.dashboard-overview-grid > .dashboard-chart,.dashboard-panel-grid.dashboard-overview-grid > .dashboard-panel-card { min-height: 0; }
+.dashboard-panel-grid.dashboard-overview-grid .dashboard-recruitment-card { grid-column: auto; }
+.dashboard-compact-list { gap: 0; }
+.dashboard-compact-row { padding: 11px 0; }
+.dashboard-compact-row strong { color: #294151; font-size: 11px; }
+.dashboard-compact-row small { color: #73818a; font-size: 10px; }
+.dashboard-panel-footer { gap: 12px; padding-top: 12px; font-size: 10px; }
+.dashboard-panel-footer a,.dashboard-panel-link { font-size: 10px; font-weight: 700; }
+.dashboard-recruitment-metrics { gap: 7px; margin-top: 12px; }
+.dashboard-recruitment-metrics > div { padding: 9px 10px; }
+.dashboard-recruitment-metrics strong { font-size: 14px; }
+.dashboard-recruitment-metrics span { font-size: 9px; }
+.dashboard-view-picker select:focus,.dashboard-territory-filter select:focus { outline: 3px solid rgba(77,139,117,.12); border-color: #729b8d; }
+@media (max-width: 900px) {
+  .modern-shell { grid-template-columns: minmax(0,1fr); }
+  .dashboard-heading-controls { width: auto; align-items: center; flex-direction: row; }
+  .dashboard-panel-grid.dashboard-overview-grid { grid-template-columns: minmax(0,1fr) minmax(260px,.9fr); }
+}
+@media (max-width: 680px) {
+  .modern-shell .shell-content { width: calc(100% - 28px); padding-top: 20px; }
+  .dashboard-compact-heading { align-items: stretch; flex-direction: column; gap: 13px; margin-bottom: 13px; padding-bottom: 13px; }
+  .dashboard-heading-controls { align-items: stretch; flex-direction: column; gap: 9px; }
+  .dashboard-territory-filter { justify-content: space-between; }
+  .dashboard-territory-filter select { flex: 1; }
+  .dashboard-compact-heading .quick-filters { justify-content: space-between; }
+  .dashboard-compact-heading .filter-chip { flex: 1; padding: 0 5px; }
+  .dashboard-compact-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+  .dashboard-compact-stats .ui-card { min-height: 88px; padding: 12px; }
+  .dashboard-view-row { min-height: 46px; margin-bottom: 10px; padding: 0 10px; }
+  .dashboard-view-picker select { min-width: 138px; }
+  .dashboard-panel-grid.dashboard-overview-grid { grid-template-columns: minmax(0,1fr); }
+  .dashboard-panel-grid.dashboard-overview-grid > .dashboard-chart { grid-row: auto; }
+}
