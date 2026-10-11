@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import client from '../api/client';
 import Button from '../components/Button';
@@ -52,21 +52,56 @@ function MultiSelect({ label, options, selected, onChange }) {
 }
 
 function RecruiterPicker({ recruiters, selected, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const pickerRef = useRef(null);
   const toggle = (recruiterId) => onChange(
     selected.includes(recruiterId)
       ? selected.filter((id) => id !== recruiterId)
       : [...selected, recruiterId],
   );
-  return <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
-    <legend style={{ fontWeight: 700, marginBottom: 8 }}>Assign recruiters</legend>
-    <small className="muted">Choose who can register applicants for this campaign. Recruiters do not need a team assignment.</small>
-    {recruiters.length ? <div className="grid-2" style={{ marginTop: 10 }}>
-      {recruiters.map((recruiter) => <label key={recruiter.id} className="ui-card" style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 12, cursor: 'pointer' }}>
-        <input type="checkbox" checked={selected.includes(recruiter.id)} onChange={() => toggle(recruiter.id)} />
-        <span><strong>{recruiter.name}</strong><br /><small className="muted">{recruiter.email}</small></span>
-      </label>)}
-    </div> : <p className="muted">No active recruiter accounts yet. <Link to="/recruiters">Create a recruiter account</Link> first.</p>}
-  </fieldset>;
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutsideClick = (event) => { if (!pickerRef.current?.contains(event.target)) setOpen(false); };
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+  const selectedRecruiters = recruiters.filter((recruiter) => selected.includes(recruiter.id));
+  const filteredRecruiters = recruiters.filter((recruiter) => `${recruiter.name} ${recruiter.email}`.toLowerCase().includes(query.toLowerCase()));
+  const summary = selectedRecruiters.length
+    ? selectedRecruiters.map((recruiter) => recruiter.name).join(', ')
+    : 'Select recruiters';
+  return <div className="field recruiter-picker" ref={pickerRef}>
+    <label id="recruiter-picker-label">Assign recruiters</label>
+    <small className="muted">Choose who can register applicants for this campaign.</small>
+    {recruiters.length ? <>
+      <button type="button" className="recruiter-picker-trigger" aria-labelledby="recruiter-picker-label" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <span className={selectedRecruiters.length ? '' : 'is-placeholder'}>{summary}</span>
+        <span className="recruiter-picker-count">{selectedRecruiters.length ? selectedRecruiters.length : ''}</span>
+        <span className="recruiter-picker-chevron" aria-hidden="true">⌄</span>
+      </button>
+      {open && <div className="recruiter-picker-menu" role="menu" aria-labelledby="recruiter-picker-label">
+        {recruiters.length > 6 && <input className="recruiter-picker-search" aria-label="Search recruiters" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search recruiters…" />}
+        <div className="recruiter-picker-options">
+          {filteredRecruiters.map((recruiter) => {
+            const isSelected = selected.includes(recruiter.id);
+            return <button key={recruiter.id} type="button" role="menuitemcheckbox" aria-checked={isSelected} className={`recruiter-picker-option ${isSelected ? 'is-selected' : ''}`} onClick={() => toggle(recruiter.id)}>
+              <span className="recruiter-picker-option-copy"><strong>{recruiter.name}</strong><small>{recruiter.email}</small></span>
+              <span className="recruiter-picker-check" aria-hidden="true">{isSelected ? '✓' : ''}</span>
+            </button>;
+          })}
+          {!filteredRecruiters.length && <p className="recruiter-picker-empty">No recruiters match that search.</p>}
+        </div>
+        <div className="recruiter-picker-footer">{selectedRecruiters.length} selected · Choose one or more</div>
+      </div>}
+    </> : <p className="muted">No active recruiter accounts yet. <Link to="/recruiters">Create a recruiter account</Link> first.</p>}
+    {selectedRecruiters.length > 0 && <div className="recruiter-picker-tags" aria-label="Selected recruiters">{selectedRecruiters.map((recruiter) => <span key={recruiter.id}>{recruiter.name}<button type="button" aria-label={`Remove ${recruiter.name}`} onClick={() => toggle(recruiter.id)}>×</button></span>)}</div>}
+  </div>;
 }
 
 export default function CampaignsPage() {
@@ -149,7 +184,7 @@ export default function CampaignsPage() {
         <p className="muted">Set campaign schedules. Assign recruitment campaigns directly to recruiter accounts; assign field campaigns to regions and teams.</p>
       </div>
       {error ? <div className="error-banner">{error}</div> : null}
-      <Card title={editing ? `Edit ${editing.name}` : 'Create campaign'}>
+      <Card className="campaign-form-card" title={editing ? `Edit ${editing.name}` : 'Create campaign'}>
         <form className="form-grid" onSubmit={submit}>
           <div className="field"><label>Client</label><input required maxLength={160} value={form.clientName} onChange={(event) => setForm({ ...form, clientName: event.target.value })} /></div>
           <div className="field"><label>Campaign name</label><input required maxLength={160} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>

@@ -900,3 +900,32 @@ tbody tr:hover { background: #f8fafb; box-shadow: none; }
   .dashboard-panel-grid.dashboard-overview-grid { grid-template-columns: minmax(0,1fr); }
   .dashboard-panel-grid.dashboard-overview-grid > .dashboard-chart { grid-row: auto; }
 }
+
+/* Campaign recruiter assignment dropdown. */
+.campaign-form-card { overflow: visible; }
+.recruiter-picker { position: relative; z-index: 2; }
+.recruiter-picker > label { color: #334c59; font-size: 12px; font-weight: 750; }
+.recruiter-picker > .muted { font-size: 11px; }
+.recruiter-picker-trigger { display: flex; width: 100%; min-height: 42px; align-items: center; gap: 10px; margin-top: 2px; padding: 0 12px; color: #2d4350; background: #fff; border: 1px solid #d9e2e7; border-radius: 7px; text-align: left; }
+.recruiter-picker-trigger:hover,.recruiter-picker-trigger[aria-expanded="true"] { border-color: #91aa9f; }
+.recruiter-picker-trigger > span:first-child { min-width: 0; flex: 1; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.recruiter-picker-trigger .is-placeholder { color: #78868d; }
+.recruiter-picker-count { display: grid; min-width: 21px; height: 21px; padding: 0 5px; place-items: center; color: #315f53; background: #eaf2ed; border-radius: 12px; font-size: 10px; font-weight: 750; }
+.recruiter-picker-chevron { color: #697a82; font-size: 15px; }
+.recruiter-picker-menu { position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; width: min(100%, 440px); overflow: hidden; background: #fff; border: 1px solid #dde5e9; border-radius: 9px; box-shadow: 0 12px 32px rgba(24,43,52,.15); }
+.recruiter-picker-search { width: calc(100% - 16px); min-height: 35px; margin: 8px; padding: 0 10px; color: #233c4a; background: #f8fafb; border: 1px solid #e1e7ea; border-radius: 6px; outline: 0; font-size: 11px; }
+.recruiter-picker-search:focus { border-color: #8aa99a; box-shadow: 0 0 0 2px rgba(77,139,117,.12); }
+.recruiter-picker-options { max-height: 230px; overflow-y: auto; padding: 4px; }
+.recruiter-picker-option { display: flex; width: 100%; min-height: 48px; align-items: center; gap: 10px; padding: 7px 9px; color: #2b4350; background: #fff; border: 0; border-radius: 6px; text-align: left; }
+.recruiter-picker-option:hover,.recruiter-picker-option:focus-visible { background: #f5f8f6; outline: 0; }
+.recruiter-picker-option-copy { display: grid; min-width: 0; flex: 1; gap: 2px; }
+.recruiter-picker-option-copy strong { overflow: hidden; color: #294251; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.recruiter-picker-option-copy small { overflow: hidden; color: #78868d; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.recruiter-picker-check { display: grid; width: 19px; height: 19px; flex: 0 0 auto; place-items: center; color: #fff; background: #fff; border: 1px solid #ccd7dc; border-radius: 5px; font-size: 12px; font-weight: 800; }
+.recruiter-picker-option.is-selected .recruiter-picker-check { background: #477c67; border-color: #477c67; }
+.recruiter-picker-footer { padding: 9px 12px; color: #718089; background: #fafbfc; border-top: 1px solid #edf0f2; font-size: 10px; }
+.recruiter-picker-empty { margin: 0; padding: 18px 12px; color: #78868d; font-size: 11px; text-align: center; }
+.recruiter-picker-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.recruiter-picker-tags > span { display: inline-flex; max-width: 100%; align-items: center; gap: 6px; padding: 4px 7px 4px 9px; color: #385d4f; background: #edf4f0; border-radius: 5px; font-size: 10px; font-weight: 650; }
+.recruiter-picker-tags button { width: 17px; height: 17px; padding: 0; color: #597266; background: transparent; border: 0; border-radius: 4px; font-size: 14px; line-height: 1; }
+.recruiter-picker-tags button:hover { color: #9b3936; background: #fff; }
