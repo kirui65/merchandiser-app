@@ -20,19 +20,30 @@ export async function startRouteTracking() {
 	const background = await Location.requestBackgroundPermissionsAsync();
 	if (background.status !== 'granted') throw new Error('Background location is required. In Android Settings, choose “Allow all the time” for this app, then start the shift again.');
 	const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME);
-	if (!alreadyStarted) {
-		await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-			accuracy: Location.Accuracy.Balanced,
-			timeInterval: LOCATION_INTERVAL_MS,
-			distanceInterval: 100,
-			pausesUpdatesAutomatically: true,
-			showsBackgroundLocationIndicator: true,
-		});
+	try {
+		if (!alreadyStarted) {
+			await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+				accuracy: Location.Accuracy.Balanced,
+				timeInterval: LOCATION_INTERVAL_MS,
+				distanceInterval: 100,
+				pausesUpdatesAutomatically: true,
+				showsBackgroundLocationIndicator: true,
+			});
+		}
+		const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+		enqueuePing({ lat: current.coords.latitude, lng: current.coords.longitude, timestamp: new Date(current.timestamp).toISOString() });
+		initDb();
+		getDb().runSync("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('shiftStartedAt', ?);", [new Date().toISOString()]);
+	} catch (error) {
+		try {
+			if (!alreadyStarted && await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME)) {
+				await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+			}
+		} catch (cleanupError) {
+			console.warn('Could not stop location updates after shift startup failed:', cleanupError);
+		}
+		throw error;
 	}
-	const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-	enqueuePing({ lat: current.coords.latitude, lng: current.coords.longitude, timestamp: new Date(current.timestamp).toISOString() });
-	initDb();
-	getDb().runSync("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('shiftStartedAt', ?);", [new Date().toISOString()]);
 }
 
 export function isRouteTrackingActive() {

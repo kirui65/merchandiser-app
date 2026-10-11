@@ -6,15 +6,18 @@ const { ApiError } = require('../middleware/errorHandler');
 async function initiatePayment(req, res, next) {
   try {
     const { phoneNumber, amount, outletId = null, accountReference = 'SALE', transactionDesc = 'Merchandiser sale' } = req.body;
-    if (!phoneNumber || !Number.isFinite(Number(amount)) || Number(amount) <= 0) throw new ApiError(400, 'phoneNumber and a positive amount are required');
-    const response = await initiateStkPush({ phoneNumber, amount, accountReference, transactionDesc });
+    const amountKsh = Math.round(Number(amount));
+    if (!phoneNumber || !Number.isFinite(Number(amount)) || amountKsh <= 0) throw new ApiError(400, 'phoneNumber and an amount of at least one shilling are required');
+    const initiatedAt = new Date().toISOString();
+    const response = await initiateStkPush({ phoneNumber, amount: amountKsh, accountReference, transactionDesc });
     const transaction = await setDoc('mpesaTransactions', response.CheckoutRequestID, {
       id: response.CheckoutRequestID,
       repId: req.user.uid,
       outletId,
-      amount: Number(amount),
+      amount: amountKsh,
       phoneNumber: normalizePhone(phoneNumber),
-      timestamp: new Date().toISOString(),
+      timestamp: initiatedAt,
+      initiatedAt,
       status: 'pending',
       matchedSaleId: null,
       merchantRequestId: response.MerchantRequestID,
@@ -34,13 +37,16 @@ async function callback(req, res, next) {
     if (!existing) return res.json({ ResultCode: 0, ResultDesc: 'Accepted' });
     const metadata = Object.fromEntries((callbackData.CallbackMetadata?.Item || []).map((item) => [item.Name, item.Value]));
     const completed = callbackData.ResultCode === 0;
+    const transactionDate = parseDarajaTransactionDate(metadata.TransactionDate);
+    const callbackAt = new Date().toISOString();
     await setDoc('mpesaTransactions', callbackData.CheckoutRequestID, {
       ...existing,
       status: completed ? 'completed' : 'failed',
       amount: metadata.Amount ?? existing.amount,
       mpesaReceiptNumber: metadata.MpesaReceiptNumber || existing.mpesaReceiptNumber || null,
       phoneNumber: metadata.PhoneNumber || existing.phoneNumber,
-      timestamp: new Date().toISOString(),
+      timestamp: transactionDate || existing.timestamp || callbackAt,
+      callbackAt,
       resultCode: callbackData.ResultCode,
       resultDescription: callbackData.ResultDesc,
     });
@@ -48,6 +54,15 @@ async function callback(req, res, next) {
   } catch (err) {
     return next(err);
   }
+}
+
+function parseDarajaTransactionDate(value) {
+  const digits = String(value ?? '');
+  if (!/^\d{14}$/.test(digits)) return null;
+  const [, year, month, day, hour, minute, second] = digits.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+  const utcMillis = Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour) - 3, Number(minute), Number(second));
+  const date = new Date(utcMillis);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
 }
 
 async function getReconciliation(req, res, next) {
@@ -59,4 +74,4 @@ async function getReconciliation(req, res, next) {
   }
 }
 
-module.exports = { initiatePayment, callback, getReconciliation };
+module.exports = { initiatePayment, callback, getReconciliation, parseDarajaTransactionDate };

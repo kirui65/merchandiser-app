@@ -7,7 +7,8 @@ export function createGpsSyncManager({ queue, api = { postPingBatch }, isOnline 
   let syncing = false;
 
   async function syncPendingPings() {
-    if (syncing || !isOnline()) return { skipped: true };
+    if (syncing) return { skipped: true };
+    if (!(await isOnline())) return { skipped: true, reason: 'offline' };
     syncing = true;
     try {
       const pending = queue.getPendingPings(BATCH_SIZE);

@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
     });
     const syncManager = ['rep', 'brand_ambassador'].includes(user.role) ? createGpsSyncManager({
       queue: { getPendingPings, markPingsFailed, markPingsSynced },
-      isOnline: () => true,
+      isOnline: isCurrentlyOnline,
     }) : null;
     const stopSalesSync = salesSyncManager.start();
     const stopGpsSync = syncManager?.start();

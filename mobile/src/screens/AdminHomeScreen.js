@@ -8,12 +8,13 @@ import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
 import { formatKes } from '../utils/formatters';
 import { spacing, typography } from '../theme/tokens';
+import { businessDateKey } from '../utils/businessDate';
 
 function reportPeriod(todayOnly = false) {
   const now = new Date();
-  const from = todayOnly
-    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-    : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const today = businessDateKey(now);
+  const fromDate = todayOnly ? today : `${today.slice(0, 7)}-01`;
+  const from = new Date(`${fromDate}T00:00:00.000+03:00`);
   return { from: from.toISOString(), to: now.toISOString() };
 }
 
