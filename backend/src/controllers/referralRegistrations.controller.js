@@ -164,6 +164,7 @@ async function listReferrals(req, res, next) {
 async function assignRecruiter(req, res, next) {
   try {
     if (req.user.role !== 'manager') throw new ApiError(403, 'Manager role required to assign an applicant');
+    const recruiterTeamId = await getActiveTeamIdForUser(req.body.recruiterId);
     const db = getFirestore();
     const referralRef = db.collection('referralRegistrations').doc(req.params.id);
     const eventRef = db.collection('referralRegistrationEvents').doc();
@@ -182,16 +183,15 @@ async function assignRecruiter(req, res, next) {
       const recruiter = recruiterSnapshot.exists ? { id: recruiterSnapshot.id, ...recruiterSnapshot.data() } : null;
       if (!campaign || campaign.programType !== 'candidate_recruitment') throw new ApiError(409, 'The linked recruitment campaign is unavailable');
       if (!recruiter || recruiter.active === false || recruiter.role !== 'recruiter') throw new ApiError(400, 'Choose an active recruiter account');
-      const teamId = await getActiveTeamIdForUser(recruiter.id);
       const directlyAssigned = campaign.recruiterIds?.includes(recruiter.id);
-      const assignedThroughTeam = Boolean(teamId && campaign.teamIds?.includes(teamId));
+      const assignedThroughTeam = Boolean(recruiterTeamId && campaign.teamIds?.includes(recruiterTeamId));
       if (!directlyAssigned && !assignedThroughTeam) {
         throw new ApiError(400, 'Choose a recruiter assigned to this campaign or one of its assigned teams');
       }
       transaction.update(referralRef, {
         recruiterId: recruiter.id,
         recruiterName: recruiter.name || 'Recruiter',
-        teamId: teamId || null,
+        teamId: recruiterTeamId || null,
         convertedAt: admin.firestore.FieldValue.serverTimestamp(),
         convertedBy: req.user.uid,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -203,7 +203,7 @@ async function assignRecruiter(req, res, next) {
         recruiterId: recruiter.id,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      return { ...referral, recruiterId: recruiter.id, recruiterName: recruiter.name || 'Recruiter', teamId: teamId || null };
+      return { ...referral, recruiterId: recruiter.id, recruiterName: recruiter.name || 'Recruiter', teamId: recruiterTeamId || null };
     });
     const campaign = await getDoc('campaigns', assigned.campaignId);
     return res.json({ referral: { ...assigned, source: assigned.source || 'recruiter_app', ...commissionInfo(assigned, campaign) } });

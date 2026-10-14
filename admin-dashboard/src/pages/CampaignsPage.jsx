@@ -10,6 +10,7 @@ const emptyForm = {
   clientName: '',
   name: '',
   description: '',
+  publicSlug: '',
   regionIds: [],
   teamIds: [],
   status: 'draft',
@@ -34,6 +35,7 @@ function toPayload(form) {
     referralCommissionKsh: form.programType === 'candidate_recruitment' && form.referralCommissionKsh !== '' ? Number(form.referralCommissionKsh) : null,
     referralCommissionAt: form.programType === 'candidate_recruitment' ? form.referralCommissionAt : null,
     recruiterIds: form.programType === 'candidate_recruitment' ? [...new Set(form.recruiterIds)] : [],
+    publicSlug: form.programType === 'candidate_recruitment' && form.publicSlug.trim() ? form.publicSlug.trim().toLowerCase() : null,
     startsAt: new Date(`${form.startsAt}T00:00:00.000+03:00`).toISOString(),
     endsAt: form.endsAt ? new Date(`${form.endsAt}T23:59:59.999+03:00`).toISOString() : null,
   };
@@ -172,6 +174,7 @@ export default function CampaignsPage() {
       clientName: campaign.clientName,
       name: campaign.name,
       description: campaign.description || '',
+      publicSlug: campaign.publicSlug || '',
       regionIds: campaign.regionIds || [],
       teamIds: campaign.teamIds || [],
       status: campaign.status,
@@ -208,7 +211,7 @@ export default function CampaignsPage() {
           <div className="field"><label>Client</label><input required maxLength={160} value={form.clientName} onChange={(event) => setForm({ ...form, clientName: event.target.value })} /></div>
           <div className="field"><label>Campaign name</label><input required maxLength={160} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
           <div className="field"><label>Program type</label><select value={form.programType} onChange={(event) => setForm({ ...form, programType: event.target.value, ...(event.target.value !== 'candidate_recruitment' ? { recruiterIds: [] } : {}) })}><option value="field_sales">Field sales</option><option value="candidate_recruitment">Candidate recruitment</option></select></div>
-          {form.programType === 'candidate_recruitment' ? <div className="grid-2"><div className="field"><label>Recruiter commission (KSh)</label><input type="number" min="1" step="1" required value={form.referralCommissionKsh} onChange={(event) => setForm({ ...form, referralCommissionKsh: event.target.value })} /><small className="muted">This is separate from the advertised candidate salary.</small></div><div className="field"><label>Commission becomes due at</label><select value={form.referralCommissionAt} onChange={(event) => setForm({ ...form, referralCommissionAt: event.target.value })}>{[['requirements_checked','Requirements checked'],['training_scheduled','Training scheduled'],['placed','Placement confirmed']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></div></div> : null}
+          {form.programType === 'candidate_recruitment' ? <div className="grid-2"><div className="field"><label>Recruiter commission (KSh)</label><input type="number" min="1" step="1" required value={form.referralCommissionKsh} onChange={(event) => setForm({ ...form, referralCommissionKsh: event.target.value })} /><small className="muted">This is separate from the advertised candidate salary.</small></div><div className="field"><label>Commission becomes due at</label><select value={form.referralCommissionAt} onChange={(event) => setForm({ ...form, referralCommissionAt: event.target.value })}>{[['requirements_checked','Requirements checked'],['training_scheduled','Training scheduled'],['placed','Placement confirmed']].map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></div><div className="field"><label>Public ad campaign slug</label><input maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" value={form.publicSlug} onChange={(event) => setForm({ ...form, publicSlug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} placeholder="homecare-oct" /><small className="muted">Optional. Ad link: /apply?campaign={form.publicSlug || 'your-slug'}</small></div></div> : null}
           <div className="field"><label>Description</label><textarea rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></div>
           {form.programType === 'candidate_recruitment' ? <RecruiterPicker recruiters={recruiters} selected={form.recruiterIds} onChange={(recruiterIds) => setForm({ ...form, recruiterIds })} /> : <div className="grid-2">
             <MultiSelect label="Regions" options={regions} selected={form.regionIds} onChange={(regionIds) => setForm({ ...form, regionIds, teamIds: form.teamIds.filter((teamId) => teams.find((team) => team.id === teamId && regionIds.includes(team.regionId))) })} />
@@ -233,7 +236,7 @@ export default function CampaignsPage() {
                 <td><strong>{campaign.name}</strong><br /><small>{campaign.description}</small></td>
                 <td>{campaign.clientName}</td>
                 <td>{dateInput(campaign.startsAt)} – {dateInput(campaign.endsAt) || 'Ongoing'}</td>
-                <td>{campaign.programType === 'candidate_recruitment' ? `${(campaign.recruiterIds || []).length} recruiters` : `${(campaign.regionIds || []).length} regions · ${(campaign.teamIds || []).length} teams`}</td>
+                <td>{campaign.programType === 'candidate_recruitment' ? <>{`${(campaign.recruiterIds || []).length} recruiters`}{campaign.publicSlug ? <><br /><small>Ad: {campaign.publicSlug}</small></> : null}</> : `${(campaign.regionIds || []).length} regions · ${(campaign.teamIds || []).length} teams`}</td>
                 <td>{campaign.status}</td>
                 <td><Button variant="secondary" onClick={() => editCampaign(campaign)}>Edit</Button>{' '}{campaign.status !== 'archived' ? <Button variant="secondary" onClick={() => archive(campaign)}>Archive</Button> : null}</td>
               </tr>
