@@ -105,8 +105,10 @@ to prevent duplicate submissions.
 {
   id: string,
   campaignId: string,
-  recruiterId: string,
+  recruiterId: string | null,
   teamId: string | null,
+  source: 'recruiter_app' | 'web_ad',
+  campaignSlug?: string, // original public-ad campaign link
   applicantName: string,
   applicantIdNumber: string,
   phone: string,
@@ -117,6 +119,9 @@ to prevent duplicate submissions.
   nitaFeeStatus: 'not_paid' | 'paid',
   applicantConsent: true,
   applicantConsentAt: Timestamp,
+  submittedAt?: Timestamp, // web-ad submission time
+  convertedAt?: Timestamp,
+  convertedBy?: string,
   status: 'submitted' | 'contacted' | 'requirements_checked' | 'training_scheduled' | 'placed' | 'rejected',
   createdAt: Timestamp,
   updatedAt: Timestamp

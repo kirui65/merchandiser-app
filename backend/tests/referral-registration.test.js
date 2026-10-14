@@ -21,7 +21,7 @@ test('Kenyan mobile numbers normalize for duplicate protection and referral stag
   const local = normalizeKenyanPhone('0712 345 678');
   assert.equal(local, '+254712345678');
   assert.equal(normalizeKenyanPhone('+254 712 345 678'), local);
-  assert.equal(referralDocumentId('campaign-1', local), referralDocumentId('campaign-1', normalizeKenyanPhone('0712345678')));
+  assert.equal(referralDocumentId(local), referralDocumentId(normalizeKenyanPhone('0712345678')));
   assert.equal(normalizeKenyanPhone('12345'), null);
   assert.equal(canTransitionReferralStatus('submitted','contacted'), true);
   assert.equal(canTransitionReferralStatus('submitted','placed'), false);

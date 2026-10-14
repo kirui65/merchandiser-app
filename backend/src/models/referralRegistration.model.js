@@ -23,6 +23,15 @@ const ReferralCreateSchema = z.object({
   applicantConsent: z.literal(true),
 }).strict();
 
+// This deliberately shares every applicant field with the recruiter flow.
+// The public endpoint receives a slug rather than a trusted campaign ID.
+const WebReferralCreateSchema = ReferralCreateSchema.omit({ campaignId: true }).extend({
+  campaignSlug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Enter a valid campaign link'),
+  // Honeypot: browsers hide this field; submissions with a value are accepted
+  // and discarded before validation so it does not become bot feedback.
+  companyWebsite: z.string().max(500).optional().default(''),
+}).strict();
+
 const ReferralStatusUpdateSchema = z.object({
   status: ReferralStatusSchema,
   note: z.string().trim().max(1000).optional(),
@@ -32,9 +41,15 @@ const ReferralPaidSchema = z.object({
   paymentReference: z.string().trim().min(2).max(120),
 }).strict();
 
+const ReferralRecruiterAssignmentSchema = z.object({
+  recruiterId: z.string().trim().min(1),
+}).strict();
+
 module.exports = {
   ReferralStatusSchema,
   ReferralCreateSchema,
+  WebReferralCreateSchema,
   ReferralStatusUpdateSchema,
   ReferralPaidSchema,
+  ReferralRecruiterAssignmentSchema,
 };

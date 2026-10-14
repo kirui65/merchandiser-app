@@ -6,6 +6,9 @@ const CampaignFieldsSchema = z.object({
   clientName: z.string().trim().min(1).max(160),
   name: z.string().trim().min(1).max(160),
   description: z.string().trim().max(4000).optional(),
+  // A campaign is public only when this value is set. It is intentionally
+  // separate from its display name so ad links remain stable after renaming.
+  publicSlug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80).nullable().optional(),
   regionIds: z.array(z.string().min(1)).default([]),
   teamIds: z.array(z.string().min(1)).default([]),
   recruiterIds: z.array(z.string().min(1)).default([]),

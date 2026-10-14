@@ -28,6 +28,7 @@ const campaignsRoutes = require('./routes/campaigns.routes');
 const reportsRoutes = require('./routes/reports.routes');
 const referralRegistrationsRoutes = require('./routes/referralRegistrations.routes');
 const adminRoutes = require('./routes/admin.routes');
+const publicReferralsRoutes = require('./routes/publicReferrals.routes');
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/field-requests', fieldRequestsRoutes);
 app.use('/api/campaigns', campaignsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/referrals', referralRegistrationsRoutes);
+app.use('/api/public', publicReferralsRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use(notFoundHandler);

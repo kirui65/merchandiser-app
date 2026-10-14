@@ -18,8 +18,10 @@ function normalizeKenyanPhone(value) {
   return `+${digits}`;
 }
 
-function referralDocumentId(campaignId, normalizedPhone) {
-  return crypto.createHash('sha256').update(`${campaignId}:${normalizedPhone}`).digest('hex');
+function referralDocumentId(normalizedPhone) {
+  // One canonical document per phone makes duplicate protection span both
+  // recruiter registrations and public ad leads (and every campaign).
+  return crypto.createHash('sha256').update(normalizedPhone).digest('hex');
 }
 
 function isReferralCommissionEligible(status, eligibleAt) {
