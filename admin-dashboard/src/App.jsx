@@ -22,6 +22,7 @@ const FieldRequestsPage = lazy(() => import('./pages/FieldRequestsPage.jsx'));
 import PasswordChangeDialog from './components/PasswordChangeDialog.jsx';
 const ReferralRegistrationsPage = lazy(() => import('./pages/ReferralRegistrationsPage.jsx'));
 const RecruitersPage = lazy(() => import('./pages/RecruitersPage.jsx'));
+const PublicApplicationPage = lazy(() => import('./pages/PublicApplicationPage.jsx'));
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -56,6 +57,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<div className="page-loading" role="status">Loading workspace…</div>}><Routes>
+          <Route path="/apply" element={<PublicApplicationPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/"
